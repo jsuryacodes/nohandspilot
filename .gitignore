@@ -1,0 +1,31 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Xcode / Swift
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+.build/
+.swiftpm/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Node
+node_modules/
+dist/
+.env
+.env.*
+npm-debug.log*
+yarn-error.log*
+.vite/
+coverage/
+
+# Local only
+docs/handoff.md
