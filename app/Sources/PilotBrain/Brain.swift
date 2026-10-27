@@ -3,6 +3,12 @@
 // Matching rules (keep the web version identical):
 //  1. Trigger: text must start with a trigger word ("pilot", "hey pilot", ...), ignoring case and
 //     punctuation. The command bar passes requireTrigger=false.
+// 1b. Teaching, checked before splitting so its commas stay inside: "when I say X, do A, B" makes X run
+//     A then B; "teach that: A" / "that means A" makes the last missed segment run A; "forget X".
+//     The app refuses a phrase that already does something (typo-tolerant app names don't count:
+//     "focus time" may reach Time Machine by prefix, yet a taught phrase wins over that anyway) and
+//     commands that don't plan right now.
+//     Taught phrases are stored in learned.json (same shape as macros) and match like macros (6a).
 //  2. Chain split on , ; . ! ? and the words "then" / "and then". A segment that doesn't match and
 //     contains "and" is retried as two commands split on "and".
 //  3. Words are lowercased, punctuation dropped, synonyms replaced (longest first) and filler words
@@ -90,6 +96,8 @@ public enum Plan: Equatable {
     case notForPilot                         // no trigger word: leave the text alone
     case run([Step])
     case unmatched(String, suggestion: String?)
+    case teach(phrase: String?, commands: [String])   // rule 1b; phrase nil = "teach that" (the last miss)
+    case forget(String)
 }
 
 public final class Brain {
@@ -141,9 +149,15 @@ public final class Brain {
         return ns.substring(from: m.range.upperBound)
     }
 
-    public func plan(_ text: String, frontmostApp: String?, requireTrigger: Bool = true) -> Plan {
+    private var typos = true
+
+    /// `typos: false` skips typo-tolerant app names (step 6e), e.g. to ask whether a phrase is already taken.
+    public func plan(_ text: String, frontmostApp: String?, requireTrigger: Bool = true, typos: Bool = true) -> Plan {
+        self.typos = typos
+        defer { self.typos = true }
         var body = text
         if let rest = stripTrigger(text) { body = rest } else if requireTrigger { return .notForPilot }
+        if let teaching = teaching(body) { return teaching }
         switch planChain(body, app: frontmostApp, explicit: false, depth: 0) {
         case .success(let steps):
             return steps.isEmpty ? .unmatched(body.trimmingCharacters(in: .whitespaces), suggestion: nil) : .run(steps)
@@ -152,14 +166,34 @@ public final class Brain {
         }
     }
 
+    /// Rule 1b, on the raw text so commas stay inside: "when I say X, do A, B", "teach that: A", "that means A", "forget X".
+    private func teaching(_ body: String) -> Plan? {
+        let s = body.trimmingCharacters(in: .whitespacesAndNewlines)
+        func groups(_ pattern: String) -> [String]? {
+            guard let m = try! NSRegularExpression(pattern: pattern, options: .caseInsensitive).firstMatch(in: s, range: NSRange(s.startIndex..., in: s)) else { return nil }
+            return (1..<m.numberOfRanges).map { String(s[Range(m.range(at: $0), in: s)!]) }
+        }
+        func clean(_ t: String) -> String { t.trimmingCharacters(in: CharacterSet(charactersIn: "\"“”'‘’.,:;!?").union(.whitespaces)) }
+        func commands(_ t: String) -> [String] { segments(t).filter { !key(canon(tokenize($0))).isEmpty } }
+        if let g = groups(#"^when i say\s+(.+?)[\s,]*\b(?:do|run)\b[\s:,]*(.+)$"#) { return .teach(phrase: clean(g[0]), commands: commands(g[1])) }
+        if let g = groups(#"^(?:teach that|that means)\b[\s:,-]*(.+)$"#) { return .teach(phrase: nil, commands: commands(g[0])) }
+        if let g = groups(#"^forget\s+(.+)$"#) { return .forget(clean(g[0])) }
+        return nil
+    }
+
     // MARK: chain
 
     struct Miss: Error { var segment: String; var app: String? }
 
     /// `explicit`: the current app was chosen by this chain (not just whatever happened to be in front).
-    private func planChain(_ text: String, app: String?, explicit: Bool, depth: Int) -> Result<[Step], Miss> {
-        let segments = text.replacingOccurrences(of: "(?i)[,;!?]+|\\.(?=\\s|$)|\\band then\\b|\\bthen\\b", with: "\u{1}", options: .regularExpression)
+    /// Rule 2's split, without the "and" retry.
+    func segments(_ text: String) -> [String] {
+        text.replacingOccurrences(of: "(?i)[,;!?]+|\\.(?=\\s|$)|\\band then\\b|\\bthen\\b", with: "\u{1}", options: .regularExpression)
             .split(separator: "\u{1}").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+    }
+
+    private func planChain(_ text: String, app: String?, explicit: Bool, depth: Int) -> Result<[Step], Miss> {
+        let segments = self.segments(text)
         var steps: [Step] = []
         var app = app, explicit = explicit
         func lastFree() -> Int? { steps.last?.freeKey != nil ? steps.count - 1 : nil }
@@ -220,7 +254,7 @@ public final class Brain {
         // c. "... in chrome"
         let words = seg.split(separator: " ").map(String.init)
         if let i = words.lastIndex(where: { ["in", "on"].contains($0.lowercased()) }), i > 0, i < words.count - 1,
-           let target = resolveApp(words[(i + 1)...].joined(separator: " "), fuzzy: true),
+           let target = resolveApp(words[(i + 1)...].joined(separator: " "), fuzzy: typos),
            let step = match(canon(tokenize(words[..<i].joined(separator: " "))), app: target, fuzzy: false, accept: { self.stays($0, in: target) }) {
             return done(inApp(step, target))
         }
@@ -239,7 +273,7 @@ public final class Brain {
             }
         }
         // e. exact, allowing typos in app names
-        if let step = match(toks, app: app, fuzzy: true) { return done(step) }
+        if typos, let step = match(toks, app: app, fuzzy: true) { return done(step) }
         return nil
     }
 

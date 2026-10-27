@@ -102,6 +102,17 @@ The first click in Chrome or an Electron app (Claude, VS Code) after it starts t
 If a badge sits somewhere other than on its element (shifted, or on the wrong monitor), tell me which
 app and whether you use more than one display.
 
+**Teach Pilot.** Taught phrases are saved in `commands/learned.json`.
+
+| Say | Expected |
+|---|---|
+| "Pilot, open a fresh tab" (in Chrome) | "Didn't catch …" (the text also lands in the field, as before) |
+| "Pilot, teach that: new tab" | "✓ Learned "open a fresh tab" → new tab" |
+| "Pilot, open a fresh tab" | A new tab opens |
+| "Pilot, when I say focus time, do open Finder, full screen" | "✓ Learned …"; then "Pilot, focus time" runs both |
+| "Pilot, when I say new tab, do mute" | Refused: "new tab" already means New tab |
+| "Pilot, forget focus time" | "✓ Forgot "focus time"" |
+
 ## Everyday use
 
 - **Change commands:** Pilot menu → Edit commands.json (it's `commands/commands.json` in the repo).

@@ -16,7 +16,8 @@ Status: in development for No Hands: The Wispr Challenge (Oct 2026). See [docs/p
 - **Brain** (`app/Sources/PilotBrain`): platform-neutral matching against
   [`commands/commands.json`](commands/commands.json): phrases with slots, synonyms, app aliases,
   per-app commands, macros, chains, and any menu item of the front app by its exact title.
-  Fully offline, rule-based.
+  Fully offline, rule-based. Teach it new phrases by voice ("when I say focus time, do …"); they're
+  saved to `commands/learned.json`.
 - **Hands** (`app/Sources/Pilot`): macOS actions: open/switch apps, shortcuts, typing, scrolling,
   and screen control through Accessibility (`Screen.swift`).
 

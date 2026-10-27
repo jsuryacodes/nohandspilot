@@ -2,6 +2,20 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 28 Oct: Teach Pilot by voice (2)
+- "Pilot, when I say focus time, do open Notion, mute, full screen" makes a new phrase that runs that
+  chain. Right after a miss, "Pilot, teach that: new tab" (or "that means new tab") maps the missed
+  words to a command. "Pilot, forget focus time" removes it. Parsed before chain splitting, so the
+  commas stay inside (matching rule 1b).
+- Refuses, with a toast saying why: a phrase that already means something ("new tab already means
+  New tab"), a command it doesn't understand right now, or "teach that" with no recent miss.
+  Typo-tolerant app guesses don't count as taken: "focus time" otherwise reached Time Machine by
+  prefix, and the taught phrase wins over that anyway.
+- Stored in `commands/learned.json` (phrase → commands, the macro shape) and merged in on load;
+  either file changing reloads both. commands.json's hand formatting is untouched. "What can I say?"
+  lists taught phrases. Misses now end with 'Or say "teach that: …"'.
+- Checked here through the app: teach, all three refusals, forget, forget-unknown. 106 BrainCheck cases.
+
 ## 28 Oct: Show numbers (1c)
 - "Pilot, show numbers" (or "show labels", "show hints") puts a yellow numbered badge on every
   button, link, tab, row, field and menu-bar title in the front window, top to bottom, left to right.

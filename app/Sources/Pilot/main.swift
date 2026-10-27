@@ -53,25 +53,67 @@ final class Pilot {
         }
         return Bundle.main.url(forResource: "commands", withExtension: "json") ?? URL(fileURLWithPath: "commands.json")
     }()
-    private var loadedAt: Date?
+    /// Phrases taught by voice, next to commands.json (never inside the signed app bundle).
+    lazy var learnedURL: URL = (commandsURL.path.hasPrefix(Bundle.main.bundlePath) ? Log.dir : commandsURL.deletingLastPathComponent())
+        .appendingPathComponent("learned.json")
+    private(set) var learned: [String: [String]] = [:]
+    private var loadedAt: [Date?] = []
+    private var lastMiss: String?   // for "teach that"
 
-    /// Reloads commands.json if it changed since last time. Returns an error message if it's broken.
+    /// Reloads commands.json and learned.json if either changed since last time. Returns an error message if one is broken.
     @discardableResult func reloadIfChanged(force: Bool = false) -> String? {
-        let mtime = (try? FileManager.default.attributesOfItem(atPath: commandsURL.path)[.modificationDate]) as? Date
-        guard force || brain == nil || mtime != loadedAt else { return nil }
+        let stamps = [commandsURL, learnedURL].map { (try? FileManager.default.attributesOfItem(atPath: $0.path)[.modificationDate]) as? Date }
+        guard force || brain == nil || stamps != loadedAt else { return nil }
+        var file = "commands.json"
         do {
             if Hands.installed.isEmpty { Hands.scanApps() }
-            brain = try Brain(json: Data(contentsOf: commandsURL), installedApps: Array(Hands.installed.keys), appAliases: Hands.aliases,
-                              slotValues: ["profile": Hands.chromeProfiles()])
+            var config = try JSONDecoder().decode(Config.self, from: Data(contentsOf: commandsURL))
+            file = "learned.json"
+            learned = try FileManager.default.fileExists(atPath: learnedURL.path)
+                ? JSONDecoder().decode([String: [String]].self, from: Data(contentsOf: learnedURL)) : [:]
+            config.macros.merge(learned) { builtIn, _ in builtIn }
+            brain = Brain(config: config, installedApps: Array(Hands.installed.keys), appAliases: Hands.aliases,
+                          slotValues: ["profile": Hands.chromeProfiles()])
             Hands.browser = brain!.config.browser ?? Hands.browser
             brain!.menuItems = { Screen.menus(of: $0) }
-            loadedAt = mtime
-            Log.debug("Loaded \(brain!.config.commands.count) commands from \(commandsURL.path)")
+            loadedAt = stamps
+            Log.debug("Loaded \(brain!.config.commands.count) commands and \(learned.count) taught phrases from \(commandsURL.deletingLastPathComponent().path)")
             return nil
         } catch {
-            Log.debug("commands.json error: \(error)")
-            return "commands.json has an error: \(error.localizedDescription)"
+            Log.debug("\(file) error: \(error)")
+            return "\(file) has an error: \(error.localizedDescription)"
         }
+    }
+
+    /// "when I say X, do …" / "teach that: …" / "forget X". Returns the toast.
+    private func learn(_ phrase: String?, _ commands: [String], forget: Bool, brain: Brain, frontApp: String?) -> String {
+        let said: String
+        if forget {
+            guard let key = learned.keys.first(where: { brain.normalize($0) == brain.normalize(phrase ?? "") }) else { return "⚠︎ \"\(phrase ?? "")\" isn't a taught phrase" }
+            said = key
+            learned[key] = nil
+        } else {
+            guard let p = phrase ?? lastMiss else { return "⚠︎ Nothing to teach yet. Say the command, then \"teach that: …\"" }
+            guard !brain.normalize(p).isEmpty, !commands.isEmpty else { return "⚠︎ Say it as \"when I say …, do …\"" }
+            switch brain.plan(p, frontmostApp: frontApp, requireTrigger: false, typos: false) {
+            case .unmatched: break
+            case .run(let steps): return "⚠︎ \"\(p)\" already means " + steps.map(\.say).joined(separator: " → ") + (learned[p.lowercased()] != nil ? ". Say \"forget \(p)\" first" : "")
+            default: return "⚠︎ \"\(p)\" can't be taught"
+            }
+            for c in commands {
+                guard case .run = brain.plan(c, frontmostApp: frontApp, requireTrigger: false) else { return "⚠︎ Didn't catch \"\(c)\", so nothing was taught" }
+            }
+            said = p.lowercased()
+            learned[said] = commands
+            lastMiss = nil
+        }
+        do {
+            let enc = JSONEncoder()
+            enc.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+            try enc.encode(learned).write(to: learnedURL, options: .atomic)
+        } catch { return "⚠︎ Couldn't save learned.json: \(error.localizedDescription)" }
+        if let err = reloadIfChanged(force: true) { return "⚠︎ \(err)" }
+        return forget ? "✓ Forgot \"\(said)\"" : "✓ Learned \"\(said)\" → " + commands.joined(separator: ", ")
     }
 
     /// Returns true if Pilot will act on the text (so a Wispr paste should be swallowed).
@@ -81,14 +123,28 @@ final class Pilot {
         guard let brain else { return false }
         let plan = brain.plan(text, frontmostApp: frontApp, requireTrigger: source == "wispr")
         let matchMs = Date().timeIntervalSince(start) * 1000
+        func taught(_ toast: String, _ id: String) -> Bool {
+            HUD.show(toast, seconds: 3)
+            Log.debug("Teach: \(toast)")
+            Log.usage(source: source, text: text, matched: [id], ok: toast.hasPrefix("✓"), error: toast.hasPrefix("✓") ? nil : toast,
+                      matchMs: matchMs, totalMs: Date().timeIntervalSince(start) * 1000)
+            return true
+        }
         switch plan {
         case .notForPilot:
             return false
         case .unmatched(let segment, let suggestion):
-            HUD.show("Didn't catch \"\(segment.isEmpty ? text : segment)\"" + (suggestion.map { ". Try \"\($0)\"" } ?? ""), seconds: 3)
+            lastMiss = segment.isEmpty ? nil : segment
+            HUD.show("Didn't catch \"\(segment.isEmpty ? text : segment)\"" + (suggestion.map { ". Try \"\($0)\"" } ?? "")
+                     + ". Or say \"teach that: …\"", seconds: 3)
             Log.usage(source: source, text: text, matched: [], ok: false, error: "unmatched: \(segment)", matchMs: matchMs, totalMs: matchMs)
             return false
+        case .teach(let phrase, let commands):
+            return taught(learn(phrase, commands, forget: false, brain: brain, frontApp: frontApp), "teach")
+        case .forget(let phrase):
+            return taught(learn(phrase, [], forget: true, brain: brain, frontApp: frontApp), "forget")
         case .run(let steps):
+            lastMiss = nil
             Hands.queue.async {
                 if pilotApp {   // command bar: wait until focus is back on the previous app
                     let deadline = Date().addingTimeInterval(1)
@@ -115,6 +171,7 @@ final class Pilot {
     func helpText() -> String {
         guard let c = brain?.config else { return "commands.json didn't load." }
         var out = "Start with \"Pilot\" when dictating with Wispr (not needed in the command bar).\nChain with commas: \"Pilot, open Chrome, new tab, search for cats\".\nAdd \"in <app>\" to run a command in another app.\n"
+            + "Teach it: \"when I say focus time, do open Notion, mute\", or right after a miss \"teach that: new tab\".\n"
         let groups = [nil] + Array(Set(c.commands.compactMap(\.app))).sorted()
         for app in groups {
             out += "\n" + (app ?? "Anywhere") + "\n"
@@ -123,7 +180,10 @@ final class Pilot {
                 out += "  • " + cmd.phrases.joined(separator: "  /  ") + todo + "\n"
             }
         }
-        out += "\nMacros\n" + c.macros.sorted { $0.key < $1.key }.map { "  • \($0.key): \($0.value.joined(separator: ", "))" }.joined(separator: "\n")
+        out += "\nMacros\n" + c.macros.filter { learned[$0.key] == nil }.sorted { $0.key < $1.key }.map { "  • \($0.key): \($0.value.joined(separator: ", "))" }.joined(separator: "\n")
+        if !learned.isEmpty {
+            out += "\n\nTaught by you (\"forget <phrase>\" removes one)\n" + learned.sorted { $0.key < $1.key }.map { "  • \($0.key): \($0.value.joined(separator: ", "))" }.joined(separator: "\n")
+        }
         out += "\n\nWebsites (\"open github\", \"search youtube for lofi\")\n  " + (c.sites ?? [:]).keys.sorted().joined(separator: ", ")
         out += "\n\nChrome profiles (\"switch to college profile\")\n  " + Array(Set(Hands.chromeProfiles().prefix { _ in true }.map(\.key))).sorted().joined(separator: ", ")
         out += "\n\nApp names\n  " + c.apps.sorted { $0.key < $1.key }.map { "\($0.key) → \($0.value)" }.joined(separator: ", ") + ", plus any installed app by name."

@@ -7,7 +7,7 @@ let profiles: [(key: String, value: String)] = [("Jaya", "Default"), ("College",
                                                 ("Jaya Surya", "Default"), ("PENUMATCHA JAYA SURYA", "Profile 1"), ("Jaya Surya Penumatcha", "Profile 2")]
 let brain = try Brain(json: Data(contentsOf: URL(fileURLWithPath: path)),
                       installedApps: ["Google Chrome", "Claude", "Visual Studio Code", "Finder", "Telegram", "WhatsApp", "Safari", "Terminal",
-                                      "GitHub Desktop", "YouTube", "ChatGPT", "Spotify", "Music", "Numbers Creator Studio", "OBS"],
+                                      "GitHub Desktop", "YouTube", "ChatGPT", "Spotify", "Music", "Numbers Creator Studio", "OBS", "Time Machine"],
                       appAliases: ["OBS Studio": "OBS", "Numbers": "Numbers Creator Studio", "Code": "Visual Studio Code"],
                       slotValues: ["profile": profiles])
 var failures = 0
@@ -149,6 +149,28 @@ check("Pilot, click number twenty-one", [.click("21")])
 check("Pilot, click a hundred and five", [.click("105")])
 check("Pilot, click #3.", [.click("3")])
 check("Pilot, show numbers, click 4", [.numbers(true), .click("4")])
+
+// teaching (rule 1b): parsed before chain splitting; taught phrases then match like macros
+func expect(_ text: String, _ plan: Plan, line: Int = #line) {
+    let got = brain.plan(text, frontmostApp: nil)
+    if got != plan { failures += 1; print("FAIL line \(line): \"\(text)\"\n  got:      \(got)\n  expected: \(plan)") }
+}
+expect("Pilot, when I say focus time, do open Notion, mute.", .teach(phrase: "focus time", commands: ["open Notion", "mute"]))
+expect("Pilot, when I say \"good night,\" run lock screen", .teach(phrase: "good night", commands: ["lock screen"]))
+expect("Pilot, when I say do not disturb, do mute", .teach(phrase: "do not disturb", commands: ["mute"]))
+expect("Pilot, teach that: new tab", .teach(phrase: nil, commands: ["new tab"]))
+expect("Pilot, that means open a new tab, then scroll down.", .teach(phrase: nil, commands: ["open a new tab", "scroll down"]))
+expect("Pilot, forget focus time.", .forget("focus time"))
+var taughtConfig = brain.config
+taughtConfig.macros["focus time"] = ["mute", "full screen"]
+let taughtBrain = Brain(config: taughtConfig, installedApps: ["Time Machine"])
+check("Pilot, focus time", [.openApp("Time Machine")])   // "focus" = "switch to", "time" = unique prefix (typo pass)
+if case .unmatched = brain.plan("focus time", frontmostApp: nil, requireTrigger: false, typos: false) {} else {
+    failures += 1; print("FAIL: without typos, \"focus time\" should be free to teach")
+}
+if case .run(let s) = taughtBrain.plan("Pilot, focus time.", frontmostApp: nil), s.flatMap(\.actions) == [.media("mute"), .keys("ctrl+cmd+f")] {} else {
+    failures += 1; print("FAIL: taught phrase didn't run like a macro")
+}
 
 // speed: the brain must be far under 100 ms
 let t0 = Date()
