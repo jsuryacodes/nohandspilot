@@ -60,7 +60,9 @@ final class Pilot {
         let mtime = (try? FileManager.default.attributesOfItem(atPath: commandsURL.path)[.modificationDate]) as? Date
         guard force || brain == nil || mtime != loadedAt else { return nil }
         do {
-            brain = try Brain(json: Data(contentsOf: commandsURL), installedApps: Array(Hands.installed.keys))
+            brain = try Brain(json: Data(contentsOf: commandsURL), installedApps: Array(Hands.installed.keys),
+                              slotValues: ["profile": Hands.chromeProfiles()])
+            Hands.browser = brain!.config.browser ?? Hands.browser
             loadedAt = mtime
             Log.debug("Loaded \(brain!.config.commands.count) commands from \(commandsURL.path)")
             return nil
@@ -80,8 +82,8 @@ final class Pilot {
         switch plan {
         case .notForPilot:
             return false
-        case .unmatched(let segment):
-            HUD.show("Didn't catch: \(segment.isEmpty ? text : segment)", seconds: 2.5)
+        case .unmatched(let segment, let suggestion):
+            HUD.show("Didn't catch \"\(segment.isEmpty ? text : segment)\"" + (suggestion.map { ". Try \"\($0)\"" } ?? ""), seconds: 3)
             Log.usage(source: source, text: text, matched: [], ok: false, error: "unmatched: \(segment)", matchMs: matchMs, totalMs: matchMs)
             return false
         case .run(let steps):
@@ -115,6 +117,8 @@ final class Pilot {
             }
         }
         out += "\nMacros\n" + c.macros.sorted { $0.key < $1.key }.map { "  • \($0.key): \($0.value.joined(separator: ", "))" }.joined(separator: "\n")
+        out += "\n\nWebsites (\"open github\", \"search youtube for lofi\")\n  " + (c.sites ?? [:]).keys.sorted().joined(separator: ", ")
+        out += "\n\nChrome profiles (\"switch to college profile\")\n  " + Array(Set(Hands.chromeProfiles().prefix { _ in true }.map(\.key))).sorted().joined(separator: ", ")
         out += "\n\nApp names\n  " + c.apps.sorted { $0.key < $1.key }.map { "\($0.key) → \($0.value)" }.joined(separator: ", ") + ", plus any installed app by name."
         return out
     }
@@ -127,6 +131,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var hotkey = "ctrl+opt+p"
 
     func applicationDidFinishLaunching(_ note: Notification) {
+        Hands.trackActivations()
         pilot.reloadIfChanged()
         HelpWindow.shared.text = { [pilot] in pilot.helpText() }
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)

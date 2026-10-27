@@ -2,6 +2,21 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 28 Oct: First real Wispr test → matcher v2
+- **Wispr interception confirmed working.** Every Wispr paste reached the *session* tap from
+  `com.electron.wispr-flow.accessibility-mac-app`; "Pilot, open Chrome and search hello" was swallowed
+  and ran. Accessibility survived a rebuild (stable signature works).
+- Failures from the real log, all fixed and now in BrainCheck: "open a new Chrome tab" (app named
+  mid-sentence), "can you switch the Chrome profile to Jaya Surya" (no profile support),
+  "open Chrome in a new tab and search hello".
+- Brain v2: app named anywhere in a command, "search X on youtube", sites, URLs, tab numbers
+  ("tab three", "last tab"), runtime slot values (Chrome profiles), "Didn't catch … Try …"
+  suggestions, more fillers ("can you", "I want to", "for me"). Matching 30 ms → ~1–2 ms.
+- commands.json v2: 84 commands, 17 websites. New: Chrome profiles by name, open/search sites,
+  "ask Claude …", media keys + volume, switch back to previous app, hide, zoom, copy/paste,
+  find on page, page down, Mission Control, screenshot, lock screen, more Finder/VS Code/Chrome.
+- Verified here: "can you open GitHub" → Chrome tab in 158 ms (match 1.4 ms). 57 brain checks pass.
+
 ## 28 Oct: Setup guide
 - `docs/setup.md`: permissions, Wispr dictionary, command bar test, the three-app Wispr test and
   exactly what to report back. README rewritten.

@@ -8,6 +8,33 @@ func appName(_ app: NSRunningApplication?) -> String? { app?.bundleURL?.deleting
 enum Hands {
     static let queue = DispatchQueue(label: "pilot.hands")
     static var installed: [String: URL] = scanApps()
+    static var browser = "Google Chrome"
+    /// Apps in activation order (newest last), for "switch back". Updated on the main thread.
+    static var history: [pid_t] = []
+
+    static func trackActivations() {
+        NotificationCenter.default.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { note in
+            guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication, app.processIdentifier != getpid() else { return }
+            history.removeAll { $0 == app.processIdentifier }
+            history.append(app.processIdentifier)
+            if history.count > 10 { history.removeFirst() }
+        }
+    }
+
+    /// Chrome profiles as (spoken name, profile directory): display names first, then Google account names.
+    static func chromeProfiles() -> [(key: String, value: String)] {
+        let url = URL(fileURLWithPath: NSHomeDirectory() + "/Library/Application Support/Google/Chrome/Local State")
+        guard let data = try? Data(contentsOf: url),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let cache = (json["profile"] as? [String: Any])?["info_cache"] as? [String: [String: Any]] else { return [] }
+        var out: [(key: String, value: String)] = []
+        for field in ["name", "gaia_name", "gaia_given_name"] {
+            for (dir, info) in cache.sorted(by: { $0.key < $1.key }) {
+                if let name = info[field] as? String, !name.isEmpty { out.append((name, dir)) }
+            }
+        }
+        return out
+    }
 
     static func scanApps() -> [String: URL] {
         let dirs = ["/Applications", "/Applications/Utilities", "/System/Applications", "/System/Applications/Utilities",
@@ -33,7 +60,35 @@ enum Hands {
             guard let (code, flags) = parseKeys(spec) else { return "Unknown keys \"\(spec)\"" }
             press(code, flags)
         case .type(let text): type(text)
-        case .scroll(let dir): scroll(down: dir != "up")
+        case .hideApp(let name):
+            let apps = NSWorkspace.shared.runningApplications.filter { appName($0) == name }
+            if apps.isEmpty { return "\(name) isn't running" }
+            apps.forEach { $0.hide() }
+        case .previousApp:
+            let pids = DispatchQueue.main.sync { history }
+            let front = NSWorkspace.shared.frontmostApplication?.processIdentifier
+            guard let pid = pids.last(where: { $0 != front }), let app = NSRunningApplication(processIdentifier: pid), let name = appName(app) else {
+                return "No previous app yet"
+            }
+            return openApp(name)
+        case .openURL(let s):
+            guard let url = URL(string: s) else { return "Bad URL \(s)" }
+            let config = NSWorkspace.OpenConfiguration()
+            config.activates = true
+            if let app = NSWorkspace.shared.runningApplications.first(where: { appName($0) == browser })?.bundleURL ?? installed[browser] {
+                NSWorkspace.shared.open([url], withApplicationAt: app, configuration: config)
+                return waitForFront(browser)
+            }
+            NSWorkspace.shared.open(url)
+        case .chromeProfile(let dir):
+            // A second "open" hands the flag to the running Chrome, which opens a window in that profile.
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+            p.arguments = ["-na", "Google Chrome", "--args", "--profile-directory=\(dir)"]
+            do { try p.run() } catch { return "Couldn't open Chrome: \(error.localizedDescription)" }
+            return waitForFront("Google Chrome")
+        case .media(let key): media(key)
+        case .scroll(let dir, let ticks): scroll(down: dir != "up", ticks: ticks)
         case .wait(let ms): usleep(useconds_t(ms * 1000))
         case .help: DispatchQueue.main.async { HelpWindow.shared.show() }
         case .notConfigured(let note): return "Not set up yet: \(note)"
@@ -53,6 +108,10 @@ enum Hands {
         let config = NSWorkspace.OpenConfiguration()
         config.activates = true
         NSWorkspace.shared.openApplication(at: url, configuration: config) { app, _ in app?.activate() }
+        return waitForFront(name)
+    }
+
+    static func waitForFront(_ name: String) -> String? {
         let deadline = Date().addingTimeInterval(5)
         while Date() < deadline {
             if let front = NSWorkspace.shared.frontmostApplication, appName(front) == name, frontWindow(pid: front.processIdentifier) != nil {
@@ -132,16 +191,31 @@ enum Hands {
     // MARK: scroll
 
     /// Scroll events go to the window under the pointer, so park the pointer in the front window first.
-    static func scroll(down: Bool) {
+    static func scroll(down: Bool, ticks: Int) {
         if let front = NSWorkspace.shared.frontmostApplication, let r = frontWindow(pid: front.processIdentifier),
            let mouse = CGEvent(source: nil)?.location, !r.contains(mouse) {
             CGWarpMouseCursorPosition(CGPoint(x: r.midX, y: r.midY))
             CGAssociateMouseAndMouseCursorPosition(1)
         }
-        for _ in 0..<6 {   // ponytail: fixed ~half a page; add "scroll down a lot" when wanted
+        for _ in 0..<ticks {   // 80 px each: 6 ≈ half a page, 16 ≈ a page
             CGEvent(scrollWheelEvent2Source: source, units: .pixel, wheelCount: 1, wheel1: down ? -80 : 80, wheel2: 0, wheel3: 0)?
                 .post(tap: .cghidEventTap)
             usleep(12_000)
         }
+    }
+}
+
+extension Hands {
+    /// Hardware media keys (NX_KEYTYPE_*), so they work with Music, Spotify, YouTube in Chrome, and the volume HUD.
+    static func media(_ key: String) {
+        let codes: [String: Int] = ["volumeUp": 0, "volumeDown": 1, "mute": 7, "play": 16, "next": 17, "previous": 18]
+        guard let code = codes[key] else { return }
+        for down in [true, false] {
+            let ev = NSEvent.otherEvent(with: .systemDefined, location: .zero, modifierFlags: NSEvent.ModifierFlags(rawValue: down ? 0xA00 : 0xB00),
+                                        timestamp: 0, windowNumber: 0, context: nil, subtype: 8,
+                                        data1: (code << 16) | ((down ? 0xA : 0xB) << 8), data2: -1)
+            ev?.cgEvent?.post(tap: .cghidEventTap)
+        }
+        usleep(40_000)
     }
 }
