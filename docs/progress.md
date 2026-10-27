@@ -2,6 +2,10 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 28 Oct: Setup guide
+- `docs/setup.md`: permissions, Wispr dictionary, command bar test, the three-app Wispr test and
+  exactly what to report back. README rewritten.
+
 ## 28 Oct: Menu-bar app, Hands, both triggers
 - `app/build.sh`: builds, runs BrainCheck, assembles `Pilot.app`, signs it with a fixed self-signed
   certificate ("Pilot Local Signing", own keychain) and installs to `~/Applications`. The signature
@@ -33,4 +37,4 @@ Newest first. Each entry matches a commit on `main`.
 
 ## Next
 - [ ] Your Wispr test (docs/setup.md) → fix whatever it shows
-- [ ] `docs/setup.md`: permissions + the Wispr test you need to run
+- [ ] Website playground (reuses commands.json; port the Brain's matching rules to JS)
