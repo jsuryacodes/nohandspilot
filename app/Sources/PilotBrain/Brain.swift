@@ -73,7 +73,8 @@ public enum Action: Equatable {
     case openApp(String), quitApp(String), hideApp(String), previousApp, openURL(String), chromeProfile(String)
     case keys(String), type(String), scroll(String, Int), media(String), wait(Int), help
     case menu(String, [String])   // app, title path: ("Google Chrome", ["Tab", "Duplicate Tab"])
-    case click(String)            // a visible element by name, normalised as in rule 3
+    case click(String)            // a visible element by name, normalised as in rule 3, or a badge number ("12")
+    case numbers(Bool)            // show / hide numbered badges on everything clickable
     case notConfigured(String)
 }
 
@@ -349,6 +350,23 @@ public final class Brain {
         return words[w].map(String.init)
     }
 
+    /// Badge numbers for click: "12", "twelve", "twenty one", "a hundred and five" (normalised text).
+    private func spokenNumber(_ t: String) -> Int? {
+        let units = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve",
+                     "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"]
+        let tens = ["twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+        let words = t.split(separator: " ").map(String.init).filter { $0 != "and" }
+        if words.count == 1, let n = Int(words[0]) { return n }
+        var n = 0
+        for w in words {
+            if let u = units.firstIndex(of: w) { n += u }
+            else if let d = tens.firstIndex(of: w) { n += (d + 2) * 10 }
+            else if w == "hundred" { n = max(n, 1) * 100 }
+            else { return nil }
+        }
+        return words.isEmpty ? nil : n
+    }
+
     /// Exact (earlier entries win), then unique prefix, then (fuzzy pass) 1–2 typos.
     private func resolveNamed(_ raw: String, _ values: [(key: String, value: String)], fuzzy: Bool) -> String? {
         let s = compact(raw)
@@ -379,7 +397,10 @@ public final class Brain {
         case "previousApp": actions = [.previousApp]
         case "chromeProfile": actions = [.chromeProfile(slots["profile"] ?? "")]
         case "help": actions = [.help]
-        case "click": actions = [.click(normalize(slots["target"] ?? ""))]
+        case "click":
+            let raw = slots["target"] ?? ""
+            actions = [.click(spokenNumber(normalize(raw.replacingOccurrences(of: "-", with: " "))).map(String.init) ?? normalize(raw))]
+        case "showNumbers", "hideNumbers": actions = [.numbers(a.type == "showNumbers")]
         case "media": actions = [.media(a.key ?? "play")]
         case "scroll": actions = [.scroll(a.direction ?? "down", a.amount ?? 6)]
         case "type": actions = [.type(fill(a.text ?? ""))]

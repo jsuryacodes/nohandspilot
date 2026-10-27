@@ -113,6 +113,7 @@ enum Hands {
         case .help: DispatchQueue.main.async { HelpWindow.shared.show() }
         case .menu(let app, let path): return Screen.pressMenu(app, path)
         case .click(let target): return Screen.click(target, note: &note)
+        case .numbers(let on): return Screen.numbers(on, note: &note)
         case .notConfigured(let note): return "Not set up yet: \(note)"
         }
         return nil

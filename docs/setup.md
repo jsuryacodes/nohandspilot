@@ -89,6 +89,19 @@ that title in the front app. "What can I say?" lists them.
 
 The first click in Chrome or an Electron app (Claude, VS Code) after it starts takes ~0.3 s longer.
 
+**Show numbers.** For icons without a name, or when "click" finds several matches.
+
+| Say | In | Expected |
+|---|---|---|
+| "Pilot, show numbers" | Chrome | Yellow numbered badges on the tabs, toolbar buttons, links and menu bar. Each badge sits on the top-left corner of its element |
+| "Pilot, click" + a badge's number | same | That element is pressed, badges disappear |
+| "Pilot, show numbers", wait 20 s | any | Badges disappear by themselves |
+| "Pilot, show numbers", then "Pilot, hide numbers" | any | Badges disappear |
+| ⌃⌥P, type `show numbers`, Enter; then ⌃⌥P, type `click 3`, Enter | Finder | Badge 3 is pressed (the bar doesn't clear the badges) |
+
+If a badge sits somewhere other than on its element (shifted, or on the wrong monitor), tell me which
+app and whether you use more than one display.
+
 ## Everyday use
 
 - **Change commands:** Pilot menu → Edit commands.json (it's `commands/commands.json` in the repo).

@@ -134,6 +134,19 @@ enum Screen {
     /// containing all its words; window before menus, controls before plain text. Ties: don't guess.
     static func click(_ target: String, note: inout String?) -> String? {
         guard let app = Screen.front, let front = appName(app), !target.isEmpty else { return "Nothing to click" }
+        // badges up: a number means that badge. Any click clears them (the screen is about to change).
+        let (shown, badge) = DispatchQueue.main.sync { () -> (Bool, Element?) in
+            let o = NumberOverlay.shared
+            let hit = Int(target).flatMap(o.take)
+            if Int(target) == nil { o.hide() }
+            return (o.isShown || hit != nil, hit)
+        }
+        if shown {
+            guard let badge else { return "No number \(target) on screen" }
+            note = "Clicked \(target)" + (badge.name.isEmpty ? "" : " \"\(badge.name)\"")
+            Log.debug("Click badge \(target) in \(front): \(badge.role) \"\(badge.name)\"")
+            return press(badge, app: front)
+        }
         let all = elements(of: app, text: true)
             + DispatchQueue.main.sync { menus(of: front) }.map { Element(el: nil, menu: $0, role: "AXMenuItem", name: $0.last ?? "", frame: .zero) }
         let named = all.map { (e: $0, n: normalize($0.name)) }.filter { !$0.n.isEmpty }
@@ -162,6 +175,24 @@ enum Screen {
         if hits.count > 1 { return "\(hits.count) matches for \"\(target)\". Say \"show numbers\"" }
         note = "Clicked \"\(hit.name)\""
         return press(hit, app: front)
+    }
+
+    /// Badges on every actionable element of the front window and the menu bar, top to bottom, left to right.
+    static func numbers(_ on: Bool, note: inout String?) -> String? {
+        guard on else { DispatchQueue.main.sync { NumberOverlay.shared.hide() }; return nil }
+        guard let app = Screen.front else { return "No app in front" }
+        var corners: [CGPoint] = []
+        let els = elements(of: app, text: false)
+            .sorted { (Int($0.frame.minY / 12), $0.frame.minX) < (Int($1.frame.minY / 12), $1.frame.minX) }
+            .filter { e in   // a row and its cell share a corner: one badge is enough
+                if corners.contains(where: { abs($0.x - e.frame.minX) < 8 && abs($0.y - e.frame.minY) < 8 }) { return false }
+                corners.append(e.frame.origin)
+                return true
+            }
+        guard !els.isEmpty else { return "Nothing to number in \(appName(app) ?? "this app")" }
+        DispatchQueue.main.sync { NumberOverlay.shared.show(els, pid: app.processIdentifier) }
+        note = "\(els.count) numbers. Say \"click\" and a number"
+        return nil
     }
 
     /// AXPress when the element supports it, else a real click at its centre (text fields always: that focuses them).

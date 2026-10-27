@@ -2,6 +2,19 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 28 Oct: Show numbers (1c)
+- "Pilot, show numbers" (or "show labels", "show hints") puts a yellow numbered badge on every
+  button, link, tab, row, field and menu-bar title in the front window, top to bottom, left to right.
+  Then "Pilot, click 12" (or "number 12", "click twelve", "click number twenty-one") presses it.
+  This is the fallback for icons with no name and for ties ("2 matches … Say show numbers").
+- Badges clear after a click, on "hide numbers", when another app comes forward (the ⌃⌥P bar doesn't
+  count), or after 20 s. One click-through panel per screen, above full-screen apps and all Spaces.
+- With no badges up, a number is just a name, so "click 2" still finds a "2" link (Google's page 2).
+- "show numbers" no longer opens the Numbers app; "close numbers" never quits it.
+- Checked here: badges up + "click 99" → "No number 99 on screen", nothing pressed. Badge placement
+  needs your eyes (test list in setup.md).
+- 98 BrainCheck cases.
+
 ## 28 Oct: Fix "switch back" (never worked)
 - Pilot listened for app switches on the wrong notification centre, so its app history stayed empty
   and "switch back" always said "No previous app yet". It's in the demo script at 1:25. Checked with

@@ -88,7 +88,8 @@
     { "id": "hide_front", "phrases": ["hide", "hide window", "hide app"], "action": { "type": "keys", "keys": "cmd+h" }, "say": "Hidden" },
     { "id": "previous_app", "phrases": ["switch back", "previous app", "last app", "switch to previous app", "switch to last app", "back to previous app"], "action": { "type": "previousApp" }, "say": "Switched back" },
     { "id": "help", "phrases": ["what can i say", "help", "show commands", "list commands"], "action": { "type": "help" }, "say": "Commands" },
-    { "id": "show_numbers", "phrases": ["show numbers", "hide numbers", "show labels", "show hints"], "action": { "type": "keys", "keys": "TODO", "note": "\"show numbers\" isn't built yet (proposed screen-control layer)" }, "say": "Show numbers" },
+    { "id": "show_numbers", "phrases": ["show numbers", "show labels", "show hints", "numbers"], "action": { "type": "showNumbers" }, "say": "Numbers on" },
+    { "id": "hide_numbers", "phrases": ["hide numbers", "hide labels", "hide hints", "clear numbers", "close numbers", "no numbers"], "action": { "type": "hideNumbers" }, "say": "Numbers off" },
 
     { "id": "chrome_profile", "phrases": ["switch profile to {profile}", "switch to profile {profile}", "switch chrome profile to {profile}", "switch to {profile} profile", "switch to {profile} chrome profile", "open {profile} profile", "open profile {profile}", "use {profile} profile", "use profile {profile}", "chrome profile {profile}", "profile {profile}"], "action": { "type": "chromeProfile" }, "say": "Chrome profile: {profile}" },
     { "id": "open_site", "phrases": ["open {site}", "switch to {site}", "open {site} website", "open {site} in browser"], "action": { "type": "openURL" }, "say": "Opened {site}" },
@@ -132,7 +133,7 @@
     { "id": "select_all", "phrases": ["select all", "select everything"], "action": { "type": "keys", "keys": "cmd+a" }, "say": "Selected all" },
     { "id": "save", "phrases": ["save", "save file", "save it"], "action": { "type": "keys", "keys": "cmd+s" }, "say": "Saved" },
     { "id": "find", "phrases": ["find {query}", "find on page {query}", "find in page {query}", "search for {query}"], "action": { "type": "sequence", "steps": ["cmd+f", "wait:150", "type:{query}"] }, "say": "Find {query}" },
-    { "id": "click", "phrases": ["click {target}", "click on {target}", "press {target}", "tap {target}", "tap on {target}", "choose {target}", "select {target}"], "action": { "type": "click" }, "say": "Clicked {target}" },
+    { "id": "click", "phrases": ["click {target}", "click on {target}", "click number {target}", "number {target}", "press {target}", "tap {target}", "tap on {target}", "choose {target}", "select {target}"], "action": { "type": "click" }, "say": "Clicked {target}" },
 
     { "id": "play_pause", "phrases": ["play", "pause", "resume", "play music", "pause music", "stop music", "play pause", "resume music"], "action": { "type": "media", "key": "play" }, "say": "Play/pause" },
     { "id": "next_track", "phrases": ["next track", "skip track", "skip", "next music"], "action": { "type": "media", "key": "next" }, "say": "Next track" },

@@ -97,7 +97,7 @@ check("Pilot, open chrome, ask claude what is jazz", [chrome, .openApp("Claude")
 check("Pilot, open chrome, open claude", [chrome, .openApp("Claude")])
 check("Pilot, can you open OBS Studio?", [.openApp("OBS")])
 check("Pilot, open numbers", [.openApp("Numbers Creator Studio")])
-check("Pilot, show numbers.", [.notConfigured("\"show numbers\" isn't built yet (proposed screen-control layer)")])
+check("Pilot, show numbers.", [.numbers(true)])
 
 // misc
 check("Pilot, pause the music", [.media("play")])
@@ -137,6 +137,18 @@ check("Pilot, press the enter key", [.keys("enter")])
 check("Pilot, press escape", [.keys("esc")])
 check("Pilot, select all", [.keys("cmd+a")])
 check("Pilot, select everything", [.keys("cmd+a")])
+
+// show numbers (1c): numbers go to click as digits; "close/hide numbers" never touches the Numbers app
+check("Pilot, show labels", [.numbers(true)])
+check("Pilot, hide numbers", [.numbers(false)])
+check("Pilot, close numbers", [.numbers(false)])
+check("Pilot, click 12", [.click("12")])
+check("Pilot, click twelve", [.click("12")])
+check("Pilot, number 7", [.click("7")])
+check("Pilot, click number twenty-one", [.click("21")])
+check("Pilot, click a hundred and five", [.click("105")])
+check("Pilot, click #3.", [.click("3")])
+check("Pilot, show numbers, click 4", [.numbers(true), .click("4")])
 
 // speed: the brain must be far under 100 ms
 let t0 = Date()

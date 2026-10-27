@@ -138,6 +138,91 @@ final class CommandBar: NSObject, NSTextFieldDelegate {
     }
 }
 
+/// "Show numbers": a badge on everything clickable in the front app. One transparent, click-through panel per
+/// screen, above everything (full-screen apps and other Spaces too). Main thread only.
+final class NumberOverlay {
+    static let shared = NumberOverlay()
+    private(set) var isShown = false
+    private var elements: [Screen.Element] = []
+    private var pid: pid_t = 0
+    private var panels: [NSPanel] = []
+    private var hideWork: DispatchWorkItem?
+
+    private init() {
+        NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] note in
+            // another app came forward: the numbers no longer point at anything (Pilot's own command bar is fine)
+            guard let pid = (note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.processIdentifier,
+                  pid != getpid(), pid != self?.pid else { return }
+            self?.hide()
+        }
+    }
+
+    /// Elements in global top-left coordinates, already in badge order (1 = first).
+    func show(_ els: [Screen.Element], pid: pid_t) {
+        hide()
+        elements = els
+        self.pid = pid
+        isShown = true
+        let primaryHeight = NSScreen.screens.first?.frame.height ?? 0
+        for screen in NSScreen.screens {
+            let view = BadgeView(frame: NSRect(origin: .zero, size: screen.frame.size))
+            for (i, e) in els.enumerated() {
+                // Accessibility: origin top-left of the primary screen, y down. AppKit: bottom-left, y up.
+                let p = NSPoint(x: e.frame.minX - screen.frame.minX, y: primaryHeight - e.frame.minY - screen.frame.minY)
+                if view.bounds.insetBy(dx: -1, dy: -1).contains(p) { view.badges.append((String(i + 1), p)) }
+            }
+            guard !view.badges.isEmpty else { continue }
+            let panel = NSPanel(contentRect: screen.frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+            panel.level = .screenSaver
+            panel.isOpaque = false
+            panel.backgroundColor = .clear
+            panel.hasShadow = false
+            panel.ignoresMouseEvents = true
+            panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
+            panel.contentView = view
+            panel.orderFrontRegardless()
+            panels.append(panel)
+        }
+        let work = DispatchWorkItem { [weak self] in self?.hide() }
+        hideWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 20, execute: work)
+    }
+
+    func hide() {
+        hideWork?.cancel()
+        panels.forEach { $0.orderOut(nil) }
+        panels = []
+        elements = []
+        isShown = false
+    }
+
+    /// The element behind badge `n`, clearing the badges; nil (badges stay) if there's no such number.
+    func take(_ n: Int) -> Screen.Element? {
+        guard elements.indices.contains(n - 1) else { return nil }
+        defer { hide() }
+        return elements[n - 1]
+    }
+
+    private final class BadgeView: NSView {
+        var badges: [(label: String, topLeft: NSPoint)] = []
+        private let attrs: [NSAttributedString.Key: Any] = [.font: NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .bold), .foregroundColor: NSColor.black]
+
+        override func draw(_ dirtyRect: NSRect) {
+            for (label, p) in badges {
+                let size = (label as NSString).size(withAttributes: attrs)
+                let w = size.width + 8, h = size.height + 2
+                let box = NSRect(x: min(max(p.x, 0), bounds.width - w), y: min(max(p.y - h, 0), bounds.height - h), width: w, height: h)
+                let path = NSBezierPath(roundedRect: box, xRadius: 4, yRadius: 4)
+                NSColor.systemYellow.setFill()
+                path.fill()
+                NSColor.black.withAlphaComponent(0.6).setStroke()
+                path.stroke()
+                (label as NSString).draw(at: NSPoint(x: box.minX + 4, y: box.minY + 1), withAttributes: attrs)
+            }
+        }
+    }
+}
+
 final class HelpWindow {
     static let shared = HelpWindow()
     var text: () -> String = { "" }
