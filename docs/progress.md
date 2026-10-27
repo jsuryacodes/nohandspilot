@@ -2,6 +2,9 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 28 Oct: Demo script
+- `docs/demo.md`: a timed 2-minute script using only commands covered by BrainCheck.
+
 ## 28 Oct: First real Wispr test → matcher v2
 - **Wispr interception confirmed working.** Every Wispr paste reached the *session* tap from
   `com.electron.wispr-flow.accessibility-mac-app`; "Pilot, open Chrome and search hello" was swallowed
@@ -15,7 +18,7 @@ Newest first. Each entry matches a commit on `main`.
 - commands.json v2: 84 commands, 17 websites. New: Chrome profiles by name, open/search sites,
   "ask Claude …", media keys + volume, switch back to previous app, hide, zoom, copy/paste,
   find on page, page down, Mission Control, screenshot, lock screen, more Finder/VS Code/Chrome.
-- Verified here: "can you open GitHub" → Chrome tab in 158 ms (match 1.4 ms). 57 brain checks pass.
+- Verified here: "can you open GitHub" → Chrome tab in 158 ms (match 1.4 ms). 53 brain checks pass.
 
 ## 28 Oct: Setup guide
 - `docs/setup.md`: permissions, Wispr dictionary, command bar test, the three-app Wispr test and
