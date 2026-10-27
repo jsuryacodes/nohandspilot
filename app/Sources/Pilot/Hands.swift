@@ -213,6 +213,7 @@ enum Hands {
     }
 
     static func type(_ text: String) {
+        if text.contains("\n") || text.count > 200 { return paste(text) }   // a typed newline would send a chat message early
         let units = Array(text.utf16)
         for start in stride(from: 0, to: units.count, by: 16) {
             let chunk = Array(units[start..<min(start + 16, units.count)])
@@ -225,6 +226,45 @@ enum Hands {
             usleep(8_000)
         }
         usleep(40_000)
+    }
+
+    /// Through the clipboard, which is put back afterwards.
+    static func paste(_ text: String) {
+        let saved = clipboard()
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        press(9, .maskCommand)   // V
+        usleep(250_000)          // the app reads the clipboard in its own time
+        setClipboard(saved)
+    }
+
+    /// Every item on the clipboard with all its types, in order, to put back exactly.
+    static func clipboard() -> [[(NSPasteboard.PasteboardType, Data)]] {
+        NSPasteboard.general.pasteboardItems?.map { item in item.types.compactMap { t in item.data(forType: t).map { (t, $0) } } } ?? []
+    }
+
+    static func setClipboard(_ items: [[(NSPasteboard.PasteboardType, Data)]]) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.writeObjects(items.map { types in
+            let item = NSPasteboardItem()
+            for (t, data) in types { item.setData(data, forType: t) }
+            return item
+        })
+    }
+
+    /// "{selection}" in a command's URL or text, filled in once when the run starts, before any app switch.
+    static func needsSelection(_ a: Action) -> Bool {
+        switch a { case .openURL(let s), .type(let s): return s.contains("{selection}"); default: return false }
+    }
+
+    static func withSelection(_ a: Action, _ text: String) -> Action {
+        switch a {
+        case .openURL(let s):   // URL-encoded, and short enough for a URL
+            let t = String(text.trimmingCharacters(in: .whitespacesAndNewlines).prefix(1500))
+            return .openURL(s.replacingOccurrences(of: "{selection}", with: t.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? t))
+        case .type(let s): return .type(s.replacingOccurrences(of: "{selection}", with: text))
+        default: return a
+        }
     }
 
     static let keyCodes: [String: CGKeyCode] = [

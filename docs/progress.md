@@ -2,6 +2,23 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 28 Oct: Commands on selected text (4)
+- Select text anywhere, then "Pilot, search this" / "google this" (Google), "translate this" (Google
+  Translate to English), "define this" / "what does this mean" (the Dictionary app, offline), or
+  "ask Claude about this" (new Claude chat with the selection, sent).
+- The selection is read once when the command starts, before any app switch: Accessibility first
+  (AXSelectedText, or the text-marker range on web pages), else Cmd+C with the clipboard put back
+  exactly, every item and type (tested on a private pasteboard). If Cmd+C copies nothing, the
+  clipboard isn't touched and the toast says "Select some text first". After a Wispr paste the copy
+  first waits for Wispr to put your clipboard back.
+- Matching rule: free text needs at least one non-filler word, so "search this" is no longer a web
+  search for "this" (and Chrome's own search doesn't grab it). "search for this week's news" still
+  searches.
+- Typing long or multi-line text now pastes it (clipboard restored after), so a newline can't send a
+  chat message early.
+- Checked through the app with nothing selected: "Select some text first", clipboard change count
+  unchanged. 132 BrainCheck cases.
+
 ## 28 Oct: Open anything by name (3)
 - Files and folders through Spotlight: "open file resume", "open the hackathon folder", "open document
   …", "find file …", "show resume in Finder". A file/folder word is required, so "open resume" is never
@@ -156,5 +173,5 @@ Newest first. Each entry matches a commit on `main`.
   (Swift Package Manager instead of an Xcode project, because Xcode isn't installed).
 
 ## Next
-- [ ] Your Wispr test (docs/setup.md) → fix whatever it shows
-- [ ] Website playground (reuses commands.json; port the Brain's matching rules to JS)
+- [ ] Your batched test of the 28 Oct features (docs/setup.md section 6) → fix whatever it shows
+- [ ] Website playground (reuses commands.json and learned.json; port the Brain's matching rules to JS)

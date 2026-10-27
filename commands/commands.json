@@ -108,6 +108,10 @@
     { "id": "settings_accessibility", "phrases": ["open accessibility settings", "accessibility settings", "show accessibility settings"], "action": { "type": "openURL", "url": "x-apple.systempreferences:com.apple.Accessibility-Settings.extension" }, "say": "Accessibility settings" },
     { "id": "open_url", "phrases": ["open {url}", "switch to {url}", "open website {url}"], "action": { "type": "openURL" }, "say": "Opened {url}" },
     { "id": "site_search", "phrases": ["search for {site} for {query}", "search for {query} on {site}", "search for {site} {query}", "{site} search for {query}", "play {query} on {site}", "find {query} on {site}"], "action": { "type": "openURL" }, "say": "{site}: {query}" },
+    { "id": "search_selection", "phrases": ["search this", "google this", "search web for this"], "action": { "type": "openURL", "url": "https://www.google.com/search?q={selection}" }, "say": "Searching the selection" },
+    { "id": "translate_selection", "phrases": ["translate this", "translate this to english"], "action": { "type": "openURL", "url": "https://translate.google.com/?sl=auto&tl=en&text={selection}&op=translate" }, "say": "Translating the selection" },
+    { "id": "define_selection", "phrases": ["define this", "what does this mean", "meaning of this"], "action": { "type": "openURL", "url": "dict://{selection}" }, "say": "Dictionary" },
+    { "id": "ask_claude_selection", "phrases": ["ask claude about this", "ask claude this"], "action": { "type": "sequence", "steps": ["open:Claude", "cmd+n", "wait:600", "type:{selection}", "wait:100", "enter"] }, "say": "Asked Claude about the selection" },
     { "id": "ask_claude", "phrases": ["ask claude {query}", "ask claude about {query}", "tell claude {query}"], "action": { "type": "sequence", "steps": ["open:Claude", "cmd+n", "wait:600", "type:{query}", "wait:100", "enter"] }, "say": "Asked Claude: {query}" },
     { "id": "web_search", "phrases": ["search for {query}", "google {query}", "search for {query} on google", "search web for {query}"], "action": { "type": "sequence", "steps": ["open:Google Chrome", "cmd+t", "type:{query}", "enter"] }, "say": "Searching {query}" },
 
@@ -171,6 +175,7 @@
     { "id": "claude_new_chat", "app": "Claude", "phrases": ["new chat", "new conversation", "start new chat"], "action": { "type": "keys", "keys": "cmd+n" }, "say": "New chat" },
     { "id": "claude_sidebar", "app": "Claude", "phrases": ["toggle sidebar", "open sidebar", "close sidebar", "sidebar", "show sidebar", "hide sidebar"], "action": { "type": "keys", "keys": "cmd+b" }, "say": "Sidebar" },
     { "id": "claude_search", "app": "Claude", "phrases": ["search chats", "command palette", "search for {query}", "search chats for {query}"], "action": { "type": "sequence", "steps": ["cmd+k", "wait:200", "type:{query}"] }, "say": "Search" },
+    { "id": "claude_ask_selection", "app": "Claude", "phrases": ["ask claude about this", "ask about this"], "action": { "type": "sequence", "steps": ["open:Claude", "cmd+n", "wait:600", "type:{selection}", "wait:100", "enter"] }, "say": "Asked Claude about the selection" },
     { "id": "claude_ask", "app": "Claude", "phrases": ["ask {query}"], "action": { "type": "sequence", "steps": ["cmd+n", "wait:600", "type:{query}", "wait:100", "enter"] }, "say": "Asked Claude: {query}" },
 
     { "id": "music_search", "app": "Music", "phrases": ["search for {query}", "find {query}", "play {query}"], "action": { "type": "sequence", "steps": ["cmd+f", "wait:250", "type:{query}", "enter"] }, "say": "Music: {query}" },

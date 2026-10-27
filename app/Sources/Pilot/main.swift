@@ -143,8 +143,9 @@ final class Pilot {
             return taught(learn(phrase, commands, forget: false, brain: brain, frontApp: frontApp), "teach")
         case .forget(let phrase):
             return taught(learn(phrase, [], forget: true, brain: brain, frontApp: frontApp), "forget")
-        case .run(let steps):
+        case .run(var steps):
             lastMiss = nil
+            let clip = NSPasteboard.general.changeCount   // a Wispr paste's, for selectedText
             Hands.queue.async {
                 if pilotApp {   // command bar: wait until focus is back on the previous app
                     let deadline = Date().addingTimeInterval(1)
@@ -152,7 +153,12 @@ final class Pilot {
                 }
                 Screen.normalize = brain.normalize   // set here so only the Hands queue touches it
                 var error: String?, said: [String] = []
-                outer: for step in steps {
+                if steps.contains(where: { $0.actions.contains(where: Hands.needsSelection) }) {   // read it before anything switches apps
+                    if let text = Screen.selectedText(wisprClip: source == "wispr" ? clip : nil) {
+                        steps = steps.map { var s = $0; s.actions = s.actions.map { Hands.withSelection($0, text) }; return s }
+                    } else { error = "Select some text first" }
+                }
+                outer: for step in steps where error == nil {
                     var note: String?
                     for action in step.actions { if let e = Hands.perform(action, note: &note) { error = e; break outer } }
                     said.append(note ?? step.say)

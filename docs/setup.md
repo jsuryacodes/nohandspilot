@@ -123,6 +123,16 @@ app and whether you use more than one display.
 | "Pilot, open downloads" (from Chrome) | Downloads opens in Finder |
 | "Pilot, open bluetooth settings" | System Settings opens on Bluetooth |
 
+**Selected text.** Select a word or sentence first (in Chrome, Notes, anywhere).
+
+| Say | Expected |
+|---|---|
+| "Pilot, search this" | A Google search for the selected text opens in Chrome |
+| "Pilot, define this" (one word selected) | The Dictionary app opens on that word |
+| "Pilot, translate this" | Google Translate opens with the text |
+| "Pilot, ask Claude about this" | Claude opens a new chat with the text and sends it |
+| "Pilot, search this" with nothing selected | "Select some text first"; your clipboard is unchanged |
+
 ## Everyday use
 
 - **Change commands:** Pilot menu → Edit commands.json (it's `commands/commands.json` in the repo).

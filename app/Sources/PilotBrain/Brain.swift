@@ -19,7 +19,10 @@
 //       {n}    1–9, "three", "third", "last"
 //       a slot with runtime values (e.g. {profile} = Chrome profiles, {folder} = Downloads, Documents,
 //              Desktop, home, Applications): exact, then unique prefix
-//       anything else ({query}, {text}) = free text kept as spoken
+//       anything else ({query}, {text}) = free text kept as spoken; it needs one non-filler word, so
+//              "search this" isn't a search for "this" (it's the selected-text command)
+//       {selection} in an action template is no slot: Hands fills in the selected text when the run
+//              starts (URL-encoded in URLs)
 //       click's {target} is free text normalised as in rule 3. Hands then picks the visible element
 //       whose normalised name equals it, else starts with it, else contains all its words (window
 //       before menu items, controls before plain text). A tie is refused, never guessed.
@@ -351,6 +354,7 @@ public final class Brain {
             let name = String(p.norm.dropFirst().dropLast())
             if !isFree(name) { while ti < toks.count, toks[ti].filler { ti += 1 } }   // "open the youtube"
             for end in stride(from: toks.count, to: ti, by: -1) {   // longest span first
+                if isFree(name), !toks[ti..<end].contains(where: { !$0.filler }) { continue }   // "search this": no text, only a filler
                 let raw = toks[ti..<end].map(\.raw).filter { !$0.isEmpty }.joined(separator: " ").trimmingCharacters(in: .whitespaces)
                 guard !raw.isEmpty, let value = resolveSlot(name, raw, fuzzy: fuzzy) else { continue }
                 var next = acc; next[name] = value

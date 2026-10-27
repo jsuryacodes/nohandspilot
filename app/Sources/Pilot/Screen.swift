@@ -77,7 +77,7 @@ enum Screen {
 
     /// Chrome and Electron apps (Claude, VS Code) only build their web content's accessibility tree when asked.
     /// Asks once per process; true if it just did. Not for other apps: it can disturb window animations.
-    private static func boost(_ app: NSRunningApplication, _ root: AXUIElement) -> Bool {
+    static func boost(_ app: NSRunningApplication, _ root: AXUIElement) -> Bool {
         guard !boosted.contains(app.processIdentifier), let path = app.bundleURL?.path else { return false }
         let fm = FileManager.default
         let attribute = app.bundleIdentifier == "com.google.Chrome" ? "AXEnhancedUserInterface"
@@ -205,6 +205,36 @@ enum Screen {
             usleep(30_000)
         }
         return nil
+    }
+
+    // MARK: selection
+
+    /// The front app's selected text: Accessibility first (the clipboard isn't touched), else Cmd+C, putting the
+    /// clipboard back exactly. `wisprClip`: the clipboard's change count when a Wispr paste was swallowed. Wispr
+    /// restores your clipboard right after its paste, so the copy waits for that first.
+    static func selectedText(wisprClip: Int?) -> String? {
+        guard let app = front else { return nil }
+        let root = AXUIElementCreateApplication(app.processIdentifier)
+        if boost(app, root) { usleep(300_000) }
+        func real(_ s: String?) -> String? { s?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false ? s : nil }
+        if let focused = element(attr(root, kAXFocusedUIElementAttribute)) {
+            if let s = real(attr(focused, kAXSelectedTextAttribute) as? String) { return s }
+            var out: CFTypeRef?   // web pages (Chrome, Safari) keep the selection as a text-marker range
+            if let range = attr(focused, "AXSelectedTextMarkerRange"),
+               AXUIElementCopyParameterizedAttributeValue(focused, "AXStringForTextMarkerRange" as CFString, range, &out) == .success,
+               let s = real(out as? String) { return s }
+        }
+        let pb = NSPasteboard.general
+        if let clip = wisprClip { let until = Date() + 0.6; while pb.changeCount == clip, Date() < until { usleep(20_000) } }
+        let saved = Hands.clipboard(), before = pb.changeCount
+        Hands.press(8, .maskCommand)   // C
+        let until = Date() + 0.4
+        while pb.changeCount == before, Date() < until { usleep(15_000) }
+        guard pb.changeCount != before else { return nil }   // nothing selected: nothing was copied, nothing to put back
+        let copied = pb.string(forType: .string)
+        Hands.setClipboard(saved)
+        Log.debug("Selection read by copying (\(copied?.count ?? 0) characters)")
+        return real(copied)
     }
 
     // MARK: AX helpers

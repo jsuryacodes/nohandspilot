@@ -190,6 +190,21 @@ check("Pilot, Wi-Fi settings.", [.openURL("x-apple.systempreferences:com.apple.w
 check("Pilot, open privacy and security settings", [.openURL("x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension")])
 check("Pilot, open settings", [.openApp("System Settings")])
 
+// selected text (4): "this" is a filler, so free text needs a real word; {selection} is filled in at run time
+let searchSel = Action.openURL("https://www.google.com/search?q={selection}")
+let askSel: [Action] = [.openApp("Claude"), .keys("cmd+n"), .wait(600), .type("{selection}"), .wait(100), .keys("enter")]
+check("Pilot, search this", [searchSel])
+check("Pilot, search this.", app: "Google Chrome", [searchSel])   // not Chrome's own "search for {query}"
+check("Pilot, google this", app: "Visual Studio Code", [searchSel])
+check("Pilot, translate this", [.openURL("https://translate.google.com/?sl=auto&tl=en&text={selection}&op=translate")])
+check("Pilot, define this", [.openURL("dict://{selection}")])
+check("Pilot, what does this mean?", [.openURL("dict://{selection}")])
+check("Pilot, ask Claude about this", askSel)
+check("Pilot, ask Claude about this", app: "Claude", askSel)   // not Claude's own "ask {query}"
+check("Pilot, ask Claude about black holes", [.openApp("Claude"), .keys("cmd+n"), .wait(600), .type("black holes"), .wait(100), .keys("enter")])
+check("Pilot, search for this week's news", app: "Google Chrome", [.keys("cmd+l"), .type("this week's news"), .keys("enter")])
+check("Pilot, type the", nil)   // free text needs one real word
+
 // speed: the brain must be far under 100 ms
 let t0 = Date()
 for _ in 0..<100 { _ = brain.plan("Pilot, can you open a new Chrome tab, search for Docker networking.", frontmostApp: "Finder") }
