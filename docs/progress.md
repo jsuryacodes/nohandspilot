@@ -2,6 +2,22 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 28 Oct: Click by name (1b)
+- "Pilot, click Sign in", "press Send", "tap Downloads", "choose English", "select …": Pilot walks the
+  front window through Accessibility and presses the element with that name: exact name first, then
+  names starting with it, then names containing all its words. Window elements beat menu items,
+  controls beat plain text. If two are equally good it refuses ("2 matches … Say show numbers").
+  "click the send button" also tries "send". The toast names what it clicked.
+- Pressing: AXPress where supported, otherwise a real click at the element's centre (rows, cells,
+  text fields). Unnamed list rows and web buttons are named by the text inside them.
+- Chrome and Electron apps are asked once to expose their page content (AXEnhancedUserInterface /
+  AXManualAccessibility). Chrome answered "not implemented" but exposed the page anyway.
+- Measured here (read-only walks): WhatsApp 87 nodes in 89 ms (30 of 31 buttons named), Chrome
+  2,210 nodes / 288 elements in 186 ms. Caps: 3000 nodes, depth 40, 300 ms.
+- Literal phrases still win: "press enter", "press the enter key", "select all", "press escape".
+- Chrome has no side-panel shortcut, menu item or toolbar button, so that command stays TODO.
+- 88 BrainCheck cases.
+
 ## 28 Oct: Menu items as commands (1a)
 - When nothing in commands.json matches, Pilot reads the current app's menu bar through Accessibility
   and presses the item whose title matches exactly (same normalising as commands): "Pilot, duplicate

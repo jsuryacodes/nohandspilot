@@ -13,6 +13,9 @@
 //       {n}    1–9, "three", "third", "last"
 //       a slot with runtime values (e.g. {profile} = Chrome profiles): exact, then unique prefix
 //       anything else ({query}, {text}) = free text kept as spoken
+//       click's {target} is free text normalised as in rule 3. Hands then picks the visible element
+//       whose normalised name equals it, else starts with it, else contains all its words (window
+//       before menu items, controls before plain text). A tie is refused, never guessed.
 //  5. Commands scoped to the current app are tried first, then global ones; more literal words wins,
 //     then JSON order. The current app follows the chain: after "open chrome", Chrome commands apply.
 //     Once the chain itself has switched app ("open music and search florida"), later commands
@@ -55,7 +58,7 @@ public struct Command: Codable {
 }
 
 public struct ActionSpec: Codable {
-    public var type: String   // openApp quitApp hideApp previousApp openURL chromeProfile keys type sequence scroll media help
+    public var type: String   // openApp quitApp hideApp previousApp openURL chromeProfile keys type sequence scroll media help click
     public var keys: String?
     public var text: String?
     public var url: String?
@@ -70,6 +73,7 @@ public enum Action: Equatable {
     case openApp(String), quitApp(String), hideApp(String), previousApp, openURL(String), chromeProfile(String)
     case keys(String), type(String), scroll(String, Int), media(String), wait(Int), help
     case menu(String, [String])   // app, title path: ("Google Chrome", ["Tab", "Duplicate Tab"])
+    case click(String)            // a visible element by name, normalised as in rule 3
     case notConfigured(String)
 }
 
@@ -375,6 +379,7 @@ public final class Brain {
         case "previousApp": actions = [.previousApp]
         case "chromeProfile": actions = [.chromeProfile(slots["profile"] ?? "")]
         case "help": actions = [.help]
+        case "click": actions = [.click(normalize(slots["target"] ?? ""))]
         case "media": actions = [.media(a.key ?? "play")]
         case "scroll": actions = [.scroll(a.direction ?? "down", a.amount ?? 6)]
         case "type": actions = [.type(fill(a.text ?? ""))]

@@ -123,8 +123,8 @@
     { "id": "lock_screen", "phrases": ["lock screen", "lock mac", "lock computer"], "action": { "type": "keys", "keys": "ctrl+cmd+q" }, "say": "Locked" },
 
     { "id": "type_text", "phrases": ["type {text}", "write {text}"], "action": { "type": "type", "text": "{text}" }, "say": "Typed" },
-    { "id": "press_enter", "phrases": ["press enter", "enter", "hit enter", "submit", "send", "send it", "send message"], "action": { "type": "keys", "keys": "enter" }, "say": "Enter" },
-    { "id": "escape", "phrases": ["escape", "press escape", "cancel"], "action": { "type": "keys", "keys": "esc" }, "say": "Escape" },
+    { "id": "press_enter", "phrases": ["press enter", "press enter key", "press return", "enter", "hit enter", "submit", "send", "send it", "send message"], "action": { "type": "keys", "keys": "enter" }, "say": "Enter" },
+    { "id": "escape", "phrases": ["escape", "press escape", "press escape key", "cancel"], "action": { "type": "keys", "keys": "esc" }, "say": "Escape" },
     { "id": "undo", "phrases": ["undo", "undo that"], "action": { "type": "keys", "keys": "cmd+z" }, "say": "Undo" },
     { "id": "redo", "phrases": ["redo"], "action": { "type": "keys", "keys": "cmd+shift+z" }, "say": "Redo" },
     { "id": "copy", "phrases": ["copy", "copy it"], "action": { "type": "keys", "keys": "cmd+c" }, "say": "Copied" },
@@ -132,6 +132,7 @@
     { "id": "select_all", "phrases": ["select all", "select everything"], "action": { "type": "keys", "keys": "cmd+a" }, "say": "Selected all" },
     { "id": "save", "phrases": ["save", "save file", "save it"], "action": { "type": "keys", "keys": "cmd+s" }, "say": "Saved" },
     { "id": "find", "phrases": ["find {query}", "find on page {query}", "find in page {query}", "search for {query}"], "action": { "type": "sequence", "steps": ["cmd+f", "wait:150", "type:{query}"] }, "say": "Find {query}" },
+    { "id": "click", "phrases": ["click {target}", "click on {target}", "press {target}", "tap {target}", "tap on {target}", "choose {target}", "select {target}"], "action": { "type": "click" }, "say": "Clicked {target}" },
 
     { "id": "play_pause", "phrases": ["play", "pause", "resume", "play music", "pause music", "stop music", "play pause", "resume music"], "action": { "type": "media", "key": "play" }, "say": "Play/pause" },
     { "id": "next_track", "phrases": ["next track", "skip track", "skip", "next music"], "action": { "type": "media", "key": "next" }, "say": "Next track" },
@@ -151,7 +152,7 @@
     { "id": "chrome_bookmark", "app": "Google Chrome", "phrases": ["bookmark", "bookmark page", "bookmark it"], "action": { "type": "keys", "keys": "cmd+d" }, "say": "Bookmarked" },
     { "id": "chrome_history", "app": "Google Chrome", "phrases": ["history", "open history", "show history"], "action": { "type": "keys", "keys": "cmd+y" }, "say": "History" },
     { "id": "chrome_devtools", "app": "Google Chrome", "phrases": ["developer tools", "dev tools", "open dev tools", "inspect"], "action": { "type": "keys", "keys": "cmd+opt+i" }, "say": "DevTools" },
-    { "id": "chrome_sidebar", "app": "Google Chrome", "phrases": ["toggle sidebar", "open sidebar", "close sidebar", "sidebar", "show sidebar", "hide sidebar"], "action": { "type": "keys", "keys": "TODO", "note": "Chrome has no fixed side panel shortcut; set one in chrome://extensions/shortcuts" }, "say": "Sidebar" },
+    { "id": "chrome_sidebar", "app": "Google Chrome", "phrases": ["toggle sidebar", "open sidebar", "close sidebar", "sidebar", "show sidebar", "hide sidebar"], "action": { "type": "keys", "keys": "TODO", "note": "Chrome has no side panel shortcut, menu item or toolbar button (checked 28 Oct)" }, "say": "Sidebar" },
 
     { "id": "claude_new_chat", "app": "Claude", "phrases": ["new chat", "new conversation", "start new chat"], "action": { "type": "keys", "keys": "cmd+n" }, "say": "New chat" },
     { "id": "claude_sidebar", "app": "Claude", "phrases": ["toggle sidebar", "open sidebar", "close sidebar", "sidebar", "show sidebar", "hide sidebar"], "action": { "type": "keys", "keys": "cmd+b" }, "say": "Sidebar" },

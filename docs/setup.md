@@ -77,6 +77,18 @@ that title in the front app. "What can I say?" lists them.
 | "Pilot, export as PDF" | Preview (any open PDF/image) | The export sheet opens |
 | "Pilot, duplicate" | Chrome | Nothing pressed: "Didn't catch" (titles must match exactly) |
 
+**Click by name.** Pilot presses the visible button, link, tab, list row or field with that name.
+
+| Say | In | Expected |
+|---|---|---|
+| "Pilot, click Downloads" | Finder (sidebar visible) | Finder shows Downloads. Toast "✓ Clicked "Downloads"" |
+| "Pilot, click" + a chat's name | WhatsApp | That chat opens |
+| "Pilot, click" + a link's text | Chrome, any page | The link opens |
+| "Pilot, press enter" | any text box | Enter is pressed (the old command still wins) |
+| "Pilot, click search" | Chrome on a page with several search boxes | Either it clicks one, or "N matches … Say show numbers" |
+
+The first click in Chrome or an Electron app (Claude, VS Code) after it starts takes ~0.3 s longer.
+
 ## Everyday use
 
 - **Change commands:** Pilot menu → Edit commands.json (it's `commands/commands.json` in the repo).

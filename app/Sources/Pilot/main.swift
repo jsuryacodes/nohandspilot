@@ -94,11 +94,16 @@ final class Pilot {
                     let deadline = Date().addingTimeInterval(1)
                     while NSWorkspace.shared.frontmostApplication?.processIdentifier == getpid(), Date() < deadline { usleep(20_000) }
                 }
-                var error: String?
-                outer: for step in steps { for action in step.actions { if let e = Hands.perform(action) { error = e; break outer } } }
+                Screen.normalize = brain.normalize   // set here so only the Hands queue touches it
+                var error: String?, said: [String] = []
+                outer: for step in steps {
+                    var note: String?
+                    for action in step.actions { if let e = Hands.perform(action, note: &note) { error = e; break outer } }
+                    said.append(note ?? step.say)
+                }
                 let totalMs = Date().timeIntervalSince(start) * 1000
                 if !steps.contains(where: { $0.actions == [.help] }) {
-                    HUD.show(error.map { "⚠︎ \($0)" } ?? "✓ " + steps.map(\.say).joined(separator: " → "))
+                    HUD.show(error.map { "⚠︎ \($0)" } ?? "✓ " + said.joined(separator: " → "))
                 }
                 Log.usage(source: source, text: text, matched: steps.map(\.id), ok: error == nil, error: error, matchMs: matchMs, totalMs: totalMs)
                 Log.debug(String(format: "Ran %@ in %.0f ms (match %.1f ms)%@", steps.map(\.id).joined(separator: ","), totalMs, matchMs, error.map { " error: \($0)" } ?? ""))
@@ -224,7 +229,8 @@ if let i = args.firstIndex(of: "--run"), i + 1 < args.count {
     let pilot = Pilot()
     Screen.start()
     pilot.reloadIfChanged()
-    let front = args.firstIndex(of: "--app").flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } ?? appName(NSWorkspace.shared.frontmostApplication)
+    Screen.testFront = args.firstIndex(of: "--app").flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil }
+    let front = Screen.testFront ?? appName(NSWorkspace.shared.frontmostApplication)
     print(pilot.handle(args[i + 1], source: "cli", frontApp: front) ? "running" : "not matched")
     Hands.queue.async { DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) { exit(0) } }
     RunLoop.main.run()

@@ -67,8 +67,8 @@ enum Hands {
         aliases = names
     }
 
-    /// Runs on `queue`. Returns an error message, or nil on success.
-    static func perform(_ action: Action) -> String? {
+    /// Runs on `queue`. Returns an error message, or nil on success. `note` replaces the step's toast (what was clicked).
+    static func perform(_ action: Action, note: inout String?) -> String? {
         switch action {
         case .openApp(let name): return openApp(name)
         case .quitApp(let name):
@@ -111,6 +111,7 @@ enum Hands {
         case .wait(let ms): usleep(useconds_t(ms * 1000))
         case .help: DispatchQueue.main.async { HelpWindow.shared.show() }
         case .menu(let app, let path): return Screen.pressMenu(app, path)
+        case .click(let target): return Screen.click(target, note: &note)
         case .notConfigured(let note): return "Not set up yet: \(note)"
         }
         return nil

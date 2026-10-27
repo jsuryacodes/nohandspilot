@@ -124,6 +124,20 @@ check("Pilot, duplicate", app: "Google Chrome", nil)                            
 check("Pilot, duplicate tab", app: "Finder", nil)                                    // only that app's menus
 check("Pilot programs are useful.", app: "Google Chrome", nil)
 
+// click by name (1b): the target is normalised; literal phrases still win
+check("Pilot, click Sign in", [.click("sign in")])
+check("Pilot, click on the Send button.", [.click("send button")])
+check("Pilot, tap Downloads", [.click("downloads")])
+check("Pilot, choose English", [.click("english")])
+check("Pilot, press play", [.click("play")])
+check("Pilot, click send in WhatsApp", [wa, .click("send")])
+check("Pilot, click sign in, then scroll down", [.click("sign in"), .scroll("down", 6)])
+check("Pilot, press enter", [.keys("enter")])
+check("Pilot, press the enter key", [.keys("enter")])
+check("Pilot, press escape", [.keys("esc")])
+check("Pilot, select all", [.keys("cmd+a")])
+check("Pilot, select everything", [.keys("cmd+a")])
+
 // speed: the brain must be far under 100 ms
 let t0 = Date()
 for _ in 0..<100 { _ = brain.plan("Pilot, can you open a new Chrome tab, search for Docker networking.", frontmostApp: "Finder") }
