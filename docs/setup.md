@@ -113,6 +113,16 @@ app and whether you use more than one display.
 | "Pilot, when I say new tab, do mute" | Refused: "new tab" already means New tab |
 | "Pilot, forget focus time" | "✓ Forgot "focus time"" |
 
+**Open anything by name.** Needs the word file, folder or document (or "in Finder").
+
+| Say | Expected |
+|---|---|
+| "Pilot, open file resume" | Your most recently used file with "resume" in its name opens. Toast names it and its folder |
+| "Pilot, open the nohandspilot folder" | That folder opens in Finder |
+| "Pilot, show demo in Finder" | Finder opens with docs/demo.md selected |
+| "Pilot, open downloads" (from Chrome) | Downloads opens in Finder |
+| "Pilot, open bluetooth settings" | System Settings opens on Bluetooth |
+
 ## Everyday use
 
 - **Change commands:** Pilot menu → Edit commands.json (it's `commands/commands.json` in the repo).

@@ -1,5 +1,6 @@
 // Hands: turns the Brain's actions into macOS events. Runs on its own serial queue so waits never block the UI.
 import AppKit
+import CoreServices
 import PilotBrain
 
 /// Apps are named by their .app file name ("Visual Studio Code"), never localizedName ("Code").
@@ -95,7 +96,8 @@ enum Hands {
             guard let url = URL(string: s) else { return "Bad URL \(s)" }
             let config = NSWorkspace.OpenConfiguration()
             config.activates = true
-            if let app = NSWorkspace.shared.runningApplications.first(where: { appName($0) == browser })?.bundleURL ?? installed[browser] {
+            if url.scheme?.hasPrefix("http") == true,   // Settings panes, dict: … go to their own app
+               let app = NSWorkspace.shared.runningApplications.first(where: { appName($0) == browser })?.bundleURL ?? installed[browser] {
                 NSWorkspace.shared.open([url], withApplicationAt: app, configuration: config)
                 return waitForFront(browser)
             }
@@ -114,9 +116,52 @@ enum Hands {
         case .menu(let app, let path): return Screen.pressMenu(app, path)
         case .click(let target): return Screen.click(target, note: &note)
         case .numbers(let on): return Screen.numbers(on, note: &note)
+        case .openFile(let name, let folder, let reveal):
+            let start = Date()
+            guard let url = name.hasPrefix("/") ? URL(fileURLWithPath: name) : spotlight(name, folder: folder) else {
+                return "No \(folder ? "folder" : "file") called \"\(name)\" in your home folder"
+            }
+            Log.debug(String(format: "Found %@ for \"%@\" in %.0f ms", url.path, name, Date().timeIntervalSince(start) * 1000))
+            if reveal { NSWorkspace.shared.activateFileViewerSelecting([url]) } else { NSWorkspace.shared.open(url) }
+            note = (reveal ? "Showing " : "Opened ") + url.lastPathComponent
+                + (name.hasPrefix("/") ? "" : " from " + url.deletingLastPathComponent().lastPathComponent)
         case .notConfigured(let note): return "Not set up yet: \(note)"
         }
         return nil
+    }
+
+    // MARK: files
+
+    /// Spoken name → path, for "open downloads" from any app.
+    static func knownFolders() -> [(key: String, value: String)] {
+        let home = NSHomeDirectory()
+        return [("downloads", home + "/Downloads"), ("documents", home + "/Documents"), ("desktop", home + "/Desktop"),
+                ("home", home), ("applications", "/Applications")]
+    }
+
+    /// The most recently used item under the home folder whose name has every word of `name` as a whole word,
+    /// ignoring case and accents (Spotlight). Whole words, not substrings: "irs" mustn't match "first", and a
+    /// substring query for "a" took 47 s here (whole word: under 1 s). Skips ~/Library, hidden folders, node_modules.
+    static func spotlight(_ name: String, folder: Bool) -> URL? {
+        let words = name.split(separator: " ").map { $0.filter { !"\"\\*?".contains($0) } }.filter { !$0.isEmpty }
+        guard !words.isEmpty else { return nil }
+        let query = words.map { "kMDItemDisplayName == \"\($0)\"cdw" }.joined(separator: " && ")
+            + (folder ? " && kMDItemContentType == \"public.folder\"" : "")
+        guard let q = MDQueryCreate(kCFAllocatorDefault, query as CFString, nil, nil) else { return nil }
+        let home = NSHomeDirectory()
+        MDQuerySetSearchScope(q, [home] as CFArray, 0)
+        MDQuerySetMaxCount(q, 1000)
+        guard MDQueryExecute(q, CFOptionFlags(kMDQuerySynchronous.rawValue)) else { return nil }
+        var best: (url: URL, used: Date)?
+        for i in 0..<MDQueryGetResultCount(q) {
+            guard let raw = MDQueryGetResultAtIndex(q, i) else { continue }
+            let item = Unmanaged<MDItem>.fromOpaque(raw).takeUnretainedValue()
+            guard let path = MDItemCopyAttribute(item, kMDItemPath) as? String, !path.hasPrefix(home + "/Library/"),
+                  !path.contains("/."), !path.contains("/node_modules/") else { continue }
+            let used = (MDItemCopyAttribute(item, kMDItemLastUsedDate) ?? MDItemCopyAttribute(item, kMDItemContentModificationDate)) as? Date ?? .distantPast
+            if best == nil || used > best!.used { best = (URL(fileURLWithPath: path), used) }
+        }
+        return best?.url
     }
 
     // MARK: apps

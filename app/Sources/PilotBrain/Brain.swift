@@ -17,7 +17,8 @@
 //       {app}  app name: alias or exact installed name (typos allowed only in step 6e)
 //       {site} a key of "sites"            {url}  something like docker.com
 //       {n}    1–9, "three", "third", "last"
-//       a slot with runtime values (e.g. {profile} = Chrome profiles): exact, then unique prefix
+//       a slot with runtime values (e.g. {profile} = Chrome profiles, {folder} = Downloads, Documents,
+//              Desktop, home, Applications): exact, then unique prefix
 //       anything else ({query}, {text}) = free text kept as spoken
 //       click's {target} is free text normalised as in rule 3. Hands then picks the visible element
 //       whose normalised name equals it, else starts with it, else contains all its words (window
@@ -73,6 +74,8 @@ public struct ActionSpec: Codable {
     public var direction: String?
     public var amount: Int?
     public var note: String?
+    public var folder: Bool?   // openFile: folders only
+    public var reveal: Bool?   // openFile: show in Finder instead of opening
 }
 
 public enum Action: Equatable {
@@ -81,6 +84,7 @@ public enum Action: Equatable {
     case menu(String, [String])   // app, title path: ("Google Chrome", ["Tab", "Duplicate Tab"])
     case click(String)            // a visible element by name, normalised as in rule 3, or a badge number ("12")
     case numbers(Bool)            // show / hide numbered badges on everything clickable
+    case openFile(String, folder: Bool, reveal: Bool)   // a name to search for, or a known folder's path
     case notConfigured(String)
 }
 
@@ -306,7 +310,8 @@ public final class Brain {
         for a in step.actions {
             switch a {
             case .openApp(let name): app = name
-            case .openURL, .chromeProfile: app = config.browser ?? "Google Chrome"
+            case .openURL(let url): if url.hasPrefix("http") { app = config.browser ?? "Google Chrome" }   // not Settings or dict: links
+            case .chromeProfile: app = config.browser ?? "Google Chrome"
             default: break
             }
         }
@@ -435,6 +440,12 @@ public final class Brain {
             let raw = slots["target"] ?? ""
             actions = [.click(spokenNumber(normalize(raw.replacingOccurrences(of: "-", with: " "))).map(String.init) ?? normalize(raw))]
         case "showNumbers", "hideNumbers": actions = [.numbers(a.type == "showNumbers")]
+        case "openFile":
+            var name = canon(tokenize(slots["query"] ?? ""))   // "my resume" → "resume"
+            while name.first?.filler == true { name.removeFirst() }
+            while name.last?.filler == true { name.removeLast() }
+            actions = [.openFile(slots["folder"] ?? name.map(\.raw).filter { !$0.isEmpty }.joined(separator: " "),
+                                 folder: a.folder ?? (slots["folder"] != nil), reveal: a.reveal ?? false)]
         case "media": actions = [.media(a.key ?? "play")]
         case "scroll": actions = [.scroll(a.direction ?? "down", a.amount ?? 6)]
         case "type": actions = [.type(fill(a.text ?? ""))]
@@ -459,7 +470,7 @@ public final class Brain {
         default: actions = [.notConfigured("unknown action type \(a.type)")]
         }
         var say = cmd.say ?? cmd.id
-        for (k, v) in slots { say = say.replacingOccurrences(of: "{\(k)}", with: k == "profile" ? (slotValues[k]?.first { $0.value == v }?.key ?? v) : v) }
+        for (k, v) in slots { say = say.replacingOccurrences(of: "{\(k)}", with: slotValues[k]?.first { $0.value == v }?.key ?? v) }   // spoken name, not a path
         return Step(id: cmd.id, say: say, actions: actions, slots: slots, freeKey: slots.keys.first(where: isFree))
     }
 

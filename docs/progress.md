@@ -2,6 +2,24 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 28 Oct: Open anything by name (3)
+- Files and folders through Spotlight: "open file resume", "open the hackathon folder", "open document
+  …", "find file …", "show resume in Finder". A file/folder word is required, so "open resume" is never
+  a file search and a misheard app name can't open a random file. Picks the most recently used match
+  under your home folder (skips ~/Library, hidden folders, node_modules); the toast names the file and
+  its folder. Inside VS Code, "open file …" still means VS Code's quick open.
+- Matches whole words, not substrings. Measured: substring matching made "irs notes" match "fdt-3
+  unit-notes(first half).pdf" and took 47 s for "a"; whole words find Jaya_Surya_Resume.pdf for
+  "resume" in 52 ms, and every test query took 21–256 ms. Trade-off: "screenshots" won't match
+  "Screenshot".
+- Downloads, Documents, Desktop, home folder, Applications open in Finder from any app ("open
+  downloads", "show documents"). Inside Finder its own shortcuts still win.
+- Settings panes: "open bluetooth / wi-fi / sound / display / battery / notifications / keyboard /
+  privacy / accessibility settings". Each URL was opened here and the System Settings window title
+  checked (all 9 matched). Non-web links now open in their own app instead of Chrome.
+- Checked through the app: "show nohandspilot in Finder" found it in 38 ms; "open bluetooth
+  settings" brought System Settings forward in 122 ms. 121 BrainCheck cases.
+
 ## 28 Oct: Teach Pilot by voice (2)
 - "Pilot, when I say focus time, do open Notion, mute, full screen" makes a new phrase that runs that
   chain. Right after a miss, "Pilot, teach that: new tab" (or "that means new tab") maps the missed
@@ -14,7 +32,7 @@ Newest first. Each entry matches a commit on `main`.
 - Stored in `commands/learned.json` (phrase → commands, the macro shape) and merged in on load;
   either file changing reloads both. commands.json's hand formatting is untouched. "What can I say?"
   lists taught phrases. Misses now end with 'Or say "teach that: …"'.
-- Checked here through the app: teach, all three refusals, forget, forget-unknown. 106 BrainCheck cases.
+- Checked here through the app: teach, all three refusals, forget, forget-unknown. 107 BrainCheck cases.
 
 ## 28 Oct: Show numbers (1c)
 - "Pilot, show numbers" (or "show labels", "show hints") puts a yellow numbered badge on every

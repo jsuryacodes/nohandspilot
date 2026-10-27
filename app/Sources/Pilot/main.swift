@@ -73,7 +73,7 @@ final class Pilot {
                 ? JSONDecoder().decode([String: [String]].self, from: Data(contentsOf: learnedURL)) : [:]
             config.macros.merge(learned) { builtIn, _ in builtIn }
             brain = Brain(config: config, installedApps: Array(Hands.installed.keys), appAliases: Hands.aliases,
-                          slotValues: ["profile": Hands.chromeProfiles()])
+                          slotValues: ["profile": Hands.chromeProfiles(), "folder": Hands.knownFolders()])
             Hands.browser = brain!.config.browser ?? Hands.browser
             brain!.menuItems = { Screen.menus(of: $0) }
             loadedAt = stamps

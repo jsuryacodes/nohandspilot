@@ -9,7 +9,8 @@ let brain = try Brain(json: Data(contentsOf: URL(fileURLWithPath: path)),
                       installedApps: ["Google Chrome", "Claude", "Visual Studio Code", "Finder", "Telegram", "WhatsApp", "Safari", "Terminal",
                                       "GitHub Desktop", "YouTube", "ChatGPT", "Spotify", "Music", "Numbers Creator Studio", "OBS", "Time Machine"],
                       appAliases: ["OBS Studio": "OBS", "Numbers": "Numbers Creator Studio", "Code": "Visual Studio Code"],
-                      slotValues: ["profile": profiles])
+                      slotValues: ["profile": profiles, "folder": [("downloads", "/Users/me/Downloads"), ("documents", "/Users/me/Documents"),
+                                                                   ("home", "/Users/me"), ("applications", "/Applications")]])
 var failures = 0
 
 func actions(_ text: String, app: String? = nil, trigger: Bool = true) -> [Action]? {
@@ -171,6 +172,23 @@ if case .unmatched = brain.plan("focus time", frontmostApp: nil, requireTrigger:
 if case .run(let s) = taughtBrain.plan("Pilot, focus time.", frontmostApp: nil), s.flatMap(\.actions) == [.media("mute"), .keys("ctrl+cmd+f")] {} else {
     failures += 1; print("FAIL: taught phrase didn't run like a macro")
 }
+
+// open anything by name (3): needs a file/folder word; known folders from any app; Settings panes
+let downloads = Action.openFile("/Users/me/Downloads", folder: true, reveal: false)
+check("Pilot, open downloads", app: "Google Chrome", [downloads])
+check("Pilot, open the downloads folder", [downloads])
+check("Pilot, open downloads", app: "Finder", [.keys("cmd+opt+l")])   // Finder's own command wins in Finder
+check("Pilot, open home folder", [.openFile("/Users/me", folder: true, reveal: false)])
+check("Pilot, open file my resume", [.openFile("resume", folder: false, reveal: false)])
+check("Pilot, open the hackathon folder", [.openFile("hackathon", folder: true, reveal: false)])
+check("Pilot, show resume.pdf in Finder", [.openFile("resume.pdf", folder: false, reveal: true)])
+check("Pilot, find file budget 2026", [.openFile("budget 2026", folder: false, reveal: false)])
+check("Pilot, open file report", app: "Visual Studio Code", [.keys("cmd+p"), .wait(200), .type("report")])   // VS Code's quick open there
+check("Pilot, open resume", nil)   // no file word: never a file search
+check("Pilot, open bluetooth settings", [.openURL("x-apple.systempreferences:com.apple.BluetoothSettings")])
+check("Pilot, Wi-Fi settings.", [.openURL("x-apple.systempreferences:com.apple.wifi-settings-extension")])
+check("Pilot, open privacy and security settings", [.openURL("x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension")])
+check("Pilot, open settings", [.openApp("System Settings")])
 
 // speed: the brain must be far under 100 ms
 let t0 = Date()
