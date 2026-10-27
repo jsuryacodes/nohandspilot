@@ -2,6 +2,23 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 28 Oct: Menu items as commands (1a)
+- When nothing in commands.json matches, Pilot reads the current app's menu bar through Accessibility
+  and presses the item whose title matches exactly (same normalising as commands): "Pilot, duplicate
+  tab", "Pilot, export as PDF", "Pilot, pin tab". Works mid-chain for running apps ("open chrome,
+  duplicate tab"). Never fuzzy, never the Apple menu, only enabled items. Matching rule 8 in Brain.swift.
+- Menus are read only on that miss path, breadth first with a 150 ms cap, then cached 30 s.
+  Measured here: WhatsApp 60 items in 87 ms, Chrome 168 items in 121 ms. Pressing WhatsApp's
+  "Chats" item end to end: 60 ms.
+- The first read per app writes every title and shortcut to debug.log (`grep "menu WhatsApp"`).
+  Verified from it: WhatsApp search really is Cmd+F (File › Search). Chrome has no side-panel menu
+  item, so that command stays TODO.
+- "What can I say?" lists the front app's menu items. Chrome's Tab and Window menus list open tabs by
+  title, so saying a tab's exact title switches to it.
+- Also fixed a real miss: "can you reduce the volume". 76 BrainCheck cases, all passing.
+- Testing without your help: `open -n -g ~/Applications/Pilot.app --args --run "…" --app WhatsApp`
+  runs one command with Pilot's own Accessibility permission (a terminal has none).
+
 ## 28 Oct: Fix chains leaving the app, "show numbers", app display names
 - "can you open music and search Florida" opened Music, then searched in Chrome. A chain that switches
   to an app now prefers commands that stay in that app; Apple Music got its own search (Cmd+F, Enter).

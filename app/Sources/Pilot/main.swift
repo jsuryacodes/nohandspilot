@@ -64,6 +64,7 @@ final class Pilot {
             brain = try Brain(json: Data(contentsOf: commandsURL), installedApps: Array(Hands.installed.keys), appAliases: Hands.aliases,
                               slotValues: ["profile": Hands.chromeProfiles()])
             Hands.browser = brain!.config.browser ?? Hands.browser
+            brain!.menuItems = { Screen.menus(of: $0) }
             loadedAt = mtime
             Log.debug("Loaded \(brain!.config.commands.count) commands from \(commandsURL.path)")
             return nil
@@ -121,6 +122,15 @@ final class Pilot {
         out += "\n\nWebsites (\"open github\", \"search youtube for lofi\")\n  " + (c.sites ?? [:]).keys.sorted().joined(separator: ", ")
         out += "\n\nChrome profiles (\"switch to college profile\")\n  " + Array(Set(Hands.chromeProfiles().prefix { _ in true }.map(\.key))).sorted().joined(separator: ", ")
         out += "\n\nApp names\n  " + c.apps.sorted { $0.key < $1.key }.map { "\($0.key) → \($0.value)" }.joined(separator: ", ") + ", plus any installed app by name."
+        if let front = NSWorkspace.shared.frontmostApplication, front.processIdentifier != getpid(), let name = appName(front) {
+            var menus: [(String, [String])] = []   // in menu-bar order
+            for p in Screen.menus(of: name, budget: 0.5) {
+                let item = p.dropFirst().joined(separator: " › ")
+                if let i = menus.firstIndex(where: { $0.0 == p[0] }) { menus[i].1.append(item) } else { menus.append((p[0], [item])) }
+            }
+            out += "\n\n\(name) menu items (say the exact title: \"Pilot, \(menus.first?.1.first ?? "new window")\")\n"
+                + menus.map { "  \($0.0): \($0.1.joined(separator: ", "))" }.joined(separator: "\n")
+        }
         return out
     }
 }
@@ -132,6 +142,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var hotkey = "ctrl+opt+p"
 
     func applicationDidFinishLaunching(_ note: Notification) {
+        Screen.start()
         Hands.trackActivations()
         pilot.reloadIfChanged()
         HelpWindow.shared.text = { [pilot] in pilot.helpText() }
@@ -206,12 +217,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 }
 
-// `Pilot --run "open chrome, new tab"` runs one command from the terminal (for testing), then exits.
+// `Pilot --run "open chrome, new tab" [--app WhatsApp]` runs one command from the terminal (for testing), then
+// exits. --app pretends that app is in front. Accessibility needs `open -n -g Pilot.app --args --run …`.
 let args = CommandLine.arguments
 if let i = args.firstIndex(of: "--run"), i + 1 < args.count {
     let pilot = Pilot()
+    Screen.start()
     pilot.reloadIfChanged()
-    print(pilot.handle(args[i + 1], source: "cli", frontApp: appName(NSWorkspace.shared.frontmostApplication)) ? "running" : "not matched")
+    let front = args.firstIndex(of: "--app").flatMap { $0 + 1 < args.count ? args[$0 + 1] : nil } ?? appName(NSWorkspace.shared.frontmostApplication)
+    print(pilot.handle(args[i + 1], source: "cli", frontApp: front) ? "running" : "not matched")
     Hands.queue.async { DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) { exit(0) } }
     RunLoop.main.run()
 }

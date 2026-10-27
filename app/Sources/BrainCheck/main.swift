@@ -107,6 +107,22 @@ check("Pilot, type hello, how are you", [.type("hello, how are you")])
 check("Pilot, search for the best pizza", app: "Google Chrome", [.keys("cmd+l"), .type("the best pizza"), .keys("enter")])
 check("Pilot, study mode", [chrome, .keys("cmd+t"), .openApp("Claude"), .keys("cmd+n")])
 if case .unmatched(_, let s) = brain.plan("Pilot, open a fresh tab", frontmostApp: "Google Chrome"), s == nil { failures += 1; print("FAIL: expected a suggestion") }
+check("Pilot, can you reduce the volume?", [.media("volumeDown")])   // real miss, 28 Oct
+
+// menu items of the current app (rule 8): only after every rule misses, exact titles only
+brain.menuItems = { $0 == "Google Chrome" ? [["File", "Export as PDF…"], ["Tab", "Duplicate Tab"], ["View", "Developer", "View Source"],
+                                              ["Bookmarks", "Bookmarks & Lists"], ["File", "New Tab"]] : [] }
+let dupTab = Action.menu("Google Chrome", ["Tab", "Duplicate Tab"])
+check("Pilot, duplicate the tab.", app: "Google Chrome", [dupTab])
+check("Pilot, export as PDF", app: "Google Chrome", [.menu("Google Chrome", ["File", "Export as PDF…"])])
+check("Pilot, view source", app: "Google Chrome", [.menu("Google Chrome", ["View", "Developer", "View Source"])])
+check("Pilot, bookmarks and lists", app: "Google Chrome", [.menu("Google Chrome", ["Bookmarks", "Bookmarks & Lists"])])
+check("Pilot, open chrome, duplicate tab", app: "Finder", [chrome, dupTab])          // the app the chain switched to
+check("Pilot, new tab", app: "Google Chrome", [.keys("cmd+t")])                      // rules first
+check("Pilot, type hello, duplicate tab", app: "Google Chrome", [.type("hello, duplicate tab")])   // rule 7 first
+check("Pilot, duplicate", app: "Google Chrome", nil)                                 // no prefixes
+check("Pilot, duplicate tab", app: "Finder", nil)                                    // only that app's menus
+check("Pilot programs are useful.", app: "Google Chrome", nil)
 
 // speed: the brain must be far under 100 ms
 let t0 = Date()

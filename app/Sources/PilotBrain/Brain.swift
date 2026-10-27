@@ -26,7 +26,10 @@
 //       e. exact match again, now allowing typos in app names
 //  7. A segment that doesn't match right after a free-text command is appended to its text
 //     ("type hello, how are you" types "hello, how are you").
-//  8. If any segment still doesn't match, nothing runs.
+//  8. Otherwise it may name a menu item of the current app ("duplicate tab", "export as PDF"): the
+//     item's title, normalised as in rule 3 ("…" and "&" too), must equal the segment exactly. Only
+//     enabled items count, never the Apple menu. Menus are read only on this miss path.
+//  9. If any segment still doesn't match, nothing runs.
 import Foundation
 
 public struct Config: Codable {
@@ -66,6 +69,7 @@ public struct ActionSpec: Codable {
 public enum Action: Equatable {
     case openApp(String), quitApp(String), hideApp(String), previousApp, openURL(String), chromeProfile(String)
     case keys(String), type(String), scroll(String, Int), media(String), wait(Int), help
+    case menu(String, [String])   // app, title path: ("Google Chrome", ["Tab", "Duplicate Tab"])
     case notConfigured(String)
 }
 
@@ -90,6 +94,8 @@ public final class Brain {
     let appAliases: [String: String]
     /// Runtime slot values, e.g. ["profile": [("Jaya Surya", "Profile 2"), ...]]. Earlier entries win ties.
     let slotValues: [String: [(key: String, value: String)]]
+    /// Title paths of a running app's enabled menu items, e.g. [["File", "Export as PDF…"]] (rule 8).
+    public var menuItems: ((_ app: String) -> [[String]])?
     private var compiled: [(cmd: Command, pattern: [Tok], literals: Int)] = []
     private let synonyms: [([String], [String])]
     private let fillers: [[String]]
@@ -172,6 +178,12 @@ public final class Brain {
                 var merged = makeStep(cmd, slots: slots)
                 if case .openApp? = merged.actions.first {} else { merged.actions.insert(contentsOf: lead, at: 0) }
                 steps[i] = merged
+                continue
+            }
+            let said = key(canon(tokenize(seg)))   // rule 8
+            if let a = app, let path = menuItems?(a).first(where: { normalize($0.last ?? "") == said }) {
+                steps.append(Step(id: "menu", say: path.joined(separator: " › "), actions: [.menu(a, path)]))
+                freeIndex = nil
                 continue
             }
             return .failure(Miss(segment: seg, app: app))
@@ -465,6 +477,8 @@ public final class Brain {
     }
 
     func key(_ toks: [Tok]) -> String { toks.filter { !$0.filler }.map(\.norm).joined(separator: " ") }
+    /// Rule 3 for any text: "Export as PDF…" → "export as pdf".
+    public func normalize(_ s: String) -> String { key(canon(tokenize(s.replacingOccurrences(of: "&", with: " and ")))) }
     func compact(_ s: String) -> String { s.lowercased().filter { $0.isLetter || $0.isNumber } }
 }
 

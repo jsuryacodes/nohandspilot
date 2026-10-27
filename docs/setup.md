@@ -58,6 +58,25 @@ How to read it if you're curious:
 - **No `Cmd+V` lines at all** while dictating: Wispr inserted the text another way. Tell me which
   app; the command bar stays the fallback there.
 
+## 6. Screen control and new commands (28 Oct)
+
+Each row: say it with Wispr (or type it into the ⌃⌥P bar without "Pilot,"). Afterwards, paste me:
+
+```
+grep -E "Menus of|Ran |error" ~/Library/Application\ Support/Pilot/debug.log | tail -30
+```
+
+**Menu items (any app, no setup).** If no command matches, Pilot presses the menu item with exactly
+that title in the front app. "What can I say?" lists them.
+
+| Say | In | Expected |
+|---|---|---|
+| "Pilot, duplicate tab" | Chrome | A copy of the tab opens. Toast "✓ Tab › Duplicate Tab" |
+| "Pilot, pin tab" | Chrome | The tab is pinned |
+| "Pilot, new group" | WhatsApp | The new-group panel opens |
+| "Pilot, export as PDF" | Preview (any open PDF/image) | The export sheet opens |
+| "Pilot, duplicate" | Chrome | Nothing pressed: "Didn't catch" (titles must match exactly) |
+
 ## Everyday use
 
 - **Change commands:** Pilot menu → Edit commands.json (it's `commands/commands.json` in the repo).

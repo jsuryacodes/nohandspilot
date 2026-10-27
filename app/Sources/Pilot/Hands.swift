@@ -110,6 +110,7 @@ enum Hands {
         case .scroll(let dir, let ticks): scroll(down: dir != "up", ticks: ticks)
         case .wait(let ms): usleep(useconds_t(ms * 1000))
         case .help: DispatchQueue.main.async { HelpWindow.shared.show() }
+        case .menu(let app, let path): return Screen.pressMenu(app, path)
         case .notConfigured(let note): return "Not set up yet: \(note)"
         }
         return nil

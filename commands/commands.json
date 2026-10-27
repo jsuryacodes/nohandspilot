@@ -137,7 +137,7 @@
     { "id": "next_track", "phrases": ["next track", "skip track", "skip", "next music"], "action": { "type": "media", "key": "next" }, "say": "Next track" },
     { "id": "previous_track", "phrases": ["previous track", "last track"], "action": { "type": "media", "key": "previous" }, "say": "Previous track" },
     { "id": "volume_up", "phrases": ["volume up", "turn up volume", "turn volume up", "louder", "increase volume"], "action": { "type": "media", "key": "volumeUp" }, "say": "Volume up" },
-    { "id": "volume_down", "phrases": ["volume down", "turn down volume", "turn volume down", "quieter", "decrease volume", "lower volume"], "action": { "type": "media", "key": "volumeDown" }, "say": "Volume down" },
+    { "id": "volume_down", "phrases": ["volume down", "turn down volume", "turn volume down", "quieter", "decrease volume", "lower volume", "reduce volume"], "action": { "type": "media", "key": "volumeDown" }, "say": "Volume down" },
     { "id": "mute", "phrases": ["mute", "unmute", "mute volume", "toggle mute"], "action": { "type": "media", "key": "mute" }, "say": "Mute" },
 
     { "id": "chrome_search", "app": "Google Chrome", "phrases": ["search for {query}", "google {query}"], "action": { "type": "sequence", "steps": ["cmd+l", "type:{query}", "enter"] }, "say": "Searching {query}" },
