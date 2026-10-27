@@ -14,7 +14,8 @@ enum Hands {
     static var history: [pid_t] = []
 
     static func trackActivations() {
-        NotificationCenter.default.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { note in
+        // NSWorkspace posts these only on its own centre, never on NotificationCenter.default
+        NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { note in
             guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication, app.processIdentifier != getpid() else { return }
             history.removeAll { $0 == app.processIdentifier }
             history.append(app.processIdentifier)

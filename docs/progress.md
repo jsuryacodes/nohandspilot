@@ -2,6 +2,13 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 28 Oct: Fix "switch back" (never worked)
+- Pilot listened for app switches on the wrong notification centre, so its app history stayed empty
+  and "switch back" always said "No previous app yet". It's in the demo script at 1:25. Checked with
+  a test program: the default centre got 0 activations, NSWorkspace's centre got 2.
+- The same mistake means the backup frontmost-app paste tap (`Taps.swift`) never follows the front
+  app. Left as is: every real Wispr paste so far came through the session tap.
+
 ## 28 Oct: Click by name (1b)
 - "Pilot, click Sign in", "press Send", "tap Downloads", "choose English", "select …": Pilot walks the
   front window through Accessibility and presses the element with that name: exact name first, then
