@@ -130,7 +130,7 @@
     { "id": "paste", "phrases": ["paste", "paste it"], "action": { "type": "keys", "keys": "cmd+v" }, "say": "Pasted" },
     { "id": "select_all", "phrases": ["select all", "select everything"], "action": { "type": "keys", "keys": "cmd+a" }, "say": "Selected all" },
     { "id": "save", "phrases": ["save", "save file", "save it"], "action": { "type": "keys", "keys": "cmd+s" }, "say": "Saved" },
-    { "id": "find", "phrases": ["find {query}", "find on page {query}", "find in page {query}"], "action": { "type": "sequence", "steps": ["cmd+f", "wait:150", "type:{query}"] }, "say": "Find {query}" },
+    { "id": "find", "phrases": ["find {query}", "find on page {query}", "find in page {query}", "search for {query}"], "action": { "type": "sequence", "steps": ["cmd+f", "wait:150", "type:{query}"] }, "say": "Find {query}" },
 
     { "id": "play_pause", "phrases": ["play", "pause", "resume", "play music", "pause music", "stop music", "play pause", "resume music"], "action": { "type": "media", "key": "play" }, "say": "Play/pause" },
     { "id": "next_track", "phrases": ["next track", "skip track", "skip", "next music"], "action": { "type": "media", "key": "next" }, "say": "Next track" },
@@ -156,6 +156,8 @@
     { "id": "claude_sidebar", "app": "Claude", "phrases": ["toggle sidebar", "open sidebar", "close sidebar", "sidebar", "show sidebar", "hide sidebar"], "action": { "type": "keys", "keys": "cmd+b" }, "say": "Sidebar" },
     { "id": "claude_search", "app": "Claude", "phrases": ["search chats", "command palette", "search for {query}", "search chats for {query}"], "action": { "type": "sequence", "steps": ["cmd+k", "wait:200", "type:{query}"] }, "say": "Search" },
     { "id": "claude_ask", "app": "Claude", "phrases": ["ask {query}"], "action": { "type": "sequence", "steps": ["cmd+n", "wait:600", "type:{query}", "wait:100", "enter"] }, "say": "Asked Claude: {query}" },
+
+    { "id": "whatsapp_search", "app": "WhatsApp", "phrases": ["search for {query}", "find {query}", "find chat {query}"], "action": { "type": "sequence", "steps": ["cmd+f", "wait:250", "type:{query}"] }, "say": "WhatsApp: {query}" },
 
     { "id": "code_sidebar", "app": "Visual Studio Code", "phrases": ["toggle sidebar", "open sidebar", "close sidebar", "sidebar", "show sidebar", "hide sidebar"], "action": { "type": "keys", "keys": "cmd+b" }, "say": "Sidebar" },
     { "id": "code_palette", "app": "Visual Studio Code", "phrases": ["command palette", "open command palette"], "action": { "type": "keys", "keys": "cmd+shift+p" }, "say": "Command palette" },

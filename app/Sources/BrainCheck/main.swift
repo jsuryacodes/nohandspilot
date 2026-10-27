@@ -80,6 +80,14 @@ check("Pilot, open the terminal in VS Code", [.openApp("Visual Studio Code"), .k
 check("Pilot, go to tab three", app: "Google Chrome", [.keys("cmd+3")])
 check("Pilot, switch to the last tab", app: "Google Chrome", [.keys("cmd+9")])
 
+// commands aimed at an app stay in that app (real miss, 28 Oct)
+let wa = Action.openApp("WhatsApp")
+check("Pilot, can you search Jotir Aditya in WhatsApp? ", [wa, .keys("cmd+f"), .wait(250), .type("Jotir Aditya")])
+check("Pilot, search jyothir aditya on whatsapp", [wa, .keys("cmd+f"), .wait(250), .type("jyothir aditya")])
+check("Pilot, search for Jyothir", app: "WhatsApp", [.keys("cmd+f"), .wait(250), .type("Jyothir")])
+check("Pilot, search for notes in Telegram", [.openApp("Telegram"), .keys("cmd+f"), .wait(150), .type("notes")])
+check("Pilot, open GitHub in Chrome", [.openURL("https://github.com")])
+
 // misc
 check("Pilot, pause the music", [.media("play")])
 check("Pilot, turn up the volume", [.media("volumeUp")])

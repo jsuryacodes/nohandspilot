@@ -2,6 +2,14 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 28 Oct: Fix "search X in WhatsApp" opening Chrome
+- Cause: "in WhatsApp" correctly switched context to WhatsApp, but with no WhatsApp search command
+  the global web search (which always opens Chrome) was accepted.
+- Fix in the Brain: a command aimed "in/on <app>" (or naming an app mid-sentence) must stay in that
+  app; commands that would open a different app are skipped. Apps without their own search fall back
+  to the standard Cmd+F find. Added a WhatsApp search command (Cmd+F, unverified shortcut).
+- 5 new BrainCheck cases, including the exact sentence from the log.
+
 ## 28 Oct: Demo script
 - `docs/demo.md`: a timed 2-minute script using only commands covered by BrainCheck.
 

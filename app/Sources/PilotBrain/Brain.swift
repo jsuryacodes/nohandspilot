@@ -20,6 +20,7 @@
 //       b. exact match (free text may not end in "in/on <app or site>")
 //       c. "<command> in/on <app>"               → switch to the app, run its command there
 //       d. app named anywhere ("new Chrome tab") → drop the name, run the rest in that app
+//          (c and d only accept commands that stay in that app: "search X in WhatsApp" never opens Chrome)
 //       e. exact match again, now allowing typos in app names
 //  7. A segment that doesn't match right after a free-text command is appended to its text
 //     ("type hello, how are you" types "hello, how are you").
@@ -193,7 +194,7 @@ public final class Brain {
         let words = seg.split(separator: " ").map(String.init)
         if let i = words.lastIndex(where: { ["in", "on"].contains($0.lowercased()) }), i > 0, i < words.count - 1,
            let target = resolveApp(words[(i + 1)...].joined(separator: " "), fuzzy: true),
-           let step = match(canon(tokenize(words[..<i].joined(separator: " "))), app: target, fuzzy: false) {
+           let step = match(canon(tokenize(words[..<i].joined(separator: " "))), app: target, fuzzy: false, accept: { self.stays($0, in: target) }) {
             return done(inApp(step, target))
         }
         // d. app named anywhere: "open a new chrome tab", "close the claude sidebar"
@@ -204,13 +205,28 @@ public final class Brain {
                     var rest = words
                     rest.removeSubrange(start..<start + len)
                     if start > 0, ["in", "on", "using", "with", "from", "of", "inside"].contains(rest[start - 1].lowercased()) { rest.remove(at: start - 1) }
-                    if let step = match(canon(tokenize(rest.joined(separator: " "))), app: target, fuzzy: false) { return done(inApp(step, target)) }
+                    if let step = match(canon(tokenize(rest.joined(separator: " "))), app: target, fuzzy: false, accept: { self.stays($0, in: target) }) {
+                        return done(inApp(step, target))
+                    }
                 }
             }
         }
         // e. exact, allowing typos in app names
         if let step = match(toks, app: app, fuzzy: true) { return done(step) }
         return nil
+    }
+
+    /// A command aimed at an app ("search X in WhatsApp") must not switch to a different app (Chrome).
+    private func stays(_ step: Step, in target: String) -> Bool {
+        let browser = config.browser ?? "Google Chrome"
+        for a in step.actions {
+            switch a {
+            case .openApp(let name) where name != target: return false
+            case .openURL, .chromeProfile: if target != browser { return false }
+            default: break
+            }
+        }
+        return true
     }
 
     /// Make sure the step runs in `target`: switch to it first unless the step already does.
@@ -238,11 +254,14 @@ public final class Brain {
 
     // MARK: matching
 
-    private func match(_ toks: [Tok], app: String?, fuzzy: Bool) -> Step? {
+    private func match(_ toks: [Tok], app: String?, fuzzy: Bool, accept: (Step) -> Bool = { _ in true }) -> Step? {
         let scoped = compiled.lazy.filter { $0.cmd.app != nil && $0.cmd.app == app }
         let global = compiled.lazy.filter { $0.cmd.app == nil }
         for c in [Array(scoped), Array(global)].joined() {
-            if let slots = bind(c.pattern, toks, fuzzy: fuzzy && c.cmd.action.type != "quitApp") { return makeStep(c.cmd, slots: slots) }
+            if let slots = bind(c.pattern, toks, fuzzy: fuzzy && c.cmd.action.type != "quitApp") {
+                let step = makeStep(c.cmd, slots: slots)
+                if accept(step) { return step }
+            }
         }
         return nil
     }
