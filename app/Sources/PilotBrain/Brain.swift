@@ -15,6 +15,8 @@
 //       anything else ({query}, {text}) = free text kept as spoken
 //  5. Commands scoped to the current app are tried first, then global ones; more literal words wins,
 //     then JSON order. The current app follows the chain: after "open chrome", Chrome commands apply.
+//     Once the chain itself has switched app ("open music and search florida"), later commands
+//     prefer ones that stay in that app (Music search, not a Chrome web search).
 //  6. Per segment, first hit wins:
 //       a. macro name
 //       b. exact match (free text may not end in "in/on <app or site>")
@@ -84,6 +86,8 @@ public enum Plan: Equatable {
 public final class Brain {
     public let config: Config
     let installedApps: [String]
+    /// Other names apps go by, e.g. ["OBS Studio": "OBS"] (display name → .app file name).
+    let appAliases: [String: String]
     /// Runtime slot values, e.g. ["profile": [("Jaya Surya", "Profile 2"), ...]]. Earlier entries win ties.
     let slotValues: [String: [(key: String, value: String)]]
     private var compiled: [(cmd: Command, pattern: [Tok], literals: Int)] = []
@@ -93,9 +97,10 @@ public final class Brain {
     private var appCache: [String: String?] = [:]
     private static let builtinSlots: Set<String> = ["app", "site", "n", "url"]
 
-    public init(config: Config, installedApps: [String] = [], slotValues: [String: [(key: String, value: String)]] = [:]) {
+    public init(config: Config, installedApps: [String] = [], appAliases: [String: String] = [:], slotValues: [String: [(key: String, value: String)]] = [:]) {
         self.config = config
         self.installedApps = installedApps
+        self.appAliases = appAliases
         self.slotValues = slotValues
         func words(_ s: String) -> [String] {
             s.split(whereSeparator: { $0.isWhitespace }).map { String($0).lowercased().filter { $0.isLetter || $0.isNumber || $0 == "`" } }.filter { !$0.isEmpty }
@@ -114,8 +119,8 @@ public final class Brain {
         compiled.sort { $0.literals > $1.literals }   // stable: JSON order breaks ties
     }
 
-    public convenience init(json: Data, installedApps: [String] = [], slotValues: [String: [(key: String, value: String)]] = [:]) throws {
-        self.init(config: try JSONDecoder().decode(Config.self, from: json), installedApps: installedApps, slotValues: slotValues)
+    public convenience init(json: Data, installedApps: [String] = [], appAliases: [String: String] = [:], slotValues: [String: [(key: String, value: String)]] = [:]) throws {
+        self.init(config: try JSONDecoder().decode(Config.self, from: json), installedApps: installedApps, appAliases: appAliases, slotValues: slotValues)
     }
 
     /// Text after the trigger word, or nil if the text isn't addressed to Pilot.
@@ -128,7 +133,7 @@ public final class Brain {
     public func plan(_ text: String, frontmostApp: String?, requireTrigger: Bool = true) -> Plan {
         var body = text
         if let rest = stripTrigger(text) { body = rest } else if requireTrigger { return .notForPilot }
-        switch planChain(body, app: frontmostApp, depth: 0) {
+        switch planChain(body, app: frontmostApp, explicit: false, depth: 0) {
         case .success(let steps):
             return steps.isEmpty ? .unmatched(body.trimmingCharacters(in: .whitespaces), suggestion: nil) : .run(steps)
         case .failure(let miss):
@@ -140,24 +145,25 @@ public final class Brain {
 
     struct Miss: Error { var segment: String; var app: String? }
 
-    private func planChain(_ text: String, app: String?, depth: Int) -> Result<[Step], Miss> {
+    /// `explicit`: the current app was chosen by this chain (not just whatever happened to be in front).
+    private func planChain(_ text: String, app: String?, explicit: Bool, depth: Int) -> Result<[Step], Miss> {
         let segments = text.replacingOccurrences(of: "(?i)[,;!?]+|\\.(?=\\s|$)|\\band then\\b|\\bthen\\b", with: "\u{1}", options: .regularExpression)
             .split(separator: "\u{1}").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
         var steps: [Step] = []
-        var app = app
+        var app = app, explicit = explicit
         func lastFree() -> Int? { steps.last?.freeKey != nil ? steps.count - 1 : nil }
         var freeIndex: Int?
         for seg in segments where !key(canon(tokenize(seg))).isEmpty {   // skip "um,"
-            if let s = planSegment(seg, app: &app, depth: depth) {
+            if let s = planSegment(seg, app: &app, explicit: &explicit, depth: depth) {
                 steps += s
                 freeIndex = lastFree()
                 continue
             }
             if seg.range(of: "\\band\\b", options: [.regularExpression, .caseInsensitive]) != nil {
                 let parts = seg.components(separatedBy: " and ").map { $0.trimmingCharacters(in: .whitespaces) }
-                var tmpApp = app, sub: [Step] = [], ok = !parts.contains("")
-                for p in parts where ok { if let s = planSegment(p, app: &tmpApp, depth: depth) { sub += s } else { ok = false } }
-                if ok { steps += sub; app = tmpApp; freeIndex = lastFree(); continue }
+                var tmpApp = app, tmpExplicit = explicit, sub: [Step] = [], ok = !parts.contains("")
+                for p in parts where ok { if let s = planSegment(p, app: &tmpApp, explicit: &tmpExplicit, depth: depth) { sub += s } else { ok = false } }
+                if ok { steps += sub; app = tmpApp; explicit = tmpExplicit; freeIndex = lastFree(); continue }
             }
             if let i = freeIndex, let freeKey = steps[i].freeKey, let cmd = config.commands.first(where: { $0.id == steps[i].id }) {   // rule 7
                 var slots = steps[i].slots
@@ -173,22 +179,26 @@ public final class Brain {
         return .success(steps)
     }
 
-    private func planSegment(_ seg: String, app: inout String?, depth: Int) -> [Step]? {
+    private func planSegment(_ seg: String, app: inout String?, explicit: inout Bool, depth: Int) -> [Step]? {
         let toks = canon(tokenize(seg))
         // a. macro
         if depth < 3, let macro = config.macros.first(where: { key(canon(tokenize($0.key))) == key(toks) }) {
             var out: [Step] = []
             for line in macro.value {
-                guard case .success(let s) = planChain(line, app: app, depth: depth + 1) else { return nil }
-                for step in s { app = contextApp(after: step) ?? app }
+                guard case .success(let s) = planChain(line, app: app, explicit: explicit, depth: depth + 1) else { return nil }
+                for step in s { if let a = contextApp(after: step) { app = a; explicit = true } }
                 out += s
             }
             return out
         }
-        var current = app
-        defer { app = current }
-        func done(_ step: Step) -> [Step] { current = contextApp(after: step) ?? current; return [step] }
-        // b. exact
+        var current = app, currentExplicit = explicit
+        defer { app = current; explicit = currentExplicit }
+        func done(_ step: Step) -> [Step] {
+            if let a = contextApp(after: step) { current = a; currentExplicit = true }
+            return [step]
+        }
+        // b. exact; inside an app the chain switched to, prefer commands that stay there (rule 5)
+        if explicit, let a = app, let step = match(toks, app: a, fuzzy: false, accept: { self.stays($0, in: a) }) { return done(step) }
         if let step = match(toks, app: app, fuzzy: false) { return done(step) }
         // c. "... in chrome"
         let words = seg.split(separator: " ").map(String.init)
@@ -403,13 +413,15 @@ public final class Brain {
         if s.isEmpty { result = nil }
         else if let a = config.apps.first(where: { compact($0.key) == s }) { result = a.value }
         else if let a = installedApps.first(where: { compact($0) == s }) { result = a }
+        else if let a = appAliases.first(where: { compact($0.key) == s }) { result = a.value }
         else if let a = config.apps.values.first(where: { compact($0) == s }) { result = a }
         else if fuzzy, s.count >= 3 {
-            let prefixed = installedApps.filter { compact($0).hasPrefix(s) }
-            if prefixed.count == 1 { result = prefixed[0] } else {
+            let names = installedApps.map { ($0, $0) } + appAliases.map { ($0.key, $0.value) }
+            let prefixed = Set(names.filter { compact($0.0).hasPrefix(s) }.map(\.1))
+            if prefixed.count == 1 { result = prefixed.first } else {
                 let maxDist = s.count >= 8 ? 2 : 1
-                let scored = (installedApps + Array(config.apps.keys)).map { ($0, levenshtein(compact($0), s)) }.filter { $0.1 <= maxDist }
-                if let best = scored.min(by: { $0.1 < $1.1 }), scored.filter({ $0.1 == best.1 }).count == 1 { result = config.apps[best.0] ?? best.0 }
+                let scored = (names + config.apps.map { ($0.key, $0.value) }).map { ($0.1, levenshtein(compact($0.0), s)) }.filter { $0.1 <= maxDist }
+                if let best = scored.min(by: { $0.1 < $1.1 }), Set(scored.filter({ $0.1 == best.1 }).map(\.0)).count == 1 { result = best.0 }
             }
         }
         appCache[cacheKey] = result

@@ -88,6 +88,7 @@
     { "id": "hide_front", "phrases": ["hide", "hide window", "hide app"], "action": { "type": "keys", "keys": "cmd+h" }, "say": "Hidden" },
     { "id": "previous_app", "phrases": ["switch back", "previous app", "last app", "switch to previous app", "switch to last app", "back to previous app"], "action": { "type": "previousApp" }, "say": "Switched back" },
     { "id": "help", "phrases": ["what can i say", "help", "show commands", "list commands"], "action": { "type": "help" }, "say": "Commands" },
+    { "id": "show_numbers", "phrases": ["show numbers", "hide numbers", "show labels", "show hints"], "action": { "type": "keys", "keys": "TODO", "note": "\"show numbers\" isn't built yet (proposed screen-control layer)" }, "say": "Show numbers" },
 
     { "id": "chrome_profile", "phrases": ["switch profile to {profile}", "switch to profile {profile}", "switch chrome profile to {profile}", "switch to {profile} profile", "switch to {profile} chrome profile", "open {profile} profile", "open profile {profile}", "use {profile} profile", "use profile {profile}", "chrome profile {profile}", "profile {profile}"], "action": { "type": "chromeProfile" }, "say": "Chrome profile: {profile}" },
     { "id": "open_site", "phrases": ["open {site}", "switch to {site}", "open {site} website", "open {site} in browser"], "action": { "type": "openURL" }, "say": "Opened {site}" },
@@ -157,6 +158,7 @@
     { "id": "claude_search", "app": "Claude", "phrases": ["search chats", "command palette", "search for {query}", "search chats for {query}"], "action": { "type": "sequence", "steps": ["cmd+k", "wait:200", "type:{query}"] }, "say": "Search" },
     { "id": "claude_ask", "app": "Claude", "phrases": ["ask {query}"], "action": { "type": "sequence", "steps": ["cmd+n", "wait:600", "type:{query}", "wait:100", "enter"] }, "say": "Asked Claude: {query}" },
 
+    { "id": "music_search", "app": "Music", "phrases": ["search for {query}", "find {query}", "play {query}"], "action": { "type": "sequence", "steps": ["cmd+f", "wait:250", "type:{query}", "enter"] }, "say": "Music: {query}" },
     { "id": "whatsapp_search", "app": "WhatsApp", "phrases": ["search for {query}", "find {query}", "find chat {query}"], "action": { "type": "sequence", "steps": ["cmd+f", "wait:250", "type:{query}"] }, "say": "WhatsApp: {query}" },
 
     { "id": "code_sidebar", "app": "Visual Studio Code", "phrases": ["toggle sidebar", "open sidebar", "close sidebar", "sidebar", "show sidebar", "hide sidebar"], "action": { "type": "keys", "keys": "cmd+b" }, "say": "Sidebar" },

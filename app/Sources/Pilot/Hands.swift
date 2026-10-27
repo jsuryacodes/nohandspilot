@@ -7,7 +7,8 @@ func appName(_ app: NSRunningApplication?) -> String? { app?.bundleURL?.deleting
 
 enum Hands {
     static let queue = DispatchQueue(label: "pilot.hands")
-    static var installed: [String: URL] = scanApps()
+    static var installed: [String: URL] = [:]
+    static var aliases: [String: String] = [:]   // display name → file name, e.g. "OBS Studio" → "OBS"
     static var browser = "Google Chrome"
     /// Apps in activation order (newest last), for "switch back". Updated on the main thread.
     static var history: [pid_t] = []
@@ -36,16 +37,34 @@ enum Hands {
         return out
     }
 
-    static func scanApps() -> [String: URL] {
+    /// Installed apps by .app file name, plus their display names, one folder deep (DaVinci Resolve/…).
+    static func scanApps() {
         let dirs = ["/Applications", "/Applications/Utilities", "/System/Applications", "/System/Applications/Utilities",
                     "/System/Library/CoreServices", NSHomeDirectory() + "/Applications"]
-        var out: [String: URL] = [:]
-        for dir in dirs {
-            for name in (try? FileManager.default.contentsOfDirectory(atPath: dir)) ?? [] where name.hasSuffix(".app") {
-                out[String(name.dropLast(4))] = out[String(name.dropLast(4))] ?? URL(fileURLWithPath: dir).appendingPathComponent(name)
+        var apps: [String: URL] = [:], names: [String: String] = [:]
+        func add(_ url: URL) {
+            let name = url.deletingPathExtension().lastPathComponent
+            guard apps[name] == nil else { return }
+            apps[name] = url
+            let info = NSDictionary(contentsOf: url.appendingPathComponent("Contents/Info.plist"))
+            for key in ["CFBundleDisplayName", "CFBundleName"] {
+                guard let alt = (info?[key] as? String)?.filter({ $0.isLetter || $0.isNumber || $0 == " " }).trimmingCharacters(in: .whitespaces),
+                      !alt.isEmpty, alt != name else { continue }
+                names[alt] = names[alt] ?? name
             }
         }
-        return out
+        for dir in dirs {
+            for entry in (try? FileManager.default.contentsOfDirectory(atPath: dir)) ?? [] {
+                let url = URL(fileURLWithPath: dir).appendingPathComponent(entry)
+                if entry.hasSuffix(".app") { add(url); continue }
+                guard !dir.hasPrefix("/System"), (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true else { continue }
+                for sub in (try? FileManager.default.contentsOfDirectory(atPath: url.path)) ?? [] where sub.hasSuffix(".app") {
+                    add(url.appendingPathComponent(sub))
+                }
+            }
+        }
+        installed = apps
+        aliases = names
     }
 
     /// Runs on `queue`. Returns an error message, or nil on success.
@@ -100,7 +119,7 @@ enum Hands {
 
     static func openApp(_ name: String) -> String? {
         let running = NSWorkspace.shared.runningApplications.first { appName($0) == name }
-        guard let url = running?.bundleURL ?? installed[name] ?? { installed = scanApps(); return installed[name] }() else {
+        guard let url = running?.bundleURL ?? installed[name] ?? { scanApps(); return installed[name] }() else {
             return "Can't find \(name)"
         }
         // openApplication on a running app acts like clicking its Dock icon: it comes forward and

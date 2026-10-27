@@ -7,7 +7,8 @@ let profiles: [(key: String, value: String)] = [("Jaya", "Default"), ("College",
                                                 ("Jaya Surya", "Default"), ("PENUMATCHA JAYA SURYA", "Profile 1"), ("Jaya Surya Penumatcha", "Profile 2")]
 let brain = try Brain(json: Data(contentsOf: URL(fileURLWithPath: path)),
                       installedApps: ["Google Chrome", "Claude", "Visual Studio Code", "Finder", "Telegram", "WhatsApp", "Safari", "Terminal",
-                                      "GitHub Desktop", "YouTube", "ChatGPT", "Spotify"],
+                                      "GitHub Desktop", "YouTube", "ChatGPT", "Spotify", "Music", "Numbers Creator Studio", "OBS"],
+                      appAliases: ["OBS Studio": "OBS", "Numbers": "Numbers Creator Studio", "Code": "Visual Studio Code"],
                       slotValues: ["profile": profiles])
 var failures = 0
 
@@ -87,6 +88,16 @@ check("Pilot, search jyothir aditya on whatsapp", [wa, .keys("cmd+f"), .wait(250
 check("Pilot, search for Jyothir", app: "WhatsApp", [.keys("cmd+f"), .wait(250), .type("Jyothir")])
 check("Pilot, search for notes in Telegram", [.openApp("Telegram"), .keys("cmd+f"), .wait(150), .type("notes")])
 check("Pilot, open GitHub in Chrome", [.openURL("https://github.com")])
+
+// chains stay in the app they switched to; display names; reserved phrases (real misses, 28 Oct)
+check("Pilot, can you open music and search Florida?", [.openApp("Music"), .keys("cmd+f"), .wait(250), .type("Florida"), .keys("enter")])
+check("Pilot, search for Florida", app: "Music", [.keys("cmd+f"), .wait(250), .type("Florida"), .keys("enter")])
+check("Pilot, open finder, search for report", [.openApp("Finder"), .keys("cmd+f"), .wait(150), .type("report")])
+check("Pilot, open chrome, ask claude what is jazz", [chrome, .openApp("Claude"), .keys("cmd+n"), .wait(600), .type("what is jazz"), .wait(100), .keys("enter")])
+check("Pilot, open chrome, open claude", [chrome, .openApp("Claude")])
+check("Pilot, can you open OBS Studio?", [.openApp("OBS")])
+check("Pilot, open numbers", [.openApp("Numbers Creator Studio")])
+check("Pilot, show numbers.", [.notConfigured("\"show numbers\" isn't built yet (proposed screen-control layer)")])
 
 // misc
 check("Pilot, pause the music", [.media("play")])

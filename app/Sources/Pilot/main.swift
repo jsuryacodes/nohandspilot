@@ -60,7 +60,8 @@ final class Pilot {
         let mtime = (try? FileManager.default.attributesOfItem(atPath: commandsURL.path)[.modificationDate]) as? Date
         guard force || brain == nil || mtime != loadedAt else { return nil }
         do {
-            brain = try Brain(json: Data(contentsOf: commandsURL), installedApps: Array(Hands.installed.keys),
+            if Hands.installed.isEmpty { Hands.scanApps() }
+            brain = try Brain(json: Data(contentsOf: commandsURL), installedApps: Array(Hands.installed.keys), appAliases: Hands.aliases,
                               slotValues: ["profile": Hands.chromeProfiles()])
             Hands.browser = brain!.config.browser ?? Hands.browser
             loadedAt = mtime

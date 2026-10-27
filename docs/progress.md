@@ -2,6 +2,15 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 28 Oct: Fix chains leaving the app, "show numbers", app display names
+- "can you open music and search Florida" opened Music, then searched in Chrome. A chain that switches
+  to an app now prefers commands that stay in that app; Apple Music got its own search (Cmd+F, Enter).
+- "show numbers" opened the Numbers app: the phrase is now reserved and says it isn't built yet
+  (it's one of the screen-control proposals).
+- "can you open OBS Studio" missed: apps are now also known by their display names ("OBS Studio",
+  "FL Studio", "PyCharm"), and apps one folder deep (DaVinci Resolve) are found.
+- 63 BrainCheck cases, all passing.
+
 ## 28 Oct: Fix "search X in WhatsApp" opening Chrome
 - Cause: "in WhatsApp" correctly switched context to WhatsApp, but with no WhatsApp search command
   the global web search (which always opens Chrome) was accepted.
