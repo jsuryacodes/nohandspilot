@@ -118,7 +118,7 @@ final class Pilot {
         return forget ? "✓ Forgot \"\(said)\"" : "✓ Learned \"\(said)\" → " + commands.joined(separator: ", ")
     }
 
-    /// Returns true if Pilot will act on the text (so a Wispr paste should be swallowed).
+    /// Returns true if Pilot acts on the text or a Wispr paste was meant for Pilot (so the paste should be swallowed).
     @discardableResult func handle(_ text: String, source: String, frontApp: String?, waitForFocusFrom pilotApp: Bool = false) -> Bool {
         let start = Date()
         if let err = reloadIfChanged() { HUD.show("⚠︎ \(err)"); return false }
@@ -142,7 +142,7 @@ final class Pilot {
             HUD.show("Didn't catch \"\(segment.isEmpty ? text : segment)\"" + (suggestion.map { ". Try \"\($0)\"" } ?? "")
                      + ". Or say \"teach that: …\"", seconds: 3)
             Log.usage(source: source, text: text, matched: [], ok: false, error: "unmatched: \(segment)", matchMs: matchMs, totalMs: matchMs)
-            return woke   // after a wake-up it wasn't meant as text (maybe a false wake): drop it, don't type it
+            return source == "wispr"   // it began with "Pilot" or followed the wake word: drop it, never type it into a text field
         case .teach(let phrase, let commands):
             return taught(learn(phrase, commands, forget: false, brain: brain, frontApp: frontApp), "teach")
         case .forget(let phrase):
@@ -244,9 +244,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             pilot.wakeUntil = .distantFuture
             HUD.show("🎙 Say the command", seconds: 2)
         }
-        WakeWord.shared.onCommandDone = { [pilot] spoke in
+        WakeWord.shared.onCommandDone = { [pilot] in
             guard pilot.wakeUntil == .distantFuture else { return }   // Wispr's text already came (it stopped by itself)
-            pilot.wakeUntil = spoke ? Date().addingTimeInterval(6) : .distantPast
+            pilot.wakeUntil = Date().addingTimeInterval(6)   // even when Apple's recognizer heard nothing, Wispr may have
         }
         if WakeWord.shared.isOn { WakeWord.shared.setOn(true) }
         Log.debug("Pilot started. Accessibility: \(AXIsProcessTrusted())")

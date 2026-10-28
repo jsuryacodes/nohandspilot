@@ -3,18 +3,19 @@
 // replaces holding its key. Off unless you switch it on (Pilot menu, or "start listening"). Main thread only.
 import AppKit
 import AVFoundation
+import Carbon
 import Speech
 
 final class WakeWord {
     static let shared = WakeWord()
     /// "Pilot" was heard and Wispr is listening: its next text is a command, even without the word.
     var onWake: () -> Void = {}
-    /// Wispr was stopped after a command. `spoke`: its text is on the way.
-    var onCommandDone: (_ spoke: Bool) -> Void = { _ in }
+    /// Wispr was stopped after a command; whatever it heard is on the way.
+    var onCommandDone: () -> Void = {}
     var isOn: Bool { UserDefaults.standard.bool(forKey: "wakeWord") }
 
     // Seconds of quiet that end a command or a dictation, and how long to wait for the first word. Tune here.
-    private let quietAfterCommand = 1.2, quietAfterDictation = 2.5, waitForFirstWord = 6.0
+    private let quietAfterCommand = 0.8, quietAfterDictation = 2.5, waitForFirstWord = 6.0
 
     private enum Mode { case listening, command, dictation }
     private var mode = Mode.listening
@@ -53,7 +54,7 @@ final class WakeWord {
     }
 
     /// "Pilot, dictate": Wispr types whatever you say next, until you pause. Works with listening off too.
-    func dictate() { prepare { [self] in begin(.dictation) } }
+    func dictate() { prepare { [self] in if task == nil { newTask() }; begin(.dictation) } }   // listening off: no transcript to hear the pause
 
     /// Permissions, then the microphone, then `then`.
     private func prepare(_ then: @escaping () -> Void) {
@@ -107,10 +108,11 @@ final class WakeWord {
         generation += 1
         let gen = generation
         words = []; checked = 0; taskStarted = Date()
+        if mode != .listening { wordsAtStart = 0 }   // replaced mid-command: every word from here on is the command
         task = recognizer.recognitionTask(with: r) { [weak self] result, error in
             guard let self, gen == generation else { return }   // a task already replaced
             if let result { heard(result.bestTranscription.segments.map { $0.substring.lowercased().filter(\.isLetter) }) }
-            if (error != nil || result?.isFinal == true), engine.isRunning, mode == .listening {   // e.g. a long silence ended it
+            if (error != nil || result?.isFinal == true), engine.isRunning {   // e.g. a long silence ended it, even mid-command
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in if self?.generation == gen { self?.newTask() } }
             }
         }
@@ -126,6 +128,11 @@ final class WakeWord {
         checked = words.count
         guard wake else { return }
         if CGEventSource.flagsState(.hidSystemState).contains(.maskSecondaryFn) { newTask(); return }   // holding Wispr's key: already dictating
+        if IsSecureEventInputEnabled() {   // Terminal's Secure Keyboard Entry or a password field hides Wispr's paste from Pilot, so it would be typed
+            Log.debug("Wake word: heard \"Pilot\", but secure input is on; not starting Wispr")
+            HUD.show("⚠︎ Secure input is on, so Wispr would type the command. In Terminal: Terminal menu → Secure Keyboard Entry", seconds: 4)
+            newTask(); return
+        }
         Log.debug("Wake word: heard \"Pilot\", starting Wispr")
         begin(.command)
         onWake()
@@ -157,7 +164,7 @@ final class WakeWord {
         mode = .listening
         openWispr("stop-hands-free")
         Log.debug(String(format: "Wake word: stopped Wispr after %.1f s (%@)", Date().timeIntervalSince(sessionStarted), spoke ? "you spoke" : "nothing said"))
-        if command { onCommandDone(spoke) }
+        if command { onCommandDone() }
         if isOn { newTask() } else { stopEngine() }   // a dictation can run with listening off
     }
 

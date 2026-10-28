@@ -2,6 +2,23 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 28 Oct: Fix commands typed into text fields, end commands sooner
+- Your test: with the cursor in a text field (Terminal, WhatsApp, Chrome) the command got typed. The
+  logs showed three separate causes, all invisible outside a text field because Wispr's paste lands
+  nowhere there:
+  1. A "Pilot, …" command that didn't match ("Pilot, swipe right across space", twice in WhatsApp)
+     was passed through as text on purpose. Now it shows "Didn't catch" and is never typed.
+  2. After "Pilot", if Apple's recognizer heard nothing (19:11:53: "nothing said" after 6.2 s), Pilot
+     stopped expecting a command, so Wispr's text was typed. Wispr's next text now always counts as
+     the command. Apple's recognizer also restarts if it stops mid-command, and "dictate" with
+     listening off now hears the pause instead of always stopping at 6 s.
+  3. Terminal has Secure Keyboard Entry on here. macOS then hides every keystroke into Terminal from
+     other apps, Wispr's Cmd+V included (Terminal pasted at 18:57:11, Pilot saw nothing). No app can
+     catch it, so "Pilot" now shows a ⚠︎ toast instead of starting Wispr. Untick it in Terminal's
+     menu to use Pilot there.
+- Latency, measured: Wispr starts 20–270 ms after Pilot's link, and Apple's recognizer reports
+  "Pilot" ~0.3 s after the word ends. The quiet that ends a command is now 0.8 s (was 1.2 s).
+
 ## 28 Oct: No hands: say "Pilot" to start Wispr
 - With listening on (Pilot menu → Listen for "Pilot", or "start listening"), Pilot hears the word
   "Pilot" with Apple's offline speech recognizer (on this Mac, Indian English), then starts Wispr
