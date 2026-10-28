@@ -119,9 +119,7 @@ enum Screen {
             }
             for c in v[5] as? [AXUIElement] ?? [] { visit(c, depth + 1, clip, owner) }
         }
-        let window = [kAXFocusedWindowAttribute, kAXMainWindowAttribute].lazy.compactMap { element(attr(root, $0)) }.first
-            ?? (attr(root, kAXWindowsAttribute) as? [AXUIElement])?.first
-        if let window, let frame = rect(attr(window, kAXPositionAttribute), attr(window, kAXSizeAttribute)) { visit(window, 0, frame, nil) }
+        if let window = window(root), let frame = rect(attr(window, kAXPositionAttribute), attr(window, kAXSizeAttribute)) { visit(window, 0, frame, nil) }
         for item in children(attr(root, kAXMenuBarAttribute)) {
             let v = values(item, [kAXTitleAttribute, kAXPositionAttribute, kAXSizeAttribute])
             if let title = v[0] as? String, !title.isEmpty, let f = rect(v[1], v[2]) { out.append(Element(el: item, role: "AXMenuBarItem", name: title, frame: f)) }
@@ -248,6 +246,13 @@ enum Screen {
     }
 
     static func children(_ el: AnyObject?) -> [AXUIElement] { attr(el, kAXChildrenAttribute) as? [AXUIElement] ?? [] }
+
+    /// The window you're working in: focused, else main, else any. Not the first one on screen: full-screen Chrome
+    /// puts its tab strip in a thin window of its own that comes first.
+    static func window(_ root: AXUIElement) -> AXUIElement? {
+        [kAXFocusedWindowAttribute, kAXMainWindowAttribute].lazy.compactMap { element(attr(root, $0)) }.first
+            ?? (attr(root, kAXWindowsAttribute) as? [AXUIElement])?.first
+    }
 
     static func element(_ v: AnyObject?) -> AXUIElement? {
         guard let v, CFGetTypeID(v) == AXUIElementGetTypeID() else { return nil }

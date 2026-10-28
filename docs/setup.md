@@ -66,6 +66,13 @@ Each row: say it with Wispr (or type it into the ⌃⌥P bar without "Pilot,"). 
 grep -E "Menus of|Ran |error" ~/Library/Application\ Support/Pilot/debug.log | tail -30
 ```
 
+**Scrolling (fixed 28 Oct).** The pointer jumps to the middle of the window, then the page scrolls.
+
+| Say | In | Expected |
+|---|---|---|
+| "Pilot, scroll down" / "Pilot, scroll up" | Chrome on LinkedIn | The feed moves about half a screen |
+| "Pilot, scroll right" / "Pilot, scroll left" | a wide page or spreadsheet | It moves sideways |
+
 **Menu items (any app, no setup).** If no command matches, Pilot presses the menu item with exactly
 that title in the front app. "What can I say?" lists them.
 

@@ -2,6 +2,19 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 28 Oct: Fix scrolling (it never worked in full-screen Chrome)
+- Your test: "scroll down" / "scroll up" on LinkedIn said "Scrolled" but nothing moved. Cause: scroll
+  events go to whatever is under the pointer, and Pilot aimed at the first window the app has on
+  screen. In full screen that's Chrome's thin tab-strip window, so the pointer went to the tabs (it
+  was sent to y=53 of 982) and the page never moved.
+- Fix: the pointer now always goes to the middle of the window you're working in (the focused
+  window, from Accessibility), then scrolls. "scroll left" / "scroll right" are new.
+- Verified here on a test page that reports its own scroll position: down + right → 480, 480;
+  left + up → 0, 0. About 140 ms per scroll.
+- Tried and dropped: checking whether the content moved, so the toast could say "nothing moved".
+  Chrome doesn't update element positions reliably after a scroll (3 false "nothing moved" out of
+  7), and a false error is as misleading as a false ✓. 134 BrainCheck cases.
+
 ## 28 Oct: Commands on selected text (4)
 - Select text anywhere, then "Pilot, search this" / "google this" (Google), "translate this" (Google
   Translate to English), "define this" / "what does this mean" (the Dictionary app, offline), or

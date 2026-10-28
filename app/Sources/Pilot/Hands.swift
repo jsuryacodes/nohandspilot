@@ -110,7 +110,7 @@ enum Hands {
             do { try p.run() } catch { return "Couldn't open Chrome: \(error.localizedDescription)" }
             return waitForFront("Google Chrome")
         case .media(let key): media(key)
-        case .scroll(let dir, let ticks): scroll(down: dir != "up", ticks: ticks)
+        case .scroll(let dir, let ticks): return scroll(dir, ticks: ticks)
         case .wait(let ms): usleep(useconds_t(ms * 1000))
         case .help: DispatchQueue.main.async { HelpWindow.shared.show() }
         case .menu(let app, let path): return Screen.pressMenu(app, path)
@@ -298,18 +298,22 @@ enum Hands {
 
     // MARK: scroll
 
-    /// Scroll events go to the window under the pointer, so park the pointer in the front window first.
-    static func scroll(down: Bool, ticks: Int) {
-        if let front = NSWorkspace.shared.frontmostApplication, let r = frontWindow(pid: front.processIdentifier),
-           let mouse = CGEvent(source: nil)?.location, !r.contains(mouse) {
-            CGWarpMouseCursorPosition(CGPoint(x: r.midX, y: r.midY))
-            CGAssociateMouseAndMouseCursorPosition(1)
-        }
+    /// Scroll events go to whatever is under the pointer, not to the front app, so the pointer always goes to the middle
+    /// of the window you're working in first: the main content is almost always there (the page, the conversation).
+    /// Not the first window on screen: in full screen that was Chrome's tab strip, so every scroll hit the tabs.
+    static func scroll(_ dir: String, ticks: Int) -> String? {
+        guard let app = Screen.front, let win = Screen.window(AXUIElementCreateApplication(app.processIdentifier))
+                .flatMap({ Screen.rect(Screen.attr($0, kAXPositionAttribute), Screen.attr($0, kAXSizeAttribute)) }) ?? frontWindow(pid: app.processIdentifier)
+        else { return "No window to scroll" }
+        CGEvent(mouseEventSource: source, mouseType: .mouseMoved, mouseCursorPosition: CGPoint(x: win.midX, y: win.midY), mouseButton: .left)?
+            .post(tap: .cghidEventTap)
+        usleep(30_000)
+        let (v, h): (Int32, Int32) = dir == "up" ? (80, 0) : dir == "left" ? (0, 80) : dir == "right" ? (0, -80) : (-80, 0)
         for _ in 0..<ticks {   // 80 px each: 6 ≈ half a page, 16 ≈ a page
-            CGEvent(scrollWheelEvent2Source: source, units: .pixel, wheelCount: 1, wheel1: down ? -80 : 80, wheel2: 0, wheel3: 0)?
-                .post(tap: .cghidEventTap)
+            CGEvent(scrollWheelEvent2Source: source, units: .pixel, wheelCount: 2, wheel1: v, wheel2: h, wheel3: 0)?.post(tap: .cghidEventTap)
             usleep(12_000)
         }
+        return nil
     }
 }
 

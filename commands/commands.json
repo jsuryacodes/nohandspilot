@@ -124,6 +124,8 @@
 
     { "id": "scroll_down", "phrases": ["scroll down", "scroll", "down", "scroll down little"], "action": { "type": "scroll", "direction": "down" }, "say": "Scrolled down" },
     { "id": "scroll_up", "phrases": ["scroll up", "up", "scroll up little"], "action": { "type": "scroll", "direction": "up" }, "say": "Scrolled up" },
+    { "id": "scroll_right", "phrases": ["scroll right", "scroll to right"], "action": { "type": "scroll", "direction": "right" }, "say": "Scrolled right" },
+    { "id": "scroll_left", "phrases": ["scroll left", "scroll to left"], "action": { "type": "scroll", "direction": "left" }, "say": "Scrolled left" },
     { "id": "page_down", "phrases": ["page down", "scroll down lot", "scroll down more", "scroll more"], "action": { "type": "scroll", "direction": "down", "amount": 16 }, "say": "Page down" },
     { "id": "page_up", "phrases": ["page up", "scroll up lot", "scroll up more"], "action": { "type": "scroll", "direction": "up", "amount": 16 }, "say": "Page up" },
     { "id": "scroll_top", "phrases": ["scroll to top", "switch to top", "top of page", "top"], "action": { "type": "keys", "keys": "cmd+up" }, "say": "Top" },

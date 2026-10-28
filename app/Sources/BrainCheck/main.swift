@@ -67,6 +67,8 @@ check("Pilot, ask Claude what is a docker bridge network", [.openApp("Claude"), 
 // chains
 check("Pilot, open Chrome, new tab, search for Docker networking.", [chrome, .keys("cmd+t"), .keys("cmd+l"), .type("Docker networking"), .keys("enter")])
 check("Pilot open chrome then new tab and then scroll down", [chrome, .keys("cmd+t"), .scroll("down", 6)])
+check("Pilot, scroll right", [.scroll("right", 6)])
+check("Pilot, scroll to the left.", [.scroll("left", 6)])
 check("Pilot, search for salt and pepper", app: "Google Chrome", [.keys("cmd+l"), .type("salt and pepper"), .keys("enter")])
 check("Pilot, open chrome, blorp, new tab", nil)
 check("Pilot, open YouTube website, then scroll down a lot", [.openURL("https://www.youtube.com"), .scroll("down", 16)])
