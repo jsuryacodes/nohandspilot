@@ -158,12 +158,14 @@ public final class Brain {
         return ns.substring(from: m.range.upperBound)
     }
 
-    private var typos = true
+    private var typos = true, menus = true
 
     /// `typos: false` skips typo-tolerant app names (step 6e), e.g. to ask whether a phrase is already taken.
-    public func plan(_ text: String, frontmostApp: String?, requireTrigger: Bool = true, typos: Bool = true) -> Plan {
+    /// `menus: false` skips menu items (rule 8), so nothing reads the screen.
+    public func plan(_ text: String, frontmostApp: String?, requireTrigger: Bool = true, typos: Bool = true, menus: Bool = true) -> Plan {
         self.typos = typos
-        defer { self.typos = true }
+        self.menus = menus
+        defer { self.typos = true; self.menus = true }
         var body = text
         if let rest = stripTrigger(text) { body = rest } else if requireTrigger { return .notForPilot }
         if let teaching = teaching(body) { return teaching }
@@ -175,22 +177,59 @@ public final class Brain {
         }
     }
 
-    /// Wake word: Apple's recognizer heard `said` after "Pilot", the first `missed` words before Wispr's mic was on,
-    /// and Wispr then typed `wispr`. Returns the command: those first words joined to Wispr's text, else Apple's words
-    /// alone. Wispr's first word may repeat the last of them (Wispr's copy stays) or be the end of a word it half
-    /// heard ("Rome" for "chrome", "Cross" for "across"; Apple's whole word stays).
-    public func joinWake(said: [String], missed: Int, wispr: String, frontmostApp: String?) -> String {
-        let heard = wispr.split(separator: " ").map(String.init), start = Array(said.prefix(missed)), next = said.dropFirst(missed).prefix(1)
-        func letters(_ w: String?) -> String { (w ?? "").lowercased().filter(\.isLetter) }
-        let first = letters(heard.first), last = letters(start.last), upcoming = letters(next.first)
-        var join = start + heard
-        if !first.isEmpty, first != upcoming {
-            if first == last { join = start.dropLast() + heard }
-            else if upcoming.hasSuffix(first) { join = start + next + heard.dropFirst() }
-            else if last.hasSuffix(first) { join = start + heard.dropFirst() }
+    /// Wake word: Apple's recognizer heard `said` after "Pilot", and Wispr, whose mic opens ~0.4 s after the word, typed
+    /// `wispr`: the end of the same command, or all of it if you paused. Returns Apple's words up to where Wispr's begin,
+    /// then Wispr's. That point is where Wispr's words line up best with the end of Apple's (word edit distance; a word
+    /// Wispr half heard, "Rome" for "chrome", lines up with Apple's whole word), not a guess from timing: on 29 Oct the
+    /// timing guess turned "open Wi-Fi settings" + "Settings" into "open Settings". If no word of Wispr's equals one of
+    /// Apple's, Apple's words go first ("close Claude" + "Odd"). The first of these that is a command wins.
+    public func joinWake(said: [String], wispr: String, frontmostApp: String?) -> String {
+        func norm(_ w: String) -> String { w.lowercased().filter { $0.isLetter || $0.isNumber } }
+        let heard = wispr.split(separator: " ").map(String.init).filter { !norm($0).isEmpty }
+        let a = said.map(norm), w = heard.map(norm)
+        func align(_ s: Int) -> (cost: Double, equal: Int) {   // Wispr's words against Apple's from index s on
+            let b = Array(a[s...])
+            var d = [[(cost: Double, equal: Int)]](repeating: .init(repeating: (0, 0), count: b.count + 1), count: w.count + 1)
+            for i in 0...w.count {
+                for j in 0...b.count where i + j > 0 {
+                    var options: [(cost: Double, equal: Int)] = []
+                    if i > 0 { options.append((d[i - 1][j].cost + 1, d[i - 1][j].equal)) }
+                    if j > 0 { options.append((d[i][j - 1].cost + 1, d[i][j - 1].equal)) }
+                    if i > 0, j > 0 {
+                        let x = w[i - 1], y = b[j - 1]
+                        let c = x == y ? 0 : (x.count > 1 && y.hasSuffix(x)) || (y.count > 1 && x.hasSuffix(y)) ? 0.5 : 1
+                        options.append((d[i - 1][j - 1].cost + c, d[i - 1][j - 1].equal + (c == 0 ? 1 : 0)))
+                    }
+                    d[i][j] = options.min { ($0.cost, -$0.equal) < ($1.cost, -$1.equal) }!
+                }
+            }
+            return d[w.count][b.count]
         }
-        let texts = [join, start + heard, said].map { $0.joined(separator: " ") }.filter { !$0.isEmpty }
+        let best = (0...a.count).map { (s: $0, r: align($0)) }.min { ($0.r.cost, $0.s) < ($1.r.cost, $1.s) }!   // ties: more of Wispr's
+        let joined = Array(said.prefix(best.s)) + heard, patched = Array(said.prefix(best.s + 1)) + heard.dropFirst()   // patched: Wispr's first word was a scrap
+        let texts = (best.r.equal > 0 ? [joined, patched, said] : [said, joined, patched]).map { $0.joined(separator: " ") }.filter { !$0.isEmpty }
         return texts.first { if case .unmatched = plan($0, frontmostApp: frontmostApp, requireTrigger: false) { return false }; return true } ?? texts.first ?? wispr
+    }
+
+    /// Every phrase with its slots filled in by example values, plus macro names: sentences that teach a speech
+    /// recognizer what Pilot listens for.
+    public func trainingPhrases() -> [String] {
+        var examples: [String: [String]] = [
+            "app": Array(Set(config.apps.keys).union(installedApps)), "site": Array((config.sites ?? [:]).keys),
+            "n": ["1", "2", "3", "one", "two", "three", "last"], "url": ["docker.com", "github.com"],
+            "query": ["docker networking", "lofi beats", "the weather"], "text": ["hello how are you"],
+            "target": ["sign in", "send", "downloads", "settings"] + (1...30).map(String.init),
+        ]
+        for (slot, values) in slotValues { examples[slot] = values.map(\.key) }
+        var out = Set(config.macros.keys)
+        for phrase in config.commands.flatMap(\.phrases) {
+            var filled = [phrase]
+            for (slot, values) in examples where phrase.contains("{\(slot)}") {
+                filled = filled.flatMap { p in values.map { p.replacingOccurrences(of: "{\(slot)}", with: $0) } }
+            }
+            out.formUnion(filled.filter { !$0.contains("{") })
+        }
+        return out.sorted()
     }
 
     /// Rule 1b, on the raw text so commas stay inside: "when I say X, do A, B", "teach that: A", "that means A", "forget X".
@@ -247,7 +286,7 @@ public final class Brain {
                 continue
             }
             let said = key(canon(tokenize(seg)))   // rule 8
-            if let a = app, let path = menuItems?(a).first(where: { normalize($0.last ?? "") == said }) {
+            if menus, let a = app, let path = menuItems?(a).first(where: { normalize($0.last ?? "") == said }) {
                 steps.append(Step(id: "menu", say: path.joined(separator: " › "), actions: [.menu(a, path)]))
                 freeIndex = nil
                 continue

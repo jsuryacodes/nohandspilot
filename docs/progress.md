@@ -2,6 +2,35 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 29 Oct: "Pilot" heard every time, the right words, sooner
+- Why it missed: Wispr's history shows that in one breath Wispr only catches the last word or nothing (11 of your
+  last 31 sessions were empty). So Pilot waited 2.5 s for text that never came, and its timing guess put Wispr's
+  word in the wrong place: "open Wi-Fi settings" + Wispr's "Settings" ran "open Settings", and "hide numbers" +
+  "Numbers" showed the numbers.
+- Apple's recognizer now learns Pilot's own sentences: a custom language model built on this Mac from every
+  phrase with example values (3,502 sentences, 2.6 s at launch, rebuilt only when commands or taught phrases
+  change). Tested offline on 70 of your "Pilot, …" recordings from Wispr's history: "Pilot" heard in all 70 with
+  or without it, and the words after it exactly right in 52 (45 before). Where Wispr misheard, it was often right:
+  "scroll left across space" where Wispr wrote "grow left across base". 50 other dictations: no false "Pilot".
+  On synthetic Indian English voices (Rishi, Aman, Tara): "Pilot" in 18 of 18 clips (16 before), and "scroll
+  write across space" became "scroll right".
+- Live listening fixes: "Pilot" anywhere in the transcript counts (before, only the last two words were checked,
+  so a word first heard as "pile" and corrected later was missed); "Pilots", "Pilot's", "Pilate" and "Violet" count
+  (Violet came up on your recordings); a result that packs "Pilot scroll" into one piece is split into words; no
+  deaf half-second when the recognizer restarts; the once-a-minute restart waits for a pause; and if the mic
+  stops (sleep, a device change), Pilot restarts it within ~2 s (checked by switching the input device).
+- Joining: Wispr's words are lined up with the end of Apple's, word by word, instead of by timing. All 6 wrong
+  joins from your 03:27 log now come out right (BrainCheck). If none of Wispr's words match, Apple's go first.
+- Faster: Pilot measures your voice level, so it knows when you'd finished before Wispr's mic opened (0.37 s
+  after its link). Then it runs at once instead of waiting for Wispr. A whole command ("scroll up") ends 0.4 s
+  after the last word, once the mic has also been quiet 0.6 s; anything else ("open …") after 1 s. That second
+  check came from a test: "hide numbers" stalled at "hide", and Cmd+H hid Chrome. If Wispr heard you, its text is
+  awaited for 1.2 s (was 2.5 s; 95% of its 2,598 pastes take under 1.1 s).
+- Measured live through a virtual audio cable (Rishi, Aman, Tara voices; Wispr kept on the real mic): 24 of 24
+  wake words caught in the runs where the Mac wasn't in use; "you'd finished first" commands ran 0.9–1.2 s after
+  the speech ended. Where Wispr heard you, expect about 1.3 s (its text, ~0.4 s, instead of the 1.2 s wait the
+  cable test hit).
+
 ## 29 Oct: Play and pause the video on screen, fixes from your last test
 - Your test (03:29): "play video" and "resume video" weren't phrases, so nothing happened. Now "play", "pause",
   "resume", "play / pause / stop the video", "pause it", "stop music" and "play pause" (toggle) all work.

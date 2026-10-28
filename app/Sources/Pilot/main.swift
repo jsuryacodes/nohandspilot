@@ -59,29 +59,40 @@ final class Pilot {
     private(set) var learned: [String: [String]] = [:]
     private var loadedAt: [Date?] = []
     private var lastMiss: String?   // for "teach that"
-    /// A wake-word command whose text Wispr is still sending, and until when Wispr's pastes belong to one.
-    private var wake: (said: [String], missed: Int)?
+    /// A wake-word command whose text Wispr is still sending (`wakes` counts them), and until when Wispr's pastes belong to one.
+    private var wake: [String]?, wakes = 0
     private var swallowWisprUntil = Date.distantPast
+    /// Called with each newly loaded Brain (the app teaches the wake word its sentences).
+    var onLoad: (Brain) -> Void = { _ in }
 
-    /// Wake word, once you paused: Apple's recognizer heard `said` after "Pilot", the first `missed` words before
-    /// Wispr's mic was on. If Wispr recorded the rest, its paste brings the command (`wisprPaste`). If Wispr isn't
-    /// recording, can't have heard any of it, or sends nothing, Apple's words run.
-    func wakeCommand(_ said: [String], missed: Int, wispr: Bool) {
+    /// Wake word, once you paused: Apple's recognizer heard `said` after "Pilot". If you were still talking once Wispr's
+    /// mic was on, its paste brings the command (`wisprPaste`). If Wispr isn't recording, heard none of it, or sends
+    /// nothing, Apple's words run.
+    func wakeCommand(_ said: [String], wispr: Bool, wisprHeard: Bool) {
         let mine = said.joined(separator: " ")
         func runMine() { if !mine.isEmpty { handle(mine, source: "voice", frontApp: appName(NSWorkspace.shared.frontmostApplication)) } }
-        guard wispr, missed < said.count || said.isEmpty else {
-            if wispr { swallowWisprUntil = Date() + 1.5 }   // all said before Wispr's mic was on: drop any scrap it caught
+        guard wispr, wisprHeard || said.isEmpty else {
+            if wispr { swallowWisprUntil = Date() + 1.5 }   // you'd finished before Wispr's mic was on: drop any scrap it sends
             runMine()
             return
         }
-        wake = (said, missed)
+        wake = said
+        wakes += 1
+        let id = wakes
         swallowWisprUntil = Date() + 4   // even if Wispr is late, its text of this is never typed
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [self] in   // Wispr usually answers in ~0.6 s
-            guard let w = wake, w.said == said else { return }
+        // Wispr's text comes 0.4 s after the stop (median of 2,598 in its history), within 1.1 s for 95%.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [self] in
+            guard wake != nil, wakes == id else { return }
             wake = nil
-            Log.debug("Wake word: no text from Wispr, running what Pilot heard")
+            Log.debug("Wake word: no text from Wispr in 1.2 s, running what Pilot heard")
             runMine()
         }
+    }
+
+    /// For ending a wake-word command sooner: is this already a whole command? (Doesn't read menus.)
+    func isCommand(_ text: String) -> Bool {
+        guard let brain, case .run = brain.plan(text, frontmostApp: appName(NSWorkspace.shared.frontmostApplication), requireTrigger: false, menus: false) else { return false }
+        return true
     }
 
     /// Every paste from Wispr. Returns true to swallow it.
@@ -94,7 +105,7 @@ final class Pilot {
         wake = nil
         swallowWisprUntil = .distantPast
         reloadIfChanged()
-        let command = brain?.joinWake(said: w.said, missed: w.missed, wispr: text, frontmostApp: front) ?? text
+        let command = brain?.joinWake(said: w, wispr: text, frontmostApp: front) ?? text
         Log.debug("Wake word: Wispr typed \"\(text)\" → \"\(command)\"")
         handle("Pilot, " + command, source: "wispr", frontApp: front)
         return true
@@ -117,6 +128,7 @@ final class Pilot {
             Hands.browser = brain!.config.browser ?? Hands.browser
             brain!.menuItems = { Screen.menus(of: $0) }
             loadedAt = stamps
+            onLoad(brain!)
             Log.debug("Loaded \(brain!.config.commands.count) commands and \(learned.count) taught phrases from \(commandsURL.deletingLastPathComponent().path)")
             return nil
         } catch {
@@ -256,6 +268,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationDidFinishLaunching(_ note: Notification) {
         Screen.start()
         Hands.trackActivations()
+        pilot.onLoad = { WakeWord.shared.train($0.trainingPhrases()) }
         pilot.reloadIfChanged()
         HelpWindow.shared.text = { [pilot] in pilot.helpText() }
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -275,7 +288,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         startTapWhenTrusted()
         WakeWord.shared.onWake = { HUD.show("🎙 Listening…", seconds: 2) }
-        WakeWord.shared.onCommand = { [pilot] said, missed, wispr in pilot.wakeCommand(said, missed: missed, wispr: wispr) }
+        WakeWord.shared.onCommand = { [pilot] said, wispr, heard in pilot.wakeCommand(said, wispr: wispr, wisprHeard: heard) }
+        WakeWord.shared.isCommand = { [pilot] in pilot.isCommand($0) }
         if WakeWord.shared.isOn { WakeWord.shared.setOn(true) }
         Log.debug("Pilot started. Accessibility: \(AXIsProcessTrusted())")
     }
