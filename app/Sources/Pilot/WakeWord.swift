@@ -199,7 +199,9 @@ final class WakeWord {
         words = split.map { $0.lowercased().filter(\.isLetter) }
         lastChange = Date()
         guard mode == .listening, let at = words.firstIndex(where: Self.names.contains) else { return }
-        if CGEventSource.flagsState(.hidSystemState).contains(.maskSecondaryFn) {   // holding Wispr's key: already dictating
+        // Holding Wispr's fn key: already dictating. The key itself (63), not the fn flag, which a shortcut any app sends
+        // can leave on until you next touch the keyboard.
+        if CGEventSource.keyState(.hidSystemState, key: 63) {
             Log.debug("Wake word: heard \"\(raw[at])\" with fn held (Wispr's key), so it's Wispr's")
             newTask()
             return

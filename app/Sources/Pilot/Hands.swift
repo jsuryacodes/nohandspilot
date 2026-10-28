@@ -208,7 +208,10 @@ enum Hands {
     static func press(_ code: CGKeyCode, _ flags: CGEventFlags) {
         for down in [true, false] {
             let e = CGEvent(keyboardEventSource: source, virtualKey: code, keyDown: down)
-            e?.flags = flags
+            // The key up has no modifiers, as if you'd let go of them. With them, macOS kept them "held" until your next
+            // real key press: after Ctrl+→, fn stayed on (the wake word took every "Pilot" for Wispr's fn key, 29 Oct)
+            // and so did Control (a click Pilot made next carried it).
+            e?.flags = down ? flags : []
             e?.post(tap: .cghidEventTap)
         }
         usleep(40_000)   // give the app a beat before the next step

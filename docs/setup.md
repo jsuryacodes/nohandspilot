@@ -174,6 +174,9 @@ app and whether you use more than one display.
    from Pilot, so "Pilot …" runs from Pilot's own hearing and Wispr doesn't start (the log says
    "secure input is on"). Untick it and Terminal works like the other apps. The same happens while a
    password field has focus.
+8. Hands off the keyboard: "Pilot, scroll right across space", then straight away "Pilot, scroll left
+   across space". Both run. Also after pressing → yourself (skipping in a video), "Pilot, pause" works.
+   Then hold fn and say "Pilot, scroll down": it scrolls once, and the log says `with fn held`.
 
 ```
 grep -E "Wake word|Ran |Cmd\+V|Player button" ~/Library/Application\ Support/Pilot/debug.log | tail -30
@@ -183,7 +186,8 @@ How to read the log:
 - `heard "open Wi-Fi settings" after 1.6 s; Wispr heard you too` then `Wispr typed "Settings " → "open
   Wi-Fi Settings"`: the join worked. Pilot supplied the first words, Wispr the rest.
 - `you'd finished before Wispr's mic was on`: it ran on Pilot's hearing at once, without waiting.
-- `heard "Pilot" with fn held`: you were holding Wispr's key, so Pilot left it to Wispr.
+- `heard "Pilot" with fn held`: you were holding Wispr's fn key, so Pilot left it to Wispr. If you
+  weren't, that's a bug: tell me.
 - `the microphone stopped, restarting it`: the mic went away (sleep, AirPods); Pilot reopened it.
 
 ## Everyday use

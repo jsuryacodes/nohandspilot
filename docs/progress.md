@@ -2,6 +2,21 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 29 Oct: "Pilot" no longer ignored after arrow-key shortcuts
+- Your test (04:34): after "Pilot, scroll right across space" ran, the next six "Pilot"s did nothing.
+  The log said `heard "Pilot" with fn held (Wispr's key)`, but Wispr's history has no session then,
+  so fn wasn't pressed.
+- Cause: Pilot ignores "Pilot" while you hold Wispr's fn key, and it read that from macOS's modifier
+  flags. Those go stale. Pilot sent Ctrl+→ with Control still on in the key up, so macOS kept Control
+  and fn "held" until your next real key press. Reproduced on an unused key (Ctrl+F16): stuck until
+  someone touched the keyboard. That test also dropped 4 of your "Pilot"s (04:45:31–42). Your own
+  → key does it to fn too: pressing it to skip in a video was enough to block "Pilot".
+- Fix 1, in every shortcut Pilot sends (and its Cmd+V / Cmd+C): the key up carries no modifiers, as
+  if you'd let go. Checked through the app: "scroll to top" (Cmd+↑) now leaves the flags clean. Same
+  cause, also fixed: a click Pilot made while they were stuck had Control set (a right-click).
+- Fix 2: the wake word checks the fn key itself (key 63), which no shortcut changes. It stayed "up"
+  through every stuck stretch above. Not yet checked with your finger on fn (setup step 8).
+
 ## 29 Oct: "Pilot" heard every time, the right words, sooner
 - Why it missed: Wispr's history shows that in one breath Wispr only catches the last word or nothing (11 of your
   last 31 sessions were empty). So Pilot waited 2.5 s for text that never came, and its timing guess put Wispr's
