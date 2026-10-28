@@ -143,28 +143,48 @@ app and whether you use more than one display.
 | "Pilot, ask Claude about this" | Claude opens a new chat with the text and sends it |
 | "Pilot, search this" with nothing selected | "Select some text first"; your clipboard is unchanged |
 
-## 7. No hands: say "Pilot" (28 Oct)
+## 7. No hands: say "Pilot" (29 Oct)
 
 1. Turn it on once: Pilot menu → **Listen for "Pilot"**, or say/type "start listening". Allow the
-   Microphone and Speech Recognition prompts.
-2. In Chrome, WhatsApp or Notes, say **"Pilot scroll right across space"** in one breath. Wispr's bar
-   appears as soon as Pilot hears "Pilot" (~0.3 s after the word). The space moves about a second
-   after you stop. Then try it with a short pause after "Pilot": Wispr hears the whole command.
-3. "Pilot dictate", then talk: Wispr starts and types it into the focused box until you pause.
-4. "Pilot stop listening" turns it off (the mic closes).
-5. With the cursor in a text field (WhatsApp, Chrome, Notes): "Pilot scroll down" runs and types
+   Microphone and Speech Recognition prompts. The log says `taught the recognizer 3502 sentences`
+   ~3 s after Pilot starts; from then on Apple's recognizer knows Pilot's phrases.
+2. Two ways to say it, both keep Wispr:
+   - **One breath:** "Pilot scroll right across space". Wispr's mic opens ~0.7 s after you say "Pilot",
+     so Pilot's own hearing supplies the first words and Wispr the rest. If you'd already finished
+     (short ones: "Pilot pause"), it runs at once (~1 s after you stop) instead of waiting for Wispr.
+   - **Pause after "Pilot"** until Wispr's bar or start sound appears, then the command: Wispr hears
+     all of it. Runs ~1.3 s after you stop (Wispr's text takes ~0.4 s).
+3. Play/pause: open a YouTube video in Chrome.
+   | Say | Expected |
+   |---|---|
+   | "Pilot, pause the video" (playing) | It pauses. Toast "✓ Paused" |
+   | "Pilot, pause" again | Nothing pressed. Toast "✓ Already paused" |
+   | "Pilot, play" | It plays. Toast "✓ Playing" |
+   | "Pilot, pause" with Spotify/Music playing and no video on screen | Spotify/Music pauses (media key) |
+   Wispr pauses what's playing while it listens ("Pause music while dictating" in Wispr's settings) and
+   resumes it when it stops, so the video may stop for a moment as soon as you say "Pilot". Pilot acts
+   0.7 s after it stops Wispr, after Wispr's resume. If "pause" ever ends with the video playing, tell
+   me: that delay is the knob (`Hands.media`).
+4. "Pilot dictate", then talk: Wispr starts and types it into the focused box until you pause.
+5. "Pilot stop listening" turns it off (the mic closes).
+6. With the cursor in a text field (WhatsApp, Chrome, Notes): "Pilot scroll down" runs and types
    nothing; "Pilot swipe right" (not a command) shows "Didn't catch" and types nothing. With Wispr's
    key held, "Pilot, swipe right" types nothing either.
-6. Terminal: while **Terminal menu → Secure Keyboard Entry** is ticked, macOS hides Wispr's paste
+7. Terminal: while **Terminal menu → Secure Keyboard Entry** is ticked, macOS hides Wispr's paste
    from Pilot, so "Pilot …" runs from Pilot's own hearing and Wispr doesn't start (the log says
-   "secure input is on"). Untick it and Terminal works like the other apps.
+   "secure input is on"). Untick it and Terminal works like the other apps. The same happens while a
+   password field has focus.
 
 ```
-grep -E "Wake word|Ran |Cmd\+V" ~/Library/Application\ Support/Pilot/debug.log | tail -30
+grep -E "Wake word|Ran |Cmd\+V|Player button" ~/Library/Application\ Support/Pilot/debug.log | tail -30
 ```
 
-In the log, `Wispr's mic missed 2 of the words` then `Wispr typed "Across space." → "scroll right
-Across space."` means the join worked: Pilot supplied the first two words, Wispr the rest.
+How to read the log:
+- `heard "open Wi-Fi settings" after 1.6 s; Wispr heard you too` then `Wispr typed "Settings " → "open
+  Wi-Fi Settings"`: the join worked. Pilot supplied the first words, Wispr the rest.
+- `you'd finished before Wispr's mic was on`: it ran on Pilot's hearing at once, without waiting.
+- `heard "Pilot" with fn held`: you were holding Wispr's key, so Pilot left it to Wispr.
+- `the microphone stopped, restarting it`: the mic went away (sleep, AirPods); Pilot reopened it.
 
 ## Everyday use
 

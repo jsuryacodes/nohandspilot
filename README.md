@@ -17,7 +17,11 @@ Status: in development for No Hands: The Wispr Challenge (Oct 2026). See [docs/p
   space"). Apple's on-device speech recognizer hears "Pilot", offline, and Pilot starts Wispr's
   hands-free mode through Wispr's own link in that moment; Wispr transcribes the command. Wispr's mic
   takes ~0.36 s to open (with its fn key too), so in one breath the first words come from Apple's
-  transcript, joined to Wispr's text. "Pilot, dictate" starts Wispr for free text.
+  transcript, lined up word by word with Wispr's text. Apple's recognizer is taught Pilot's own
+  sentences (a custom language model built on the Mac). "Pilot, dictate" starts Wispr for free text.
+- **Play / pause:** "Pilot, pause the video" presses the player's own button in the front window
+  (YouTube, Netflix, Spotify, Music), so "pause" never starts anything; with no player on screen it
+  presses the media key.
 - **Brain** (`app/Sources/PilotBrain`): platform-neutral matching against
   [`commands/commands.json`](commands/commands.json): phrases with slots, synonyms, app aliases,
   per-app commands, macros, chains, and any menu item of the front app by its exact title.

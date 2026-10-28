@@ -9,7 +9,7 @@ your Mac before recording. Tip: use Wispr's hands-free mode so your hands stay v
 | 0:15 | Empty desktop | "Pilot, open Chrome, new tab, search for Docker networking." |
 | 0:25 | Results page | "Pilot, scroll down." … "Pilot, scroll down a lot." |
 | 0:32 | | "Pilot, switch to my college profile." |
-| 0:40 | | "Pilot, play lofi beats on YouTube." … "Pilot, pause the music." |
+| 0:40 | | "Pilot, play lofi beats on YouTube." … "Pilot, show numbers." … "Pilot, click" + a video's number … "Pilot, pause the video." … "Pilot, play." |
 | 0:52 | | "Pilot, ask Claude what is a Docker bridge network." |
 | 1:05 | Claude answering | "Pilot, open the sidebar in Claude." |
 | 1:10 | Click into Claude's box | *Normal dictation:* "Explain it like I'm five." Text types normally: **anything not starting with "Pilot" is untouched.** |
@@ -23,5 +23,7 @@ your Mac before recording. Tip: use Wispr's hands-free mode so your hands stay v
 - Pilot menu → Open at Login (so it's clearly a daily tool), and say "Pilot, what can I say?" once to
   show the command list.
 - Close apps that make noise; quit Pilot's command bar if it's open.
+- No hands: say a chain ("open Chrome, new tab, …") without a long stop at the commas. A stop of 0.6 s
+  after a whole command ("open Chrome") ends it there.
 - If a line misfires, the toast says "Didn't catch … Try …". Add the phrase you naturally used to
   `commands/commands.json`; it applies on the next command, no rebuild needed.
