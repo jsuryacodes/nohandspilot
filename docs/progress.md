@@ -2,6 +2,29 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 29 Oct: Wispr back for "Pilot …", started the instant Pilot hears the word
+- Your ask: keep Wispr (mandatory) and trigger it straight after "Pilot", like the fn key. Your
+  02:33 tries with Apple alone all failed ("scroll write across space", "scroll right Cross space").
+- Measured (CoreAudio's per-app "mic running" flag, polled every 1 ms): Wispr's mic is on 349–375 ms
+  after its link and 352–373 ms after a simulated fn press, every time, because Wispr opens its mic
+  fresh for each dictation. So fn is no faster, and Pilot keeps the link. Apple's recognizer adds
+  ~0.3 s before it reports "Pilot", so Wispr hears from ~0.6 s after the word.
+- Now: Pilot starts Wispr in the same moment it hears "Pilot", before logging or showing anything.
+  If you pause a beat, Wispr hears the whole command. In one breath, Pilot notes which words Apple
+  heard before Wispr's mic was on and puts them in front of Wispr's text ("scroll right" + "Across
+  space."). Wispr's first word can be the end of a word it half heard ("Rome" for "chrome", "Cross"
+  for "across"): then Pilot's whole word is used. If the join doesn't match a command, Pilot's own
+  words are tried. 8 BrainCheck cases for the join (`Brain.joinWake`).
+- If Wispr can't have heard any of it (a short "Pilot mute"), Pilot runs its own words at once and
+  drops whatever scrap Wispr sends in the next 1.5 s. If Wispr sends nothing within 2.5 s, Pilot's
+  own words run. Wispr's text of a wake command is never typed (it's dropped for 4 s).
+- Wispr ignores a start sent within ~0.3 s of a stop (it keeps recording that long), so "Pilot
+  dictate" now waits until 0.5 s after the command's stop before starting Wispr again.
+- With secure input on (Terminal's Secure Keyboard Entry), Pilot can't catch Wispr's paste, so it
+  doesn't start Wispr and runs its own words, as before. Untick it to get Wispr in Terminal too.
+- From Wispr's history: a session with no speech pastes nothing; Wispr's text arrives 0.25–0.55 s
+  after the stop. A command now runs ~1.3 s after you stop speaking (was ~0.8 s without Wispr).
+
 ## 28 Oct: "Pilot scroll right across space" in one breath, run instantly
 - Your ask: no wait between "Pilot" and the command. Wispr can't do that: it only starts once Pilot
   has heard "Pilot" (~0.3 s after the word) and takes up to ~0.3 s more to record, so the first words

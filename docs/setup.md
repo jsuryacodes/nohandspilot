@@ -147,18 +147,24 @@ app and whether you use more than one display.
 
 1. Turn it on once: Pilot menu → **Listen for "Pilot"**, or say/type "start listening". Allow the
    Microphone and Speech Recognition prompts.
-2. Say **"Pilot scroll right across space"** in one breath, no pause after "Pilot". The space moves
-   under a second after you stop. Wispr doesn't start (Pilot heard it all itself).
+2. In Chrome, WhatsApp or Notes, say **"Pilot scroll right across space"** in one breath. Wispr's bar
+   appears as soon as Pilot hears "Pilot" (~0.3 s after the word). The space moves about a second
+   after you stop. Then try it with a short pause after "Pilot": Wispr hears the whole command.
 3. "Pilot dictate", then talk: Wispr starts and types it into the focused box until you pause.
 4. "Pilot stop listening" turns it off (the mic closes).
-5. With the cursor in a text field (WhatsApp, Chrome, Notes, Terminal): "Pilot scroll down" runs and
-   types nothing; "Pilot swipe right" (not a command) shows "Didn't catch" and types nothing. With
-   Wispr's key held, "Pilot, swipe right" types nothing either (except in Terminal with **Terminal
-   menu → Secure Keyboard Entry** ticked: macOS then hides Wispr's paste from Pilot).
+5. With the cursor in a text field (WhatsApp, Chrome, Notes): "Pilot scroll down" runs and types
+   nothing; "Pilot swipe right" (not a command) shows "Didn't catch" and types nothing. With Wispr's
+   key held, "Pilot, swipe right" types nothing either.
+6. Terminal: while **Terminal menu → Secure Keyboard Entry** is ticked, macOS hides Wispr's paste
+   from Pilot, so "Pilot …" runs from Pilot's own hearing and Wispr doesn't start (the log says
+   "secure input is on"). Untick it and Terminal works like the other apps.
 
 ```
 grep -E "Wake word|Ran |Cmd\+V" ~/Library/Application\ Support/Pilot/debug.log | tail -30
 ```
+
+In the log, `Wispr's mic missed 2 of the words` then `Wispr typed "Across space." → "scroll right
+Across space."` means the join worked: Pilot supplied the first two words, Wispr the rest.
 
 ## Everyday use
 

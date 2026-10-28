@@ -13,10 +13,11 @@ Status: in development for No Hands: The Wispr Challenge (Oct 2026). See [docs/p
 - **Trigger A:** Wispr pastes dictated text with Cmd+V. Pilot watches for Cmd+V sent *by Wispr*,
   reads the text, and swallows the paste if it starts with "Pilot".
 - **Trigger B:** Control+Option+P opens a command bar you can dictate or type into.
-- **No hands (optional):** with listening on, say "Pilot" and the command in one breath ("Pilot scroll
-  right across space"). Apple's on-device speech recognizer hears both, offline, and the command runs
-  as soon as you pause: no waiting for Wispr to start, which would miss the first words. "Pilot,
-  dictate" starts Wispr's hands-free mode through Wispr's own link for free text.
+- **No hands (optional):** with listening on, say "Pilot" and the command ("Pilot scroll right across
+  space"). Apple's on-device speech recognizer hears "Pilot", offline, and Pilot starts Wispr's
+  hands-free mode through Wispr's own link in that moment; Wispr transcribes the command. Wispr's mic
+  takes ~0.36 s to open (with its fn key too), so in one breath the first words come from Apple's
+  transcript, joined to Wispr's text. "Pilot, dictate" starts Wispr for free text.
 - **Brain** (`app/Sources/PilotBrain`): platform-neutral matching against
   [`commands/commands.json`](commands/commands.json): phrases with slots, synonyms, app aliases,
   per-app commands, macros, chains, and any menu item of the front app by its exact title.

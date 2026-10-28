@@ -225,6 +225,21 @@ check("Pilot, ask Claude about black holes", [.openApp("Claude"), .keys("cmd+n")
 check("Pilot, search for this week's news", app: "Google Chrome", [.keys("cmd+l"), .type("this week's news"), .keys("enter")])
 check("Pilot, type the", nil)   // free text needs one real word
 
+// wake word (29 Oct): the words Pilot heard before Wispr's mic was on, joined to Wispr's text
+func joined(_ said: String, missed: Int, _ wispr: String, app: String? = nil) -> String {
+    brain.joinWake(said: said.split(separator: " ").map(String.init), missed: missed, wispr: wispr, frontmostApp: app)
+}
+check(joined("scroll right a cross base", missed: 2, "Across space."), trigger: false, [.keys("ctrl+right")])   // clean join; Pilot misheard the end
+check(joined("scroll right across base", missed: 3, "Cross space."), trigger: false, [.keys("ctrl+right")])   // Wispr caught the end of "across"
+check(joined("scroll right across base", missed: 2, "Cross space."), trigger: false, [.keys("ctrl+right")])   // same, counted one word earlier
+check(joined("scroll right across space", missed: 0, "Scroll right across space."), trigger: false, [.keys("ctrl+right")])   // paused after "Pilot"
+check(joined("search for docker net walking", missed: 2, "Docker networking.", app: "Google Chrome"), app: "Google Chrome", trigger: false,
+      [.keys("cmd+l"), .type("Docker networking"), .keys("enter")])   // Wispr's words win for free text
+check(joined("search for docker", missed: 3, "Docker networking.", app: "Google Chrome"), app: "Google Chrome", trigger: false,
+      [.keys("cmd+l"), .type("Docker networking"), .keys("enter")])   // both heard "docker": once
+check(joined("open chrome", missed: 1, "Rome."), trigger: false, [chrome])   // Wispr only caught a scrap
+check(joined("", missed: 0, "Open Chrome."), trigger: false, [chrome])   // Pilot heard nothing, Wispr did
+
 // speed: the brain must be far under 100 ms
 let t0 = Date()
 for _ in 0..<100 { _ = brain.plan("Pilot, can you open a new Chrome tab, search for Docker networking.", frontmostApp: "Finder") }

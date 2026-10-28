@@ -59,6 +59,46 @@ final class Pilot {
     private(set) var learned: [String: [String]] = [:]
     private var loadedAt: [Date?] = []
     private var lastMiss: String?   // for "teach that"
+    /// A wake-word command whose text Wispr is still sending, and until when Wispr's pastes belong to one.
+    private var wake: (said: [String], missed: Int)?
+    private var swallowWisprUntil = Date.distantPast
+
+    /// Wake word, once you paused: Apple's recognizer heard `said` after "Pilot", the first `missed` words before
+    /// Wispr's mic was on. If Wispr recorded the rest, its paste brings the command (`wisprPaste`). If Wispr isn't
+    /// recording, can't have heard any of it, or sends nothing, Apple's words run.
+    func wakeCommand(_ said: [String], missed: Int, wispr: Bool) {
+        let mine = said.joined(separator: " ")
+        func runMine() { if !mine.isEmpty { handle(mine, source: "voice", frontApp: appName(NSWorkspace.shared.frontmostApplication)) } }
+        guard wispr, missed < said.count || said.isEmpty else {
+            if wispr { swallowWisprUntil = Date() + 1.5 }   // all said before Wispr's mic was on: drop any scrap it caught
+            runMine()
+            return
+        }
+        wake = (said, missed)
+        swallowWisprUntil = Date() + 4   // even if Wispr is late, its text of this is never typed
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [self] in   // Wispr usually answers in ~0.6 s
+            guard let w = wake, w.said == said else { return }
+            wake = nil
+            Log.debug("Wake word: no text from Wispr, running what Pilot heard")
+            runMine()
+        }
+    }
+
+    /// Every paste from Wispr. Returns true to swallow it.
+    func wisprPaste(_ text: String) -> Bool {
+        let front = appName(NSWorkspace.shared.frontmostApplication)
+        guard let w = wake else {
+            if Date() < swallowWisprUntil { Log.debug("Wake word: Wispr's text of a command that already ran, dropped"); return true }
+            return handle(text, source: "wispr", frontApp: front)
+        }
+        wake = nil
+        swallowWisprUntil = .distantPast
+        reloadIfChanged()
+        let command = brain?.joinWake(said: w.said, missed: w.missed, wispr: text, frontmostApp: front) ?? text
+        Log.debug("Wake word: Wispr typed \"\(text)\" → \"\(command)\"")
+        handle("Pilot, " + command, source: "wispr", frontApp: front)
+        return true
+    }
 
     /// Reloads commands.json and learned.json if either changed since last time. Returns an error message if one is broken.
     @discardableResult func reloadIfChanged(force: Bool = false) -> String? {
@@ -223,9 +263,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem.menu = NSMenu()
         statusItem.menu?.delegate = self
 
-        interceptor.onWisprPaste = { [pilot] text in
-            pilot.handle(text, source: "wispr", frontApp: appName(NSWorkspace.shared.frontmostApplication))
-        }
+        interceptor.onWisprPaste = { [pilot] text in pilot.wisprPaste(text) }
         CommandBar.shared.onSubmit = { [pilot] text, previous in
             pilot.handle(text, source: "bar", frontApp: appName(previous), waitForFocusFrom: true)
         }
@@ -237,9 +275,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         startTapWhenTrusted()
         WakeWord.shared.onWake = { HUD.show("🎙 Listening…", seconds: 2) }
-        WakeWord.shared.onCommand = { [pilot] said in
-            pilot.handle(said, source: "voice", frontApp: appName(NSWorkspace.shared.frontmostApplication))
-        }
+        WakeWord.shared.onCommand = { [pilot] said, missed, wispr in pilot.wakeCommand(said, missed: missed, wispr: wispr) }
         if WakeWord.shared.isOn { WakeWord.shared.setOn(true) }
         Log.debug("Pilot started. Accessibility: \(AXIsProcessTrusted())")
     }

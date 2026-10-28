@@ -175,6 +175,24 @@ public final class Brain {
         }
     }
 
+    /// Wake word: Apple's recognizer heard `said` after "Pilot", the first `missed` words before Wispr's mic was on,
+    /// and Wispr then typed `wispr`. Returns the command: those first words joined to Wispr's text, else Apple's words
+    /// alone. Wispr's first word may repeat the last of them (Wispr's copy stays) or be the end of a word it half
+    /// heard ("Rome" for "chrome", "Cross" for "across"; Apple's whole word stays).
+    public func joinWake(said: [String], missed: Int, wispr: String, frontmostApp: String?) -> String {
+        let heard = wispr.split(separator: " ").map(String.init), start = Array(said.prefix(missed)), next = said.dropFirst(missed).prefix(1)
+        func letters(_ w: String?) -> String { (w ?? "").lowercased().filter(\.isLetter) }
+        let first = letters(heard.first), last = letters(start.last), upcoming = letters(next.first)
+        var join = start + heard
+        if !first.isEmpty, first != upcoming {
+            if first == last { join = start.dropLast() + heard }
+            else if upcoming.hasSuffix(first) { join = start + next + heard.dropFirst() }
+            else if last.hasSuffix(first) { join = start + heard.dropFirst() }
+        }
+        let texts = [join, start + heard, said].map { $0.joined(separator: " ") }.filter { !$0.isEmpty }
+        return texts.first { if case .unmatched = plan($0, frontmostApp: frontmostApp, requireTrigger: false) { return false }; return true } ?? texts.first ?? wispr
+    }
+
     /// Rule 1b, on the raw text so commas stay inside: "when I say X, do A, B", "teach that: A", "that means A", "forget X".
     private func teaching(_ body: String) -> Plan? {
         let s = body.trimmingCharacters(in: .whitespacesAndNewlines)

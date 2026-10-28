@@ -1,23 +1,29 @@
-// Wake word: Pilot hears "Pilot" and the command after it with Apple's offline speech recognizer, and runs the
-// command as soon as you pause, so "Pilot scroll right across space" works in one breath. (Wispr can only start
-// after "Pilot" is heard, so it would miss the first words.) "Pilot, dictate" starts Wispr Flow's hands-free mode
-// through Wispr's own link and stops it when you go quiet. Off unless you switch it on (Pilot menu, or
-// "start listening"). Main thread only.
+// Wake word: Pilot hears "Pilot" with Apple's offline speech recognizer and at once starts Wispr Flow's hands-free
+// mode through Wispr's own link, then stops it when you pause, so Wispr types the command into Pilot's paste
+// interceptor. Wispr's mic needs ~0.36 s to open after any trigger (its own fn key too), so in a command said in one
+// breath ("Pilot scroll right across space") the words before that come from Apple's transcript, joined to Wispr's
+// text. "Pilot, dictate" starts Wispr for free text and stops it when you go quiet. Off unless you switch it on
+// (Pilot menu, or "start listening"). Main thread only.
 import AppKit
 import AVFoundation
+import Carbon
 import Speech
 
 final class WakeWord {
     static let shared = WakeWord()
     /// "Pilot" was heard; the command follows.
     var onWake: () -> Void = {}
-    /// What you said after "Pilot", once you paused.
-    var onCommand: (String) -> Void = { _ in }
+    /// You paused: the words Apple's recognizer heard after "Pilot", how many of them came before Wispr's mic was on,
+    /// and whether Wispr recorded the command (its text then follows as a paste).
+    var onCommand: (_ said: [String], _ missed: Int, _ wispr: Bool) -> Void = { _, _, _ in }
     var isOn: Bool { UserDefaults.standard.bool(forKey: "wakeWord") }
 
     // Seconds of quiet that end a command or a dictation, and how long to wait for the first word. Tune here:
     // a shorter command pause runs sooner but cuts off anyone who stops mid-command.
     private let quietAfterCommand = 0.5, quietAfterDictation = 2.5, waitForFirstWord = 6.0
+    // Measured on this Mac (29 Oct): Wispr's mic is on 0.35–0.38 s after its link or its fn key, and Apple's
+    // recognizer reports a word ~0.3 s after you finish it.
+    private let wisprMicDelay = 0.4, recognizerLag = 0.3
 
     private enum Mode { case listening, command, dictation }
     private var mode = Mode.listening
@@ -31,6 +37,8 @@ final class WakeWord {
     private var task: SFSpeechRecognitionTask?
     private var generation = 0, raw: [String] = [], words: [String] = [], checked = 0, wordsAtStart = 0   // words: raw, lowercased letters
     private var taskStarted = Date(), lastChange = Date(), sessionStarted = Date()
+    private var wispr = false, wisprStarted = Date(), wisprStopped = Date.distantPast
+    private var wisprFrom: Int?   // index in `raw` of the first word said after Wispr's mic was on
     private var timer: Timer?
 
     private init() {
@@ -110,7 +118,10 @@ final class WakeWord {
         generation += 1
         let gen = generation
         raw = []; words = []; checked = 0; taskStarted = Date()
-        if mode != .listening { wordsAtStart = 0 }   // replaced mid-command: every word from here on is the command
+        if mode != .listening {   // replaced mid-command: every word from here on is the command
+            wordsAtStart = 0
+            if wisprFrom != nil { wisprFrom = 0 }
+        }
         task = recognizer.recognitionTask(with: r) { [weak self] result, error in
             guard let self, gen == generation else { return }   // a task already replaced
             if let result { heard(result.bestTranscription.segments.map(\.substring)) }
@@ -131,8 +142,8 @@ final class WakeWord {
         checked = words.count
         guard let wakeAt else { return }
         if CGEventSource.flagsState(.hidSystemState).contains(.maskSecondaryFn) { newTask(); return }   // holding Wispr's key: already dictating
-        Log.debug("Wake word: heard \"Pilot\"")
-        begin(.command, after: wakeAt)
+        begin(.command, after: wakeAt)   // starts Wispr first: every millisecond here is speech it misses
+        Log.debug("Wake word: heard \"Pilot\"" + (wispr ? ", starting Wispr" : "; secure input is on, so Pilot can't catch Wispr's paste and runs its own words"))
         onWake()
     }
 
@@ -140,9 +151,14 @@ final class WakeWord {
     private func begin(_ m: Mode, after wakeAt: Int? = nil) {
         mode = m
         wordsAtStart = (wakeAt ?? words.count - 1) + 1
+        wisprFrom = nil
         sessionStarted = Date()
         lastChange = Date()
-        if m == .dictation { openWispr("start-hands-free") }
+        wispr = m == .dictation || !IsSecureEventInputEnabled()   // secure input (Terminal's Secure Keyboard Entry) hides Wispr's paste from Pilot
+        guard wispr else { return }
+        let wait = max(0, wisprStopped.timeIntervalSinceNow + 0.5)   // Wispr ignores a start while it finishes the last session
+        wisprStarted = Date() + wait
+        if wait > 0 { DispatchQueue.main.asyncAfter(deadline: .now() + wait) { self.openWispr("start-hands-free") } } else { openWispr("start-hands-free") }
     }
 
     private func tick() {
@@ -152,6 +168,9 @@ final class WakeWord {
         case .listening:
             if Date().timeIntervalSince(taskStarted) > 60 { newTask() }
         case .command, .dictation:
+            if mode == .command, wispr, wisprFrom == nil, Date().timeIntervalSince(wisprStarted) > wisprMicDelay + recognizerLag {
+                wisprFrom = words.count   // the words Apple has by now were said before Wispr's mic was on
+            }
             let spoke = words.count > wordsAtStart
             let done = spoke ? quiet > (mode == .command ? quietAfterCommand : quietAfterDictation) : elapsed > waitForFirstWord
             if done || elapsed > (mode == .command ? 20 : 120) { finish(spoke: spoke) }
@@ -160,14 +179,16 @@ final class WakeWord {
 
     private func finish(spoke: Bool) {
         let took = String(format: "%.1f s", Date().timeIntervalSince(sessionStarted))
+        if wispr { openWispr("stop-hands-free"); wisprStopped = Date() }
         if mode == .command {
-            let said = raw.dropFirst(wordsAtStart).joined(separator: " ")   // without the word, which may have come out as "Pilate"
-            Log.debug("Wake word: \(spoke ? "heard \"\(said)\"" : "nothing said") after \(took)")
+            let said = Array(raw.dropFirst(wordsAtStart))   // without the word, which may have come out as "Pilate"
+            let missed = min(said.count, max(0, (wisprFrom ?? raw.count) - wordsAtStart))
+            Log.debug("Wake word: \(spoke ? "heard \"\(said.joined(separator: " "))\"" : "nothing said") after \(took)"
+                      + (wispr ? "; Wispr's mic missed \(missed) of the words" : ""))
             mode = .listening
-            if spoke { onCommand(said) }
+            onCommand(said, missed, wispr)
         } else {
             mode = .listening
-            openWispr("stop-hands-free")
             Log.debug("Wake word: stopped Wispr after \(took) (\(spoke ? "you spoke" : "nothing said"))")
         }
         if isOn { newTask() } else { stopEngine() }   // a dictation can run with listening off
