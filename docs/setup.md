@@ -143,6 +143,19 @@ app and whether you use more than one display.
 | "Pilot, ask Claude about this" | Claude opens a new chat with the text and sends it |
 | "Pilot, search this" with nothing selected | "Select some text first"; your clipboard is unchanged |
 
+## 7. No hands: say "Pilot" (28 Oct)
+
+1. Turn it on once: Pilot menu → **Listen for "Pilot"**, or say/type "start listening". Allow the
+   Microphone and Speech Recognition prompts.
+2. Say **"Pilot"**, wait for the 🎙 toast (Wispr starts listening), then say the command. Pause, and
+   it runs about a second later.
+3. "Pilot" … "dictate" … then talk: Wispr types it into the focused box until you pause.
+4. "Pilot" … "stop listening" turns it off (the mic closes).
+
+```
+grep -E "Wake word|after the wake word|Ran |Cmd\+V" ~/Library/Application\ Support/Pilot/debug.log | tail -30
+```
+
 ## Everyday use
 
 - **Change commands:** Pilot menu → Edit commands.json (it's `commands/commands.json` in the repo).

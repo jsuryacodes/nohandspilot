@@ -116,6 +116,8 @@ enum Hands {
         case .menu(let app, let path): return Screen.pressMenu(app, path)
         case .click(let target): return Screen.click(target, note: &note)
         case .numbers(let on): return Screen.numbers(on, note: &note)
+        case .listen(let on): DispatchQueue.main.async { WakeWord.shared.setOn(on) }
+        case .dictate: DispatchQueue.main.async { WakeWord.shared.dictate() }
         case .openFile(let name, let folder, let reveal):
             let start = Date()
             guard let url = name.hasPrefix("/") ? URL(fileURLWithPath: name) : spotlight(name, folder: folder) else {

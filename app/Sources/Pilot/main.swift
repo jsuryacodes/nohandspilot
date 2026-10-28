@@ -59,6 +59,8 @@ final class Pilot {
     private(set) var learned: [String: [String]] = [:]
     private var loadedAt: [Date?] = []
     private var lastMiss: String?   // for "teach that"
+    /// Set by the wake word: until then, Wispr's text is a command even without "Pilot" (Wispr started after the word).
+    var wakeUntil = Date.distantPast
 
     /// Reloads commands.json and learned.json if either changed since last time. Returns an error message if one is broken.
     @discardableResult func reloadIfChanged(force: Bool = false) -> String? {
@@ -121,7 +123,9 @@ final class Pilot {
         let start = Date()
         if let err = reloadIfChanged() { HUD.show("⚠︎ \(err)"); return false }
         guard let brain else { return false }
-        let plan = brain.plan(text, frontmostApp: frontApp, requireTrigger: source == "wispr")
+        let woke = source == "wispr" && Date() < wakeUntil
+        if woke { wakeUntil = .distantPast; Log.debug("Wispr text after the wake word: read as a command") }
+        let plan = brain.plan(text, frontmostApp: frontApp, requireTrigger: source == "wispr" && !woke)
         let matchMs = Date().timeIntervalSince(start) * 1000
         func taught(_ toast: String, _ id: String) -> Bool {
             HUD.show(toast, seconds: 3)
@@ -138,7 +142,7 @@ final class Pilot {
             HUD.show("Didn't catch \"\(segment.isEmpty ? text : segment)\"" + (suggestion.map { ". Try \"\($0)\"" } ?? "")
                      + ". Or say \"teach that: …\"", seconds: 3)
             Log.usage(source: source, text: text, matched: [], ok: false, error: "unmatched: \(segment)", matchMs: matchMs, totalMs: matchMs)
-            return false
+            return woke   // after a wake-up it wasn't meant as text (maybe a false wake): drop it, don't type it
         case .teach(let phrase, let commands):
             return taught(learn(phrase, commands, forget: false, brain: brain, frontApp: frontApp), "teach")
         case .forget(let phrase):
@@ -178,6 +182,7 @@ final class Pilot {
         guard let c = brain?.config else { return "commands.json didn't load." }
         var out = "Start with \"Pilot\" when dictating with Wispr (not needed in the command bar).\nChain with commas: \"Pilot, open Chrome, new tab, search for cats\".\nAdd \"in <app>\" to run a command in another app.\n"
             + "Teach it: \"when I say focus time, do open Notion, mute\", or right after a miss \"teach that: new tab\".\n"
+            + "No hands: \"start listening\", then say \"Pilot\", wait for Wispr to start, and say the command. \"Dictate\" types what you say next.\n"
         let groups = [nil] + Array(Set(c.commands.compactMap(\.app))).sorted()
         for app in groups {
             out += "\n" + (app ?? "Anywhere") + "\n"
@@ -235,6 +240,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary)
         }
         startTapWhenTrusted()
+        WakeWord.shared.onWake = { [pilot] in
+            pilot.wakeUntil = .distantFuture
+            HUD.show("🎙 Say the command", seconds: 2)
+        }
+        WakeWord.shared.onCommandDone = { [pilot] spoke in
+            guard pilot.wakeUntil == .distantFuture else { return }   // Wispr's text already came (it stopped by itself)
+            pilot.wakeUntil = spoke ? Date().addingTimeInterval(6) : .distantPast
+        }
+        if WakeWord.shared.isOn { WakeWord.shared.setOn(true) }
         Log.debug("Pilot started. Accessibility: \(AXIsProcessTrusted())")
     }
 
@@ -254,6 +268,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             menu.addItem(item("⚠︎ Grant Accessibility permission…", #selector(openAccessibility)))
         }
         menu.addItem(.separator())
+        let listen = item("Listen for \"Pilot\" (no key needed)", #selector(toggleListening))
+        listen.state = WakeWord.shared.isOn ? .on : .off
+        menu.addItem(listen)
         menu.addItem(item("Command Bar (\(hotkey))", #selector(openBar)))
         menu.addItem(item("What Can I Say?", #selector(openHelp)))
         menu.addItem(.separator())
@@ -274,6 +291,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc func openBar() { CommandBar.shared.show() }
+    @objc func toggleListening() { WakeWord.shared.setOn(!WakeWord.shared.isOn) }
     @objc func openHelp() { HelpWindow.shared.show() }
     @objc func editCommands() { NSWorkspace.shared.open(pilot.commandsURL) }
     @objc func showLogs() { NSWorkspace.shared.activateFileViewerSelecting([Log.usageURL, Log.debugURL]) }

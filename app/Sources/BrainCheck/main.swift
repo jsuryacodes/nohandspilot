@@ -158,6 +158,14 @@ check("Pilot, click a hundred and five", [.click("105")])
 check("Pilot, click #3.", [.click("3")])
 check("Pilot, show numbers, click 4", [.numbers(true), .click("4")])
 
+// no hands: wake word on/off, dictation
+check("Pilot, start listening.", [.listen(true)])
+check("Pilot, stop listening", [.listen(false)])
+check("start listening", trigger: false, [.listen(true)])
+check("Pilot, dictate", [.dictate])
+check("Dictate.", trigger: false, [.dictate])   // what Wispr types after "Pilot" + a pause
+check("Pilot, start dictation", [.dictate])
+
 // teaching (rule 1b): parsed before chain splitting; taught phrases then match like macros
 func expect(_ text: String, _ plan: Plan, line: Int = #line) {
     let got = brain.plan(text, frontmostApp: nil)

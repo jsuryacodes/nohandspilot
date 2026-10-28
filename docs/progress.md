@@ -2,6 +2,22 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 28 Oct: No hands: say "Pilot" to start Wispr
+- With listening on (Pilot menu → Listen for "Pilot", or "start listening"), Pilot hears the word
+  "Pilot" with Apple's offline speech recognizer (on this Mac, Indian English), then starts Wispr
+  Flow's hands-free mode through Wispr's own link (`wispr-flow://start-hands-free`) without taking
+  focus. You say the command; after 1.2 s of quiet Pilot stops Wispr (`stop-hands-free`), Wispr types,
+  and Pilot runs it as usual. Wispr still transcribes every command: this only replaces the key.
+- Wispr starts after you've said "Pilot", so its next text counts as a command without the word. If
+  that text isn't a command (a false wake), it's dropped, not typed. Holding Wispr's Fn key never
+  triggers it (you're already dictating).
+- "Pilot, dictate": Wispr types what you say next (not run as a command) until you pause 2.5 s.
+- Found by reading Wispr's app: those links exist, and Wispr reads its Fn key at the hardware level,
+  so a key press sent by Pilot wouldn't have worked. Checked here: the start link doesn't take focus,
+  and the stop link makes Wispr type.
+- Mic and speech permission asked once. Off unless switched on; the mic is open while it's on.
+  144 BrainCheck cases. Needs your voice test.
+
 ## 28 Oct: Scroll across spaces
 - Your design: plain "scroll …" stays inside the app; adding "across space(s)" goes across, like the
   three-finger swipe. "scroll right across space" = the full-screen app or desktop on the right

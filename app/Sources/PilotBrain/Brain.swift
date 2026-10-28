@@ -88,6 +88,8 @@ public enum Action: Equatable {
     case click(String)            // a visible element by name, normalised as in rule 3, or a badge number ("12")
     case numbers(Bool)            // show / hide numbered badges on everything clickable
     case openFile(String, folder: Bool, reveal: Bool)   // a name to search for, or a known folder's path
+    case listen(Bool)             // wake word on / off: hearing "Pilot" starts the dictation app hands-free
+    case dictate                  // start hands-free dictation; the text is typed, not run
     case notConfigured(String)
 }
 
@@ -444,6 +446,8 @@ public final class Brain {
             let raw = slots["target"] ?? ""
             actions = [.click(spokenNumber(normalize(raw.replacingOccurrences(of: "-", with: " "))).map(String.init) ?? normalize(raw))]
         case "showNumbers", "hideNumbers": actions = [.numbers(a.type == "showNumbers")]
+        case "startListening", "stopListening": actions = [.listen(a.type == "startListening")]
+        case "dictate": actions = [.dictate]
         case "openFile":
             var name = canon(tokenize(slots["query"] ?? ""))   // "my resume" → "resume"
             while name.first?.filler == true { name.removeFirst() }
