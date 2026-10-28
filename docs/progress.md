@@ -16,6 +16,9 @@ Newest first. Each entry matches a commit on `main`.
   cause, also fixed: a click Pilot made while they were stuck had Control set (a right-click).
 - Fix 2: the wake word checks the fn key itself (key 63), which no shortcut changes. It stayed "up"
   through every stuck stretch above. Not yet checked with your finger on fn (setup step 8).
+- Your run after the fix (04:55–04:58): 14 "Pilot"s logged, none dropped as `fn held`. "Pilot" 2 s
+  after "scroll right across space" (the 04:34 failure) worked, and the Space still switched (Wispr's
+  history: Music in front before, Chrome after).
 
 ## 29 Oct: "Pilot" heard every time, the right words, sooner
 - Why it missed: Wispr's history shows that in one breath Wispr only catches the last word or nothing (11 of your
