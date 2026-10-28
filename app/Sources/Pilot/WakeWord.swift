@@ -37,7 +37,8 @@ final class WakeWord {
     private var task: SFSpeechRecognitionTask?
     private var generation = 0, raw: [String] = [], words: [String] = [], checked = 0, wordsAtStart = 0   // words: raw, lowercased letters
     private var taskStarted = Date(), lastChange = Date(), sessionStarted = Date()
-    private var wispr = false, wisprStarted = Date(), wisprStopped = Date.distantPast
+    private var wispr = false, wisprStarted = Date()
+    private(set) var wisprStopped = Date.distantPast
     private var wisprFrom: Int?   // index in `raw` of the first word said after Wispr's mic was on
     private var timer: Timer?
 

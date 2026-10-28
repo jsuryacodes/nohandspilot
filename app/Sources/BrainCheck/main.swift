@@ -108,7 +108,19 @@ check("Pilot, open numbers", [.openApp("Numbers Creator Studio")])
 check("Pilot, show numbers.", [.numbers(true)])
 
 // misc
-check("Pilot, pause the music", [.media("play")])
+check("Pilot, pause the music", [.media("pause")])
+check("Pilot, pause the video.", [.media("pause")])   // real misses, 29 Oct: no video phrases
+check("Pilot, resume video", [.media("play")])
+check("Pilot, play video", [.media("play")])
+check("Pilot, stop the video", [.media("pause")])
+check("Pilot, play", [.media("play")])
+check("Pilot, play pause", [.media("playPause")])
+check("Pilot, show number", [.numbers(true)])   // real miss, 29 Oct: opened the Numbers app
+check("Pilot, hide number", [.numbers(false)])
+check("Pilot, open Bluetooth", [.openURL("x-apple.systempreferences:com.apple.BluetoothSettings")])
+check("Pilot, open Wi-Fi", [.openURL("x-apple.systempreferences:com.apple.wifi-settings-extension")])
+check("Pilot, open network settings", [.openURL("x-apple.systempreferences:com.apple.Network-Settings.extension")])
+check("Pilot, open Spotlight", [.keys("cmd+space")])   // real miss, 29 Oct: waited 5 s for a Spotlight app
 check("Pilot, turn up the volume", [.media("volumeUp")])
 check("Pilot, switch back", [.previousApp])
 check("Pilot, type hello, how are you", [.type("hello, how are you")])

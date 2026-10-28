@@ -2,6 +2,20 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 29 Oct: Play and pause the video on screen, fixes from your last test
+- Your test (03:29): "play video" and "resume video" weren't phrases, so nothing happened. Now "play", "pause",
+  "resume", "play / pause / stop the video", "pause it", "stop music" and "play pause" (toggle) all work.
+- "pause" only pauses and "play" only plays: Pilot first looks for the player's own button in the front window.
+  YouTube names it for what it does now ("Pause keyboard shortcut k" while playing), as do Netflix, Spotify,
+  Music and QuickTime. So "pause" on a paused video says "Already paused" instead of starting it. With no player
+  on screen it presses the media key, which goes to whatever is playing (Spotify or Music in the background).
+- Wispr pauses what's playing while it records ("Pause music while dictating" is on in your Wispr settings) and
+  resumes it when it stops. So after Pilot stops Wispr, play/pause waits until 0.7 s after the stop, or Wispr's
+  resume would undo it.
+- Also from that log: "show number" opened the Numbers app (now shows the badges), "open Bluetooth" / "open
+  Wi-Fi" / "open network settings" didn't match (now open those panes; the Network pane ID was checked against
+  the system's settings extensions), and "open Spotlight" waited 5 s for an app (now Cmd+Space).
+
 ## 29 Oct: Wispr back for "Pilot …", started the instant Pilot hears the word
 - Your ask: keep Wispr (mandatory) and trigger it straight after "Pilot", like the fn key. Your
   02:33 tries with Apple alone all failed ("scroll write across space", "scroll right Cross space").

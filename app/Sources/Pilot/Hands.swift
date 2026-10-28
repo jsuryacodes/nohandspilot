@@ -109,7 +109,7 @@ enum Hands {
             p.arguments = ["-na", "Google Chrome", "--args", "--profile-directory=\(dir)"]
             do { try p.run() } catch { return "Couldn't open Chrome: \(error.localizedDescription)" }
             return waitForFront("Google Chrome")
-        case .media(let key): media(key)
+        case .media(let key): media(key, note: &note)
         case .scroll(let dir, let ticks): return scroll(dir, ticks: ticks)
         case .wait(let ms): usleep(useconds_t(ms * 1000))
         case .help: DispatchQueue.main.async { HelpWindow.shared.show() }
@@ -321,8 +321,16 @@ enum Hands {
 
 extension Hands {
     /// Hardware media keys (NX_KEYTYPE_*), so they work with Music, Spotify, YouTube in Chrome, and the volume HUD.
-    static func media(_ key: String) {
-        let codes: [String: Int] = ["volumeUp": 0, "volumeDown": 1, "mute": 7, "play": 16, "next": 17, "previous": 18]
+    /// Play and pause first look for the player on screen (Screen.playPause), so "pause" never starts anything.
+    static func media(_ key: String, note: inout String?) {
+        if ["play", "pause", "playPause"].contains(key) {
+            // Wispr pauses whatever is playing while it records and resumes it when it stops; act after that.
+            // Tune here: 0.7 s after Pilot stops Wispr (its resume time isn't measured yet).
+            let wait = DispatchQueue.main.sync { WakeWord.shared.wisprStopped }.timeIntervalSinceNow + 0.7
+            if wait > 0 { usleep(useconds_t(wait * 1_000_000)) }
+            if Screen.playPause(key, note: &note) { return }
+        }
+        let codes: [String: Int] = ["volumeUp": 0, "volumeDown": 1, "mute": 7, "play": 16, "pause": 16, "playPause": 16, "next": 17, "previous": 18]
         guard let code = codes[key] else { return }
         for down in [true, false] {
             let ev = NSEvent.otherEvent(with: .systemDefined, location: .zero, modifierFlags: NSEvent.ModifierFlags(rawValue: down ? 0xA00 : 0xB00),

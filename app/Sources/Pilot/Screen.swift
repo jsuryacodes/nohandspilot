@@ -175,6 +175,25 @@ enum Screen {
         return press(hit, app: front)
     }
 
+    /// "play" / "pause" / "playPause" on the player in the front window (YouTube, Netflix, Spotify, Music, QuickTime): its
+    /// button is named for what it does now ("Pause (k)", "Pause keyboard shortcut k" while playing), so "pause" on a paused
+    /// video presses nothing. False if there's no such button: the media key then goes to whatever plays in the background.
+    static func playPause(_ want: String, note: inout String?) -> Bool {
+        guard let app = front, let name = appName(app) else { return false }
+        let extra: Set<Substring> = ["k", "keyboard", "shortcut", "video", "button", "space", "spacebar"]
+        let buttons = elements(of: app, text: false).compactMap { e -> (Element, Bool)? in   // (button, it pauses)
+            let words = normalize(e.name).split(separator: " ")
+            guard e.role == kAXButtonRole, let first = words.first, first == "play" || first == "pause", words.dropFirst().allSatisfy(extra.contains) else { return nil }
+            return (e, first == "pause")
+        }
+        guard let (button, pauses) = buttons.first(where: { want == "playPause" || $0.1 == (want == "pause") }) ?? buttons.first else { return false }
+        Log.debug("Player button in \(name): \"\(button.name)\" (\(buttons.count) found)")
+        if want != "playPause", pauses != (want == "pause") { note = pauses ? "Already playing" : "Already paused"; return true }
+        _ = press(button, app: name)
+        note = pauses ? "Paused" : "Playing"
+        return true
+    }
+
     /// Badges on every actionable element of the front window and the menu bar, top to bottom, left to right.
     static func numbers(_ on: Bool, note: inout String?) -> String? {
         guard on else { DispatchQueue.main.sync { NumberOverlay.shared.hide() }; return nil }
