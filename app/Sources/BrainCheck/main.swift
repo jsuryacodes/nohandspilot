@@ -163,8 +163,13 @@ check("Pilot, start listening.", [.listen(true)])
 check("Pilot, stop listening", [.listen(false)])
 check("start listening", trigger: false, [.listen(true)])
 check("Pilot, dictate", [.dictate])
-check("Dictate.", trigger: false, [.dictate])   // what Wispr types after "Pilot" + a pause
+check("Dictate.", trigger: false, [.dictate])
 check("Pilot, start dictation", [.dictate])
+// what Apple's recognizer hands over after the wake word, said in one breath: no punctuation
+check("Pilot scroll right across space", [.keys("ctrl+right")])
+check("Pilot dictate", [.dictate])
+check("Pilot open Chrome then new tab", [chrome, .keys("cmd+t")])
+check("Pilot open Chrome new tab", [chrome, .keys("cmd+t")])
 
 // teaching (rule 1b): parsed before chain splitting; taught phrases then match like macros
 func expect(_ text: String, _ plan: Plan, line: Int = #line) {

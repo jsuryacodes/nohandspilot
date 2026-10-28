@@ -2,6 +2,20 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 28 Oct: "Pilot scroll right across space" in one breath, run instantly
+- Your ask: no wait between "Pilot" and the command. Wispr can't do that: it only starts once Pilot
+  has heard "Pilot" (~0.3 s after the word) and takes up to ~0.3 s more to record, so the first words
+  were lost ("Cross space", "Across spaces", "Space" in the log). Its links are start, stop and
+  switch-mic only, with no cancel, so Pilot can't race it and call it off either.
+- Now Apple's offline recognizer, which already hears everything for the wake word, also hears the
+  command. Pilot runs it after a 0.5 s pause (checked 10×/s, was 5×). Measured from a recording: the
+  last word reaches Pilot ~0.3 s after it's said, so it runs ~0.8 s after you stop, with no Wispr
+  start, transcription or paste in between.
+- So no paste either: these commands can't be typed into a text field, and they work in Terminal
+  even with Secure Keyboard Entry on (the warning from the last entry is gone with Wispr's start).
+- Wispr still does "Pilot dictate" and anything said with its key held. 4 BrainCheck cases for
+  unpunctuated one-breath text (Apple adds no commas; "Pilot open Chrome new tab" still chains).
+
 ## 28 Oct: Fix commands typed into text fields, end commands sooner
 - Your test: with the cursor in a text field (Terminal, WhatsApp, Chrome) the command got typed. The
   logs showed three separate causes, all invisible outside a text field because Wispr's paste lands
