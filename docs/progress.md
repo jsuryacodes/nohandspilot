@@ -26,10 +26,12 @@ Newest first. Each entry matches a commit on `main`.
   after the last word, once the mic has also been quiet 0.6 s; anything else ("open …") after 1 s. That second
   check came from a test: "hide numbers" stalled at "hide", and Cmd+H hid Chrome. If Wispr heard you, its text is
   awaited for 1.2 s (was 2.5 s; 95% of its 2,598 pastes take under 1.1 s).
-- Measured live through a virtual audio cable (Rishi, Aman, Tara voices; Wispr kept on the real mic): 24 of 24
-  wake words caught in the runs where the Mac wasn't in use; "you'd finished first" commands ran 0.9–1.2 s after
-  the speech ended. Where Wispr heard you, expect about 1.3 s (its text, ~0.4 s, instead of the 1.2 s wait the
-  cable test hit).
+- Measured live through a virtual audio cable (Rishi, Aman, Tara voices; Wispr kept on the real mic, so it heard
+  the room, not the test): first run 12 of 12 wake words; second run 7 of 12, the 5 misses all in one 40 s
+  stretch while someone was using the Mac (Chrome had a password field focused, Wispr's mic heard speech). Not
+  confirmed why. One guess is Wispr's fn key held: Pilot ignores "Pilot" then, and now logs it ("with fn held").
+  Commands where you'd finished before Wispr's mic opened ran 0.9–1.2 s after the speech ended. Where Wispr
+  heard you, expect ~1.3 s (its text, ~0.4 s, instead of the 1.2 s wait the cable test hit).
 
 ## 29 Oct: Play and pause the video on screen, fixes from your last test
 - Your test (03:29): "play video" and "resume video" weren't phrases, so nothing happened. Now "play", "pause",
