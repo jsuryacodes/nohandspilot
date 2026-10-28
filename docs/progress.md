@@ -2,6 +2,15 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 28 Oct: Scroll across spaces
+- Your design: plain "scroll …" stays inside the app; adding "across space(s)" goes across, like the
+  three-finger swipe. "scroll right across space" = the full-screen app or desktop on the right
+  (Chrome → WhatsApp), "scroll left across space" = on the left, "scroll up across space" = Mission
+  Control, "scroll down across space" = the current app's windows (what three fingers up/down do).
+- Uses macOS's own shortcuts (Control+arrow keys), which are on by default. No "swipe" phrases.
+- Checked here: from the Desktop space, "scroll right across space" moved to Chrome (58 ms).
+  138 BrainCheck cases.
+
 ## 28 Oct: Fix scrolling (it never worked in full-screen Chrome)
 - Your test: "scroll down" / "scroll up" on LinkedIn said "Scrolled" but nothing moved. Cause: scroll
   events go to whatever is under the pointer, and Pilot aimed at the first window the app has on

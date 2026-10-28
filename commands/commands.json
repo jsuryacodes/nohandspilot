@@ -138,7 +138,10 @@
     { "id": "zoom_in", "phrases": ["zoom in", "make it bigger", "bigger"], "action": { "type": "keys", "keys": "cmd+=" }, "say": "Zoom in" },
     { "id": "zoom_out", "phrases": ["zoom out", "make it smaller", "smaller"], "action": { "type": "keys", "keys": "cmd+-" }, "say": "Zoom out" },
     { "id": "zoom_reset", "phrases": ["reset zoom", "actual size"], "action": { "type": "keys", "keys": "cmd+0" }, "say": "Zoom reset" },
-    { "id": "mission_control", "phrases": ["mission control", "show all windows", "show windows"], "action": { "type": "keys", "keys": "ctrl+up" }, "say": "Mission Control" },
+    { "id": "space_right", "phrases": ["scroll right across space", "scroll right across spaces", "scroll to right across space", "scroll to right across spaces"], "action": { "type": "keys", "keys": "ctrl+right" }, "say": "Space on the right" },
+    { "id": "space_left", "phrases": ["scroll left across space", "scroll left across spaces", "scroll to left across space", "scroll to left across spaces"], "action": { "type": "keys", "keys": "ctrl+left" }, "say": "Space on the left" },
+    { "id": "app_windows", "phrases": ["scroll down across space", "scroll down across spaces"], "action": { "type": "keys", "keys": "ctrl+down" }, "say": "This app's windows" },
+    { "id": "mission_control", "phrases": ["mission control", "show all windows", "show windows", "scroll up across space", "scroll up across spaces"], "action": { "type": "keys", "keys": "ctrl+up" }, "say": "Mission Control" },
     { "id": "screenshot", "phrases": ["take screenshot", "screenshot", "capture screen"], "action": { "type": "keys", "keys": "cmd+shift+3" }, "say": "Screenshot saved" },
     { "id": "lock_screen", "phrases": ["lock screen", "lock mac", "lock computer"], "action": { "type": "keys", "keys": "ctrl+cmd+q" }, "say": "Locked" },
 

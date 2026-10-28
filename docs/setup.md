@@ -72,6 +72,9 @@ grep -E "Menus of|Ran |error" ~/Library/Application\ Support/Pilot/debug.log | t
 |---|---|---|
 | "Pilot, scroll down" / "Pilot, scroll up" | Chrome on LinkedIn | The feed moves about half a screen |
 | "Pilot, scroll right" / "Pilot, scroll left" | a wide page or spreadsheet | It moves sideways |
+| "Pilot, scroll right across space" | any full-screen app | The next full-screen app or desktop on the right slides in |
+| "Pilot, scroll left across space" | same | The one on the left |
+| "Pilot, scroll up across space" / "scroll down across space" | any | Mission Control / this app's windows |
 
 **Menu items (any app, no setup).** If no command matches, Pilot presses the menu item with exactly
 that title in the front app. "What can I say?" lists them.

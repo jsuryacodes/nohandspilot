@@ -69,6 +69,11 @@ check("Pilot, open Chrome, new tab, search for Docker networking.", [chrome, .ke
 check("Pilot open chrome then new tab and then scroll down", [chrome, .keys("cmd+t"), .scroll("down", 6)])
 check("Pilot, scroll right", [.scroll("right", 6)])
 check("Pilot, scroll to the left.", [.scroll("left", 6)])
+// "… across space" moves between full-screen apps and desktops; plain "scroll" stays in the app
+check("Pilot, scroll right across space", [.keys("ctrl+right")])
+check("Pilot, scroll to the left across spaces.", [.keys("ctrl+left")])
+check("Pilot, scroll up across the space", [.keys("ctrl+up")])
+check("Pilot, scroll down across spaces", [.keys("ctrl+down")])
 check("Pilot, search for salt and pepper", app: "Google Chrome", [.keys("cmd+l"), .type("salt and pepper"), .keys("enter")])
 check("Pilot, open chrome, blorp, new tab", nil)
 check("Pilot, open YouTube website, then scroll down a lot", [.openURL("https://www.youtube.com"), .scroll("down", 16)])
