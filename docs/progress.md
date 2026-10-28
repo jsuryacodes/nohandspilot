@@ -23,7 +23,8 @@ Newest first. Each entry matches a commit on `main`.
 - With secure input on (Terminal's Secure Keyboard Entry), Pilot can't catch Wispr's paste, so it
   doesn't start Wispr and runs its own words, as before. Untick it to get Wispr in Terminal too.
 - From Wispr's history: a session with no speech pastes nothing; Wispr's text arrives 0.25–0.55 s
-  after the stop. A command now runs ~1.3 s after you stop speaking (was ~0.8 s without Wispr).
+  after the stop, and it keeps recording ~0.3 s past it. A command now runs ~1.5 s after you stop
+  speaking (was ~0.8 s without Wispr).
 
 ## 28 Oct: "Pilot scroll right across space" in one breath, run instantly
 - Your ask: no wait between "Pilot" and the command. Wispr can't do that: it only starts once Pilot
