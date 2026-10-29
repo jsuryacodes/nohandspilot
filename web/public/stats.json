@@ -1,0 +1,76 @@
+{
+  "exportedAt": "2026-10-29T10:15:15+05:30",
+  "firstDay": "2026-10-28",
+  "lastDay": "2026-10-29",
+  "commands": 551,
+  "ok": 350,
+  "failed": 201,
+  "chains": 17,
+  "sources": {
+    "bar": 2,
+    "wispr": 452,
+    "voice": 97
+  },
+  "days": [
+    {
+      "date": "2026-10-28",
+      "commands": 385,
+      "ok": 247
+    },
+    {
+      "date": "2026-10-29",
+      "commands": 166,
+      "ok": 103
+    }
+  ],
+  "top": [
+    {
+      "id": "click",
+      "count": 117
+    },
+    {
+      "id": "open_app",
+      "count": 38
+    },
+    {
+      "id": "scroll_up",
+      "count": 34
+    },
+    {
+      "id": "scroll_down",
+      "count": 28
+    },
+    {
+      "id": "quit_app",
+      "count": 18
+    },
+    {
+      "id": "show_numbers",
+      "count": 18
+    },
+    {
+      "id": "volume_down",
+      "count": 15
+    },
+    {
+      "id": "space_right",
+      "count": 13
+    },
+    {
+      "id": "chrome_search",
+      "count": 11
+    },
+    {
+      "id": "music_search",
+      "count": 11
+    }
+  ],
+  "matchMs": {
+    "median": 1.1,
+    "p95": 96.8
+  },
+  "totalMs": {
+    "median": 115,
+    "p95": 1092
+  }
+}

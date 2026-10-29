@@ -2,6 +2,31 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 29 Oct: Website, checkpoint 1: foundation (waiting for your design OK)
+- `web/`: Vite, React, TypeScript (strict), Tailwind, Framer Motion, Vitest, ESLint and Prettier;
+  `npm run dev / build / test / preview / lint / format / og`. Two routes without a router library:
+  `/`, and `/try` (a placeholder until the desktop is built). `web/vercel.json` serves `/try` on reload.
+- The Brain in TypeScript (`web/src/brain/brain.ts`): a line-by-line port of `Brain.swift` that reads
+  `commands/commands.json` itself through a Vite alias, so the site and the app share one copy. All 183
+  BrainCheck cases are in Vitest and pass: the 165 checks, 6 teaching plans, 5 one-off checks, 6 training
+  sentences and the speed check, wake-word joins and menu items included. The demo chain plans in about
+  1 ms in the browser.
+- `scripts/export-stats.mjs`: usage.jsonl → `web/public/stats.json`, aggregates only (never the text or
+  the error messages, which can quote it). From your log now: 551 commands, 28 to 29 Oct, 350 ran, 17
+  chains, median match 1.1 ms (p95 96.8 ms), checked against jq. `stats.example.json` holds made-up round
+  numbers, and the site labels them "Sample data" whenever it falls back to that file.
+- Design (`web/DESIGN.md`, tokens in `web/src/index.css`): ink background, paper-white text, and one amber
+  signal (#FFB02E) used only while Pilot hears or acts. Fraunces for headlines, Instrument Sans for text,
+  JetBrains Mono for commands, all self-hosted.
+- Logo: a raised hand with a sound wave through the palm, as an app-icon tile (`web/public/favicon.svg`):
+  the favicon, the nav mark, the dock icon and the link preview. `web/public/og.png` is rendered from the
+  site's own fonts by `npm run og`.
+- The hero types real commands into a Pilot bar and shows what the Brain made of each: the HUD line from
+  the commands' `say`, the measured match time, and the keys each step would press on a Mac.
+- Found while porting: "install Pilot" isn't a phrase in commands.json and "pilot" is a filler word, so
+  the site answers it with "Didn't catch"; "open NoHandsPilot" opens the app's window instead. Your log
+  starts on 28 Oct, so the site won't repeat the demo script's "every day since 25 October".
+
 ## 29 Oct: "click Relax" / "click Feel Good" in Apple Music
 - Your test (04:49): "Pilot, click relax" and "click feel good" on Music's Home page said "Couldn't
   find". Same for "click your essentials" (04:48).

@@ -1,0 +1,123 @@
+@import 'tailwindcss';
+
+/* Design tokens: the one place. web/DESIGN.md says what each is for. Tailwind's own colours, sizes,
+   radii and shadows are switched off, so nothing outside this block can sneak in. */
+@theme {
+  --color-*: initial;
+  --color-ink: #08090b; /* page */
+  --color-ink-1: #0e1013; /* raised: panels, bars */
+  --color-ink-2: #15181c; /* inputs, hover */
+  --color-ink-3: #1e2227; /* pressed, selected */
+  --color-line: rgb(242 237 228 / 0.09); /* hairlines */
+  --color-line-strong: rgb(242 237 228 / 0.18);
+  --color-paper: #f2ede4; /* text */
+  --color-paper-2: rgb(242 237 228 / 0.68); /* secondary text */
+  /* labels and hints: the faintest text allowed (4.5:1 on ink-1) */
+  --color-paper-3: rgb(242 237 228 / 0.52);
+  --color-signal: #ffb02e; /* Pilot is acting. Nothing else. */
+  --color-signal-soft: rgb(255 176 46 / 0.14);
+
+  --font-*: initial;
+  --font-display: 'Fraunces Variable', ui-serif, Georgia, serif;
+  --font-sans: 'Instrument Sans Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, Menlo, monospace;
+  /* the mock macOS */
+  --font-os: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', system-ui, sans-serif;
+
+  --text-*: initial;
+  --text-display: clamp(2.75rem, 1.35rem + 5.2vw, 6.25rem);
+  --text-display--line-height: 0.98;
+  --text-display--letter-spacing: -0.022em;
+  --text-title: clamp(2.125rem, 1.4rem + 2.8vw, 3.75rem);
+  --text-title--line-height: 1.02;
+  --text-title--letter-spacing: -0.02em;
+  --text-heading: clamp(1.375rem, 1.1rem + 1vw, 1.875rem);
+  --text-heading--line-height: 1.15;
+  --text-heading--letter-spacing: -0.015em;
+  --text-lead: 1.25rem;
+  --text-lead--line-height: 1.5;
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.6;
+  --text-small: 0.9375rem;
+  --text-small--line-height: 1.5;
+  --text-micro: 0.75rem;
+  --text-micro--line-height: 1.4;
+
+  --radius-*: initial;
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  --shadow-*: initial;
+  --shadow-window:
+    0 0 0 0.5px rgb(0 0 0 / 0.7), 0 1px 0 0 rgb(255 255 255 / 0.06) inset,
+    0 24px 80px -12px rgb(0 0 0 / 0.65), 0 8px 24px -8px rgb(0 0 0 / 0.5);
+  --shadow-hud: 0 0 0 0.5px rgb(0 0 0 / 0.6), 0 12px 32px -6px rgb(0 0 0 / 0.55);
+  --shadow-signal: 0 0 0 1px rgb(255 176 46 / 0.35), 0 0 28px -4px rgb(255 176 46 / 0.35);
+
+  --ease-*: initial;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --animate-wave: wave 900ms var(--ease-in-out) infinite alternate;
+
+  @keyframes wave {
+    from {
+      transform: scaleY(0.25);
+    }
+    to {
+      transform: scaleY(1);
+    }
+  }
+}
+
+/* Motion timings (Framer Motion reads the same numbers from src/motion.ts) */
+:root {
+  --motion-fast: 150ms; /* hover, press, focus */
+  --motion-base: 220ms; /* HUD, menus, chips */
+  --motion-slow: 300ms; /* windows open and close */
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    background: var(--color-ink);
+    color: var(--color-paper);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    min-height: 100dvh;
+    background: var(--color-ink);
+    overflow-x: clip;
+  }
+  ::selection {
+    background: var(--color-paper);
+    color: var(--color-ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-paper);
+    outline-offset: 3px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 1ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Film grain over the landing page: grey fractal noise, drawn once by the browser. */
+@utility grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}

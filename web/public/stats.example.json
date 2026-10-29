@@ -1,0 +1,29 @@
+{
+  "sample": true,
+  "exportedAt": "2026-01-07T12:00:00+05:30",
+  "firstDay": "2026-01-01",
+  "lastDay": "2026-01-07",
+  "commands": 1234,
+  "ok": 1200,
+  "failed": 34,
+  "chains": 123,
+  "sources": { "wispr": 1000, "voice": 200, "bar": 34 },
+  "days": [
+    { "date": "2026-01-01", "commands": 100, "ok": 95 },
+    { "date": "2026-01-02", "commands": 150, "ok": 145 },
+    { "date": "2026-01-03", "commands": 200, "ok": 195 },
+    { "date": "2026-01-04", "commands": 0, "ok": 0 },
+    { "date": "2026-01-05", "commands": 250, "ok": 245 },
+    { "date": "2026-01-06", "commands": 234, "ok": 230 },
+    { "date": "2026-01-07", "commands": 300, "ok": 290 }
+  ],
+  "top": [
+    { "id": "open_app", "count": 400 },
+    { "id": "scroll_down", "count": 300 },
+    { "id": "new_tab", "count": 200 },
+    { "id": "click", "count": 100 },
+    { "id": "web_search", "count": 50 }
+  ],
+  "matchMs": { "median": 1.0, "p95": 10.0 },
+  "totalMs": { "median": 100, "p95": 1000 }
+}

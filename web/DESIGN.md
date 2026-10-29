@@ -1,0 +1,142 @@
+# No Hands Pilot: design
+
+Everything on the site follows this file. The tokens live in one place in code: the `@theme` block in
+[`src/index.css`](src/index.css). Tailwind's own palette, type sizes, radii and shadows are switched
+off there, so a class like `text-gray-500` or `rounded-lg` from muscle memory simply won't exist.
+Framer Motion takes its timings from [`src/motion.ts`](src/motion.ts), which mirrors the CSS ones.
+
+## Mood
+
+Calm, precise, a little cinematic. A dark room with one warm light: near-black ink, warm paper-white
+text, and a single amber signal that only appears when Pilot is doing something. The page should
+feel like the product: quiet until you speak, then exact.
+
+Texture: a 4.5% film grain over the landing page (the `grain` utility) and one soft pool of light at
+the top. Never over the mock desktop, which has to read as a real screen.
+
+## Colour
+
+| Token | Value | Use |
+|---|---|---|
+| `ink` | `#08090B` | Page background |
+| `ink-1` | `#0E1013` | Raised surfaces: panels, bars, the mock desktop's frame |
+| `ink-2` | `#15181C` | Inputs, hover |
+| `ink-3` | `#1E2227` | Pressed, selected, the HUD |
+| `line` | paper at 9% | Hairlines, card borders |
+| `line-strong` | paper at 18% | Input and button borders |
+| `paper` | `#F2EDE4` | Text |
+| `paper-2` | paper at 68% | Secondary text |
+| `paper-3` | paper at 52% | Labels and hints: the faintest text allowed (4.5:1 on `ink-1`) |
+| `signal` | `#FFB02E` | **Pilot is acting.** The waveform while it hears or acts, the active command, the HUD's ✓. Nothing else |
+| `signal-soft` | signal at 14% | A wash behind an acting element, when a line isn't enough |
+
+The signal is a cockpit caution amber: warm against the cool ink, and far from Wispr's colours. If
+more than one thing on screen is amber and Pilot isn't acting, one of them is wrong. Errors aren't
+red: "Didn't catch …" is plain `paper-2` with a `·`, because a miss is information, not an alarm.
+
+Dark only. There's no light theme, and `color-scheme: dark` keeps form controls and scrollbars dark too.
+
+## Type
+
+| Role | Face | Notes |
+|---|---|---|
+| Display | **Fraunces** (variable, optical size on auto) | Headlines only. Weight 380, so the high-contrast large optical size shows |
+| Body and UI | **Instrument Sans** (variable) | Everything you read that isn't a headline or a command |
+| Commands | **JetBrains Mono** (variable) | Anything you'd say to Pilot, plus labels and numbers |
+| The mock macOS | System font stack (`font-os`) | So it reads as an OS, not as this website |
+
+All three are self-hosted through `@fontsource-variable` (Latin is about 137 KB for the three). Nothing
+loads from a font CDN.
+
+| Token | Size | Line height | Tracking | Use |
+|---|---|---|---|---|
+| `text-display` | 44 → 100 px (fluid) | 0.98 | −0.022em | The hero headline |
+| `text-title` | 34 → 60 px | 1.02 | −0.02em | Section headings |
+| `text-heading` | 22 → 30 px | 1.15 | −0.015em | Card and step titles |
+| `text-lead` | 20 px | 1.5 | | The line under a headline |
+| `text-body` | 17 px | 1.6 | | Paragraphs |
+| `text-small` | 15 px | 1.5 | | UI, buttons, the HUD, commands in fields |
+| `text-micro` | 12 px | 1.4 | | Mono labels; eyebrows add uppercase and 0.14em tracking |
+
+**Commands always look like something you say:** mono, in straight quotes, starting with "Pilot,"
+when shown as speech: `"Pilot, open Chrome"`. Inside a field or a chip, the quotes and "Pilot," can
+go, because the field already is the place you say it.
+
+## Space and layout
+
+- 4 px grid (Tailwind's spacing scale). Common steps: 8, 12, 16, 24, 32, 48, 64, 96.
+- Content width 1200 px max; side padding 20 px on phones, 32 px from `md`.
+- Sections breathe: 96 to 160 px between them on desktop, 64 to 96 px on phones.
+- Nothing may scroll sideways at 390, 768, 1024 or 1440 px.
+
+## Radii
+
+| Token | Value | Use |
+|---|---|---|
+| `rounded-xs` | 6 px | Badges, tags, number badges |
+| `rounded-sm` | 8 px | Small controls, focus targets |
+| `rounded-md` | 12 px | Buttons, the HUD, chips |
+| `rounded-lg` | 16 px | Inputs, the command bar |
+| `rounded-xl` | 24 px | Cards, panels, the embedded desktop |
+
+The app icon uses a 14.5/64 corner (about 22.6%), close to macOS's own icon shape.
+
+## Shadows
+
+| Token | Use |
+|---|---|
+| `shadow-window` | Panels and mock windows: a hairline, a faint top highlight, then a long soft drop |
+| `shadow-hud` | The HUD toast and menus |
+| `shadow-signal` | An amber halo for the one element Pilot is acting on. Use it for at most one thing at a time |
+
+## Motion
+
+| Name | Time | Use |
+|---|---|---|
+| fast | 150 ms | Hover, press, focus (the default for `transition`) |
+| base | 220 ms | HUD in and out, menus, chips, steps appearing |
+| slow | 300 ms | Windows opening, closing and minimising |
+| typing | 32 ms a character | Commands typing themselves |
+| step | 140 ms apart | The steps of a chain appearing as Pilot does them |
+
+- Easing: `ease-out` `cubic-bezier(0.2, 0.8, 0.2, 1)` for things arriving, `ease-in-out`
+  `cubic-bezier(0.65, 0, 0.35, 1)` for things moving in place (the waveform).
+- Motion explains cause and effect: a command is said, then the thing it names happens. Nothing
+  moves for decoration, and nothing loops except the waveform while Pilot hears.
+- `prefers-reduced-motion`: every CSS animation and transition drops to 1 ms, Framer Motion skips
+  transforms (`MotionConfig reducedMotion="user"`), and typing appears whole.
+
+## Logo
+
+A raised right hand, palm out, with a sound wave flowing through the palm: Wispr hears, Pilot's
+hand acts. It's one file, [`public/favicon.svg`](public/favicon.svg): an ink tile with a paper hand,
+the wrist running off the bottom edge, and the amber wave cut through the palm with a mask (a real gap,
+not a painted outline). The same file is the favicon (16 px), the dock icon (64 px), the
+nav mark and the OG image. At 16 px the fingers merge, but it still reads as a hand with an amber wave.
+
+- Don't recolour it, outline it, or put it on a busy background.
+- The wordmark is "No Hands Pilot" in Fraunces at regular weight, set next to the tile.
+- The app on the mock desktop's dock is labelled "NoHandsPilot", like a Mac app name.
+
+## Voice and tone
+
+- **First person, from the maker.** "I built Pilot because …", "my real usage". Not "we", not "users love".
+- **Plain and concrete.** Say what it does with a real command. Numbers only from `stats.json` or the
+  docs, always with their date range. If a claim can't be sourced, it doesn't go on the page.
+- **Honest about the edges.** Wispr does the transcribing; Pilot's own recognizer only hears its
+  name. Anything the website can't really do says "On your Mac: …".
+- **Product names:** Wispr Flow (text only, never styled like Wispr's brand), Pilot, No Hands Pilot.
+- **Words we don't use:** supercharge, seamless, effortless, magic, revolutionary, unleash,
+  AI-powered, 10x, "the future of".
+
+## Do / don't
+
+| Do | Don't |
+|---|---|
+| One amber thing at a time, only while Pilot acts | Amber for links, buttons or decoration |
+| Show a real command and its real result | Mock screenshots of things the site can't do |
+| Use the real `commands.json` and the real Brain | Copy phrases into the site by hand |
+| Draw original, generic app icons with text labels | Use Wispr's, Apple's, Google's or Microsoft's real icons or logos |
+| Paper-white focus rings (2 px, 3 px offset) on everything focusable | Remove outlines, or rely on colour alone |
+| `aria-live` for the HUD only when the visitor caused it | Announce the auto-playing demo to screen readers on a loop |
+| Let empty space do the work | Gradient blobs, glass cards for their own sake, emoji feature grids |

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>No Hands Pilot</title>
+  <!-- A raised right hand, palm out, with a sound wave flowing through the palm. One file for the favicon, the dock and the hero. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1C1F25"/><stop offset="1" stop-color="#09090B"/></linearGradient>
+    <clipPath id="tile"><rect width="64" height="64" rx="14.5"/></clipPath>
+    <path id="wave" fill="none" stroke-linecap="round" stroke-linejoin="round" d="M5 42.5C7 41.9 9 41.9 11 42.5C13 44.6 15 44.6 17 42.5C19 39 21 39 23 42.5C25 47 27 47 29 42.5C31 37.7 33 37.7 35 42.5C37 47 39 47 41 42.5C43 39 45 39 47 42.5C49 44.6 51 44.6 53 42.5C55 41.9 57 41.9 59 42.5"/>
+    <mask id="cut"><rect width="64" height="64" fill="#fff"/><use href="#wave" stroke="#000" stroke-width="7.8"/></mask>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="64" height="64" fill="url(#bg)"/>
+    <g mask="url(#cut)" fill="#F2EDE4">
+      <g stroke="#F2EDE4" stroke-width="6.2" stroke-linecap="round">
+        <path d="M24 34V16.4M31.2 34V12.6M38.4 34V15.2M45.4 35V20.8M22.6 41.5 14 30.2"/>
+      </g>
+      <path d="M20.9 30v18.5c0 4 3.5 6 5.3 7.6V64h18V56.1c1.8-1.6 4.3-3.6 4.3-7.6V31Z"/>
+    </g>
+    <use href="#wave" stroke="#FFB02E" stroke-width="3.4"/>
+  </g>
+  <rect x=".5" y=".5" width="63" height="63" rx="14" fill="none" stroke="#fff" stroke-opacity=".08"/>
+</svg>
