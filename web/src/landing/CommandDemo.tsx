@@ -94,20 +94,18 @@ export function CommandDemo() {
   const view = result && hud(result.plan, result.ms);
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-line bg-ink-1 p-5 shadow-window sm:p-7">
+    <div className="relative overflow-hidden rounded-xl border border-line bg-surface-1 p-5 shadow-window sm:p-7">
       <div className="flex items-center gap-3">
         <img src="/favicon.svg" alt="" width={36} height={36} className="size-9" />
         <div className="leading-tight">
           <p className="text-small font-medium">Pilot</p>
-          <p
-            className={`font-mono text-micro ${phase === 'ready' ? 'text-paper-3' : 'text-signal'}`}
-          >
+          <p className={`font-mono text-micro ${phase === 'ready' ? 'text-fg-3' : 'text-signal'}`}>
             {STATUS[phase]}
           </p>
         </div>
       </div>
 
-      <label className="mt-6 flex h-14 items-center gap-3 rounded-lg border border-line-strong bg-ink-2 px-4 focus-within:border-paper-3">
+      <label className="mt-6 flex h-14 items-center gap-3 rounded-lg border border-line-strong bg-surface-2 px-4 focus-within:border-fg-3">
         <Wave on={phase !== 'ready'} />
         <span className="sr-only">Command</span>
         <input
@@ -130,7 +128,7 @@ export function CommandDemo() {
           placeholder="Type a command, then press Enter"
           spellCheck={false}
           autoComplete="off"
-          className="min-w-0 flex-1 bg-transparent font-mono text-small text-paper outline-none placeholder:text-paper-3"
+          className="min-w-0 flex-1 bg-transparent font-mono text-small text-fg outline-none placeholder:text-fg-3"
         />
       </label>
 
@@ -144,18 +142,18 @@ export function CommandDemo() {
               exit={{ opacity: 0 }}
               transition={{ duration: base, ease: easeOut }}
             >
-              <p className="inline-flex max-w-full items-start gap-2 rounded-md bg-ink-3 px-3.5 py-2.5 text-small shadow-hud">
-                <span aria-hidden className={view.ok ? 'text-signal' : 'text-paper-3'}>
+              <p className="inline-flex max-w-full items-start gap-2 rounded-md bg-raised px-3.5 py-2.5 text-small shadow-hud">
+                <span aria-hidden className={view.ok ? 'text-signal' : 'text-fg-3'}>
                   {view.ok ? '✓' : '·'}
                 </span>
-                <span className={view.ok ? 'text-paper' : 'text-paper-2'}>{view.text}</span>
+                <span className={view.ok ? 'text-fg' : 'text-fg-2'}>{view.text}</span>
               </p>
               {steps.length > 0 && (
                 <motion.ol
                   initial="hidden"
                   animate="shown"
                   variants={{ shown: { transition: { staggerChildren: STEP_S } } }}
-                  className="mt-4 space-y-1.5 font-mono text-micro text-paper-3"
+                  className="mt-4 space-y-1.5 font-mono text-micro text-fg-3"
                 >
                   {steps.map((s, i) => (
                     <motion.li
@@ -164,7 +162,7 @@ export function CommandDemo() {
                       transition={{ duration: base, ease: easeOut }}
                       className="flex gap-3"
                     >
-                      <span className="w-28 shrink-0 truncate text-paper-2">{s.id}</span>
+                      <span className="w-28 shrink-0 truncate text-fg-2">{s.id}</span>
                       <span className="truncate">{s.actions.map(actionLabel).join(' · ')}</span>
                     </motion.li>
                   ))}
@@ -186,7 +184,7 @@ function Wave({ on }: { on: boolean }) {
         <span
           key={i}
           style={{ height: `${h * 100}%`, animationDelay: `${i * -170}ms` }}
-          className={`w-[3px] origin-center rounded-full transition-colors ${on ? 'animate-wave bg-signal' : 'scale-y-[0.25] bg-paper-3'}`}
+          className={`w-[3px] origin-center rounded-full transition-colors ${on ? 'animate-wave bg-signal' : 'scale-y-[0.25] bg-fg-3'}`}
         />
       ))}
     </span>

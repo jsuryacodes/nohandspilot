@@ -9,6 +9,21 @@
       content="Say “Pilot, open Chrome, new tab, search for Docker networking” with Wispr Flow and your Mac does it. A macOS menu-bar app: offline, rule-based, no API keys."
     />
     <meta name="theme-color" content="#08090b" />
+    <script>
+      // The theme before the first paint: the saved choice (src/theme.ts), else the system's.
+      (function () {
+        var saved = null;
+        try {
+          saved = localStorage.getItem('theme');
+        } catch (e) {}
+        var light =
+          saved === 'light' ||
+          (saved !== 'dark' && matchMedia('(prefers-color-scheme: light)').matches);
+        document.documentElement.dataset.theme = light ? 'light' : 'dark';
+        if (light)
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f4f0e8');
+      })();
+    </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
   <body>

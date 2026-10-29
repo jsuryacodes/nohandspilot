@@ -11,30 +11,45 @@ Calm, precise, a little cinematic. A dark room with one warm light: near-black i
 text, and a single amber signal that only appears when Pilot is doing something. The page should
 feel like the product: quiet until you speak, then exact.
 
-Texture: a 4.5% film grain over the landing page (the `grain` utility) and one soft pool of light at
+Texture: a film grain over the landing page (4.5% in dark, 3% in light) (the `grain` utility) and one soft pool of light at
 the top. Never over the mock desktop, which has to read as a real screen.
 
 ## Colour
 
-| Token | Value | Use |
-|---|---|---|
-| `ink` | `#08090B` | Page background |
-| `ink-1` | `#0E1013` | Raised surfaces: panels, bars, the mock desktop's frame |
-| `ink-2` | `#15181C` | Inputs, hover |
-| `ink-3` | `#1E2227` | Pressed, selected, the HUD |
-| `line` | paper at 9% | Hairlines, card borders |
-| `line-strong` | paper at 18% | Input and button borders |
-| `paper` | `#F2EDE4` | Text |
-| `paper-2` | paper at 68% | Secondary text |
-| `paper-3` | paper at 52% | Labels and hints: the faintest text allowed (4.5:1 on `ink-1`) |
-| `signal` | `#FFB02E` | **Pilot is acting.** The waveform while it hears or acts, the active command, the HUD's ✓. Nothing else |
-| `signal-soft` | signal at 14% | A wash behind an acting element, when a line isn't enough |
+Two colours do most of the work, ink `#08090B` and paper `#F2EDE4`, plus one amber signal. The
+tokens are named for their role, so the same class works in both themes: dark is paper-on-ink,
+light swaps them to ink-on-paper.
+
+| Token | Dark | Light | Use |
+|---|---|---|---|
+| `canvas` | `#08090B` | `#F4F0E8` | Page background |
+| `surface-1` | `#0E1013` | `#FBF9F5` | Panels, bars, the mock desktop's frame |
+| `surface-2` | `#15181C` | `#ECE7DD` | Inputs, hover |
+| `surface-3` | `#1E2227` | `#E3DDD1` | Pressed, selected, the chosen theme |
+| `raised` | `#23272D` | `#FFFFFF` | Floating things: the HUD, menus |
+| `line` / `line-strong` | paper at 9% / 18% | ink at 10% / 20% | Hairlines and card borders / input and button borders |
+| `fg` | paper | `#14161A` | Text |
+| `fg-2` | paper at 68% | ink at 72% | Secondary text |
+| `fg-3` | paper at 52% | ink at 62% | Labels and hints: the faintest text allowed |
+| `signal` | `#FFB02E` | `#A85700` | **Pilot is acting.** The waveform while it hears or acts, the active command, the HUD's ✓. Nothing else |
+| `signal-soft` | signal at 14% | signal at 12% | A wash behind an acting element, when a line isn't enough |
+| `glow` | paper at 7% | white at 75% | The pool of light at the top of the page |
+
+Every text token is at least 4.5:1 on every surface in both themes (`fg-3` is the limit: 4.5 to 5.1).
+In light mode the amber is deeper (`#A85700`) so it still reads as text on paper; the bright amber
+would be under 2:1 there.
 
 The signal is a cockpit caution amber: warm against the cool ink, and far from Wispr's colours. If
 more than one thing on screen is amber and Pilot isn't acting, one of them is wrong. Errors aren't
-red: "Didn't catch …" is plain `paper-2` with a `·`, because a miss is information, not an alarm.
+red: "Didn't catch …" is plain `fg-2` with a `·`, because a miss is information, not an alarm.
 
-Dark only. There's no light theme, and `color-scheme: dark` keeps form controls and scrollbars dark too.
+### Theme
+
+System, Light or Dark, chosen with three side-by-side buttons in the nav (radio buttons: click one,
+or use the arrow keys), never a toggle that cycles. System follows the visitor's OS and changes with
+it; Light and Dark are saved in `localStorage` (`src/theme.ts`). A small script in `index.html` sets
+`data-theme` before the first paint, so there's no flash of the wrong theme. The app icon doesn't
+change: it's a dark tile in both, like an app icon on a Mac.
 
 ## Type
 
@@ -137,6 +152,6 @@ nav mark and the OG image. At 16 px the fingers merge, but it still reads as a h
 | Show a real command and its real result | Mock screenshots of things the site can't do |
 | Use the real `commands.json` and the real Brain | Copy phrases into the site by hand |
 | Draw original, generic app icons with text labels | Use Wispr's, Apple's, Google's or Microsoft's real icons or logos |
-| Paper-white focus rings (2 px, 3 px offset) on everything focusable | Remove outlines, or rely on colour alone |
+| `fg` focus rings (2 px, 3 px offset) on everything focusable | Remove outlines, or rely on colour alone |
 | `aria-live` for the HUD only when the visitor caused it | Announce the auto-playing demo to screen readers on a loop |
 | Let empty space do the work | Gradient blobs, glass cards for their own sake, emoji feature grids |

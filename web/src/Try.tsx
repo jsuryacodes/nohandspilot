@@ -7,7 +7,7 @@ export function Try() {
         <h1 className="mt-6 font-display text-heading">The live desktop is on its way.</h1>
         <a
           href="/"
-          className="mt-4 inline-block text-small text-paper-2 underline underline-offset-4 hover:text-paper"
+          className="mt-4 inline-block text-small text-fg-2 underline underline-offset-4 hover:text-fg"
         >
           Back to the home page
         </a>

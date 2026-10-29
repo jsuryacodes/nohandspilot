@@ -2,6 +2,17 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 29 Oct: Website: light mode, and a System / Light / Dark choice
+- Your ask: a light theme, chosen directly from three options, not a button that cycles. The nav now
+  has three side-by-side buttons (radio buttons, so arrow keys work too). System follows your Mac and
+  changes with it; Light and Dark are remembered. The theme is set before the page first draws, so it
+  never flashes dark first. Checked in a browser: Dark sticks after a reload, System forgets it.
+- Light is the same two colours swapped (ink on paper) with a deeper amber (#A85700), because the
+  bright one is under 2:1 on paper. Every text colour is at least 4.5:1 on every surface in both
+  themes. The colour tokens are now named for their role (`canvas`, `surface`, `fg`), so one class
+  works in both. DESIGN.md has both palettes.
+- On phones the nav keeps only the logo and the theme choice (the hero's "Try it" is right below).
+
 ## 29 Oct: Website, checkpoint 1: foundation (waiting for your design OK)
 - `web/`: Vite, React, TypeScript (strict), Tailwind, Framer Motion, Vitest, ESLint and Prettier;
   `npm run dev / build / test / preview / lint / format / og`. Two routes without a router library:

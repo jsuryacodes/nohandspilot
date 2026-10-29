@@ -1,21 +1,24 @@
 @import 'tailwindcss';
 
 /* Design tokens: the one place. web/DESIGN.md says what each is for. Tailwind's own colours, sizes,
-   radii and shadows are switched off, so nothing outside this block can sneak in. */
+   radii and shadows are switched off, so nothing outside this block can sneak in.
+   Colours are roles, not paint: these are the dark theme's, and [data-theme='light'] below swaps them. */
 @theme {
   --color-*: initial;
-  --color-ink: #08090b; /* page */
-  --color-ink-1: #0e1013; /* raised: panels, bars */
-  --color-ink-2: #15181c; /* inputs, hover */
-  --color-ink-3: #1e2227; /* pressed, selected */
+  --color-canvas: #08090b; /* page */
+  --color-surface-1: #0e1013; /* panels, bars */
+  --color-surface-2: #15181c; /* inputs, hover */
+  --color-surface-3: #1e2227; /* pressed, selected */
+  --color-raised: #23272d; /* floating: the HUD, menus */
   --color-line: rgb(242 237 228 / 0.09); /* hairlines */
   --color-line-strong: rgb(242 237 228 / 0.18);
-  --color-paper: #f2ede4; /* text */
-  --color-paper-2: rgb(242 237 228 / 0.68); /* secondary text */
-  /* labels and hints: the faintest text allowed (4.5:1 on ink-1) */
-  --color-paper-3: rgb(242 237 228 / 0.52);
+  --color-fg: #f2ede4; /* text */
+  --color-fg-2: rgb(242 237 228 / 0.68); /* secondary text */
+  /* labels and hints: the faintest text allowed (4.5:1 on every surface, both themes) */
+  --color-fg-3: rgb(242 237 228 / 0.52);
   --color-signal: #ffb02e; /* Pilot is acting. Nothing else. */
   --color-signal-soft: rgb(255 176 46 / 0.14);
+  --color-glow: rgb(242 237 228 / 0.07); /* the pool of light at the top of the page */
 
   --font-*: initial;
   --font-display: 'Fraunces Variable', ui-serif, Georgia, serif;
@@ -77,16 +80,42 @@
 
 /* Motion timings (Framer Motion reads the same numbers from src/motion.ts) */
 :root {
+  color-scheme: dark;
+  --grain: 0.045;
   --motion-fast: 150ms; /* hover, press, focus */
   --motion-base: 220ms; /* HUD, menus, chips */
   --motion-slow: 300ms; /* windows open and close */
 }
 
+/* Light: the same two colours swapped (ink on paper), a deeper amber that still reads on paper, softer shadows.
+   index.html sets data-theme before the first paint: the saved choice, else the system's. */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --grain: 0.03;
+  --color-canvas: #f4f0e8;
+  --color-surface-1: #fbf9f5;
+  --color-surface-2: #ece7dd;
+  --color-surface-3: #e3ddd1;
+  --color-raised: #ffffff;
+  --color-line: rgb(20 22 26 / 0.1);
+  --color-line-strong: rgb(20 22 26 / 0.2);
+  --color-fg: #14161a;
+  --color-fg-2: rgb(20 22 26 / 0.72);
+  --color-fg-3: rgb(20 22 26 / 0.62);
+  --color-signal: #a85700;
+  --color-signal-soft: rgb(168 87 0 / 0.12);
+  --color-glow: rgb(255 255 255 / 0.75);
+  --shadow-window:
+    0 0 0 0.5px rgb(20 22 26 / 0.14), 0 1px 0 0 rgb(255 255 255 / 0.7) inset,
+    0 28px 70px -20px rgb(70 45 10 / 0.24), 0 8px 20px -10px rgb(70 45 10 / 0.14);
+  --shadow-hud: 0 0 0 0.5px rgb(20 22 26 / 0.12), 0 12px 30px -8px rgb(70 45 10 / 0.22);
+  --shadow-signal: 0 0 0 1px rgb(168 87 0 / 0.35), 0 0 24px -4px rgb(255 176 46 / 0.5);
+}
+
 @layer base {
   html {
-    color-scheme: dark;
-    background: var(--color-ink);
-    color: var(--color-paper);
+    background: var(--color-canvas);
+    color: var(--color-fg);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -94,15 +123,15 @@
   }
   body {
     min-height: 100dvh;
-    background: var(--color-ink);
+    background: var(--color-canvas);
     overflow-x: clip;
   }
   ::selection {
-    background: var(--color-paper);
-    color: var(--color-ink);
+    background: var(--color-fg);
+    color: var(--color-canvas);
   }
   :focus-visible {
-    outline: 2px solid var(--color-paper);
+    outline: 2px solid var(--color-fg);
     outline-offset: 3px;
   }
   @media (prefers-reduced-motion: reduce) {
