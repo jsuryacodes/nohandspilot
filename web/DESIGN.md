@@ -133,6 +133,28 @@ nav mark and the OG image. At 16 px the fingers merge, but it still reads as a h
 - The wordmark is "No Hands Pilot" in Fraunces at regular weight, set next to the tile.
 - The app on the mock desktop's dock is labelled "NoHandsPilot", like a Mac app name.
 
+## The mock Mac (`/try`, and the hero)
+
+It has to read as an operating system, not as this website, so it has its own small set of tokens
+(`os-*` in `src/index.css`): neutral, graphite selection like macOS's Graphite accent, in a light and
+a dark appearance that follow the site's theme. The site's amber still means one thing in there:
+Pilot. It's on the waveform, the HUD's ✓ and the number badges (the real ones are yellow). The only
+other colours are the traffic lights and the app tiles in the Dock.
+
+- **Type:** the system font stack (`font-os`) at 13 px for the OS and apps; JetBrains Mono in the
+  editor and Terminal.
+- **Wallpaper:** drawn in SVG: dunes under a night sky, or in the morning in light mode.
+- **Icons:** original tiles with generic glyphs (a folder, a globe, `</>`, a speech bubble, `>_`, a
+  note, a gear) and the app's name in the Dock's label. No real app icons or logos. The Pilot
+  menu-bar icon is an airplane, like the real app's, drawn from scratch.
+- **Windows:** 12 px corners, `shadow-window`, 38 px title bars; open, close and minimise in 300 ms
+  (`slow`); minimise drops towards the Dock; full screen keeps the menu bar and hides the Dock.
+- **Pages in the mock Chrome** are stand-ins and say so ("Stand-in results. On your Mac, Pilot opens
+  the real Google search in Chrome."). Site names appear as plain text, never as their logos.
+- **Sizes:** on a laptop `/try` is a real-size Mac (the screen is the viewport, nothing scaled). In
+  the hero and on phones it's a 1180 × 720 (or 1024 × 680) Mac scaled to fit, and the command bar
+  and HUD sit below it at full size so they stay readable.
+
 ## Voice and tone
 
 - **First person, from the maker.** "I built Pilot because …", "my real usage". Not "we", not "users love".

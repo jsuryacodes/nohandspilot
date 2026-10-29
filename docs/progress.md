@@ -2,6 +2,41 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 29 Oct: Website, checkpoint 2: a Mac in the browser (/try)
+- `/try` is a Mac that runs commands through Pilot's real Brain and commands.json. It has a menu bar
+  with a live clock and Pilot's airplane menu ("Today: N commands, on this page"), a drawn wallpaper,
+  and a Dock with original icons that magnifies and bounces apps as they open. Windows can be dragged,
+  focused, minimised, made full screen and closed. It follows the site's theme (light or dark Mac).
+- About 30 commands really happen there: open, switch to, quit and hide apps, switch back; new,
+  close, reopen, next, previous and numbered tabs; search; sites by name; YouTube results, then play and
+  pause ("Already paused"); scrolling; full screen and minimise; show numbers, click N, click by name;
+  VS Code's terminal, Claude's sidebar, new chat and "ask Claude"; Finder folders and Settings panes;
+  study mode and coding mode; "what can I say?" (searchable, and its phrases run when clicked); open
+  NoHandsPilot. Anything else that matches says what it would do, from commands.json: "On your Mac:
+  presses ⌘=".
+- It behaves like Hands: a link opens in a new tab, opening an app with no window opens one (Finder
+  after "switch back"), numbers go when another app comes forward or after 20 s, two things with the
+  same name are refused, and the errors read like Pilot's ("No previous app yet").
+- Command bar: type, dictate into it with Wispr (a paste runs by itself, like the real bar), use the
+  browser's speech recognition, or tap a suggestion. The suggestions step through: open Chrome → new
+  tab → search → the chain → play lofi beats on YouTube → show numbers → click 3 → pause the video →
+  switch back → study mode → open NoHandsPilot → what can I say. "/" focuses the bar. The HUD shows a
+  chain step by step, with the measured match time.
+- The NoHandsPilot window: Download, View on GitHub, the setup steps in order (Gatekeeper,
+  Accessibility, Input Monitoring if needed, Wispr's dictionary, the ⌃⌥P test, the optional wake word's
+  Speech Recognition and Microphone), and Build from source.
+- First visit: an empty desktop, then it types and runs "open Chrome, new tab, search for Docker
+  networking" by itself (done in about 3.5 s) and stops for good once you click or type. Phones get the
+  Mac scaled down, with the controls below it.
+- Tests: 51 command → effect cases in Vitest (234 with the Brain's), and a Playwright test that the
+  first visit's chain finishes within 5 s.
+- Followed the code over the brief: "pause the video" now comes after "click 3" (the YouTube command
+  opens the results, and nothing plays until you click one, as in docs/demo.md), and "install Pilot"
+  isn't a command.
+- Found while writing the setup steps: since macOS 15, right-click → Open no longer opens an app that
+  isn't notarized. The steps say System Settings → Privacy & Security → Open Anyway, and keep
+  right-click → Open for macOS 14 and earlier.
+
 ## 29 Oct: Website: light mode, and a System / Light / Dark choice
 - Your ask: a light theme, chosen directly from three options, not a button that cycles. The nav now
   has three side-by-side buttons (radio buttons, so arrow keys work too). System follows your Mac and
