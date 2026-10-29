@@ -1,4 +1,4 @@
-import { AnimatePresence, MotionConfig, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, MotionConfig, useInView, useReducedMotion } from 'framer-motion';
 import {
   useCallback,
   useEffect,
@@ -136,10 +136,11 @@ export function PilotDesktop({
 
   // A real-size Mac when there's room (/try on a laptop); otherwise a scaled one, with the controls below it.
   const inside = !compact && size.width >= 900;
-  const W = inside ? size.width : compact ? 1180 : 1024;
-  const H = inside ? Math.max(560, size.height) : compact ? 720 : 680;
+  const W = inside ? size.width : compact ? 1040 : 1024;
+  const H = inside ? Math.max(560, size.height) : compact ? 650 : 680;
   const scale = inside ? 1 : Math.min(1, size.width / W) || 1;
   const bottom = inside ? 220 : 92;
+  const overlay = inside || (compact && size.width >= 600); // the HUD over the screen, where there's room
 
   /** Plays a step's actions one at a time (typing shows up letter by letter), then lands on the real result. */
   const playStep = async (before: Desk, step: Step) => {
@@ -215,7 +216,12 @@ export function PilotDesktop({
         if (!loop) return;
         i = 0;
         await sleep(1200);
-        apply(initial);
+      }
+      if (loop && i === 0 && deskRef.current !== initial) {
+        apply(initial); // each round starts from an empty desktop
+        setHud(undefined);
+        await sleep(700);
+        if (cancelled()) return;
       }
       const command = autoplay[i];
       setPhase('hearing');
@@ -229,15 +235,17 @@ export function PilotDesktop({
       await sleep(2000);
     }
   });
+  // Plays only while it's on screen, so a page scrolled past it isn't doing work.
+  const seen = useInView(root, { amount: 0.25 });
   useEffect(() => {
-    if (visitor || !autoplay.length) return;
+    if (visitor || !autoplay.length || !seen) return;
     let stop = false;
     const start = window.setTimeout(() => autoRun(() => stop), 650); // an empty desktop first, then it starts
     return () => {
       stop = true;
       window.clearTimeout(start);
     };
-  }, [visitor, autoplay.length]);
+  }, [visitor, autoplay.length, seen]);
 
   // "/" starts typing a command, from anywhere on the page
   useEffect(() => {
@@ -414,11 +422,17 @@ export function PilotDesktop({
             />
           </div>
         </MotionConfig>
+        {overlay && (
+          // Over the screen, above the Dock (above the command bar on a full-size Mac)
+          <div
+            className="pointer-events-none absolute inset-x-0 z-[1100]"
+            style={{ bottom: inside ? 236 : 92 * scale + 8 }}
+          >
+            <Hud hud={hud} announce={visitor} />
+          </div>
+        )}
         {inside && (
           <>
-            <div className="pointer-events-none absolute inset-x-0 bottom-[236px] z-[1100]">
-              <Hud hud={hud} announce={visitor} />
-            </div>
             <div className="absolute inset-x-0 bottom-[86px] z-[1100] flex justify-center px-4">
               {controls}
             </div>
@@ -426,12 +440,14 @@ export function PilotDesktop({
         )}
       </div>
       {!inside && (
-        // On a small screen the HUD sits under the Mac instead of covering it; its space is kept so nothing jumps.
         <>
-          <div className="mb-3 mt-3 min-h-[5.75rem]">
-            <Hud hud={hud} announce={visitor} />
-          </div>
-          <div className="flex justify-center">{controls}</div>
+          {/* On a small screen the HUD sits under the Mac instead of covering it; its space is kept so nothing jumps. */}
+          {!overlay && (
+            <div className="mt-3 min-h-[5.75rem]">
+              <Hud hud={hud} announce={visitor} />
+            </div>
+          )}
+          <div className="mt-4 flex justify-center">{controls}</div>
         </>
       )}
       {!inside && !compact && (

@@ -2,6 +2,28 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 29 Oct: Website, checkpoint 3: the landing page
+- The hero keeps the approved headline and puts the live Mac next to it: it plays the chain, YouTube,
+  numbers, click 3, pause and study mode, round and round, until you touch it, and only while it's on
+  screen. On a laptop it's all above the fold: the Mac, its HUD and the command bar.
+- Then: why I built it (a by-hand / with-Pilot table of six everyday things), how it works (Wispr →
+  Pilot catches the paste → the Brain → Accessibility; median match, offline, untouched dictation; the
+  wake word; teaching by voice), the demo video slot (`DEMO_VIDEO_ID` in `web/src/config.ts`; until it's
+  set the poster says the video is on its way and points to the Mac above), my real usage, the Wispr
+  usage card (`web/public/wispr-usage.png`, a dashed frame until it's there), a get-it band with the
+  three install steps, and the footer (not affiliated with Wispr, MIT, @jsuryacodes).
+- My real usage comes from `stats.json`: commands, how many ran, chains, median match and run times,
+  commands per day, how they reached Pilot (Wispr, Pilot's own hearing, the command bar), and the most
+  used commands by the phrase you say. Every chart is one series in one neutral ink (the amber stays
+  Pilot's), with hover and keyboard tooltips and a table for screen readers.
+- Copy checked against the docs. One correction to the brief: with the wake word, Wispr doesn't always
+  write the whole command. Said in one breath, the first words come from Pilot's own hearing, because
+  Wispr's mic takes ~0.36 s to open (README, the 29 Oct measurements). The page says that.
+- Link previews: title, description and `og.png`, with the absolute address filled in from Vercel's
+  production domain at build time.
+- A test checks that every command the page shows runs in the real Brain (14 phrases); 248 tests in
+  all, plus the 2 browser tests.
+
 ## 29 Oct: Website, checkpoint 2: a Mac in the browser (/try)
 - `/try` is a Mac that runs commands through Pilot's real Brain and commands.json. It has a menu bar
   with a live clock and Pilot's airplane menu ("Today: N commands, on this page"), a drawn wallpaper,
