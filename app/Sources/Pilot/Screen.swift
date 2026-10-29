@@ -90,8 +90,15 @@ enum Screen {
         return true
     }
 
+    /// Does it answer AXPress? Apple Music's tiles ("Relax", "Feel Good") are groups that do.
+    private static func pressable(_ el: AXUIElement) -> Bool {
+        var actions: CFArray?
+        return AXUIElementCopyActionNames(el, &actions) == .success && (actions as? [String] ?? []).contains(kAXPressAction)
+    }
+
     /// Visible elements of the app's focused window in tree order, then its menu bar titles. Actionable ones even
-    /// without a name (for numbers), plus plain text when `text`. Capped at 3000 nodes, depth 40, 300 ms.
+    /// without a name (for numbers), named ones of any role that answer AXPress, plus plain text when `text`.
+    /// Capped at 3000 nodes, depth 40, 300 ms.
     static func elements(of app: NSRunningApplication, text: Bool) -> [Element] {
         let root = AXUIElementCreateApplication(app.processIdentifier)
         if boost(app, root) { usleep(300_000) }   // the first walk after asking can come back thin
@@ -109,7 +116,7 @@ enum Screen {
                 if role == kAXScrollAreaRole { clip = clip.intersection(f) }
                 let labels = textInputs.contains(role) ? v[1...3] : v[1...4]   // a text field's value is what's typed in it
                 let name = labels.lazy.compactMap { ($0 as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) }.first { !$0.isEmpty } ?? ""
-                if actionable.contains(role) {
+                if actionable.contains(role) || (!name.isEmpty && role != kAXStaticTextRole && pressable(node)) {
                     out.append(Element(el: node, role: role, name: name, frame: f.intersection(clip)))
                     owner = name.isEmpty ? out.count - 1 : nil   // unnamed: named by the text inside it (list rows, web buttons)
                 } else if role == kAXStaticTextRole, !name.isEmpty {

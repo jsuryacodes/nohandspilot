@@ -2,6 +2,18 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 29 Oct: "click Relax" / "click Feel Good" in Apple Music
+- Your test (04:49): "Pilot, click relax" and "click feel good" on Music's Home page said "Couldn't
+  find". Same for "click your essentials" (04:48).
+- Cause: those tiles aren't buttons. Music exposes each one as a group named "Relax", "Feel Good", …
+  that answers the press action, and click only looked at buttons, links, tabs, rows, cells, fields
+  and plain text.
+- Fix: any element with a name that answers press counts too (only named ones are asked, so plain
+  containers stay out). "show numbers" now badges those tiles as well.
+- Checked on Music's live tree without pressing anything: before, no match for "relax" or "feel
+  good"; now exactly one each (the tile), and the 10 tiles on screen are the only additions. Chrome's
+  page (1,873 nodes) walks in the same time as before.
+
 ## 29 Oct: "Pilot" no longer ignored after arrow-key shortcuts
 - Your test (04:34): after "Pilot, scroll right across space" ran, the next six "Pilot"s did nothing.
   The log said `heard "Pilot" with fn held (Wispr's key)`, but Wispr's history has no session then,

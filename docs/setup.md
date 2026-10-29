@@ -93,6 +93,7 @@ that title in the front app. "What can I say?" lists them.
 |---|---|---|
 | "Pilot, click Downloads" | Finder (sidebar visible) | Finder shows Downloads. Toast "✓ Clicked "Downloads"" |
 | "Pilot, click" + a chat's name | WhatsApp | That chat opens |
+| "Pilot, click Feel Good" | Music, Home ("Find Your Mood" on screen) | The Feel Good station opens or plays, like a mouse click |
 | "Pilot, click" + a link's text | Chrome, any page | The link opens |
 | "Pilot, press enter" | any text box | Enter is pressed (the old command still wins) |
 | "Pilot, click search" | Chrome on a page with several search boxes | Either it clicks one, or "N matches … Say show numbers" |
