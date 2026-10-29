@@ -155,6 +155,11 @@ other colours are the traffic lights and the app tiles in the Dock.
   the hero and on phones it's a 1180 × 720 (or 1024 × 680) Mac scaled to fit, and the command bar
   and HUD sit below it at full size so they stay readable.
 
+- **Keyboard and screen readers:** "/" focuses the command bar from anywhere, Tab reaches everything
+  else with a visible ring, and the HUD speaks (`aria-live`) once the visitor has done something. A
+  scaled-down Mac (the hero, phones) is a picture: it's `inert`, and the full-size chips and command
+  bar beside it drive it; in the hero, clicking it opens the full-size one.
+
 ## Voice and tone
 
 - **First person, from the maker.** "I built Pilot because …", "my real usage". Not "we", not "users love".

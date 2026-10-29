@@ -141,6 +141,9 @@ export function PilotDesktop({
   const scale = inside ? 1 : Math.min(1, size.width / W) || 1;
   const bottom = inside ? 220 : 92;
   const overlay = inside || (compact && size.width >= 600); // the HUD over the screen, where there's room
+  // Drawn this small it's a picture of a Mac: its buttons would be specks. The full-size chips and command bar drive
+  // it, and the hero's links to the full-size one.
+  const picture = scale < 0.75;
 
   /** Plays a step's actions one at a time (typing shows up letter by letter), then lands on the real result. */
   const playStep = async (before: Desk, step: Step) => {
@@ -368,6 +371,7 @@ export function PilotDesktop({
         <MotionConfig transformPagePoint={(p) => ({ x: p.x / scale, y: p.y / scale })}>
           <div
             ref={stage}
+            inert={picture}
             className="absolute left-0 top-0 origin-top-left select-none overflow-hidden"
             style={{ width: W, height: H, transform: `scale(${scale})` }}
           >
@@ -422,6 +426,17 @@ export function PilotDesktop({
             />
           </div>
         </MotionConfig>
+        {picture && compact && (
+          <a
+            href="/try"
+            className="group absolute inset-0 z-[1050] rounded-xl"
+            aria-label="Open the Mac full size"
+          >
+            <span className="absolute right-3 top-6 rounded-full bg-raised px-3 py-1 text-micro text-fg opacity-0 shadow-hud transition group-hover:opacity-100 group-focus-visible:opacity-100">
+              Open it full size ↗
+            </span>
+          </a>
+        )}
         {overlay && (
           // Over the screen, above the Dock (above the command bar on a full-size Mac)
           <div

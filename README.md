@@ -40,3 +40,23 @@ cd app && swift run BrainCheck   # matching self-checks
 ```
 
 Setup and permissions: [docs/setup.md](docs/setup.md).
+
+## Website
+
+Live: _(link coming)_. Try Pilot in the browser at `/try`: a Mac that runs commands through Pilot's
+Brain (ported to TypeScript, passing every BrainCheck case) and the real `commands/commands.json`.
+
+```
+cd web && npm i && npm run dev   # the site, at localhost:5173
+npm test                         # the Brain's checks and the desktop's command → effect tests
+npm run e2e                      # builds, then checks the first visit in a real browser
+```
+
+To refresh the usage numbers on the site, from the repo root (counts and timings only; what you said
+never leaves the Mac):
+
+```
+node scripts/export-stats.mjs    # ~/Library/Application Support/Pilot/usage.jsonl → web/public/stats.json
+```
+
+Design notes: [web/DESIGN.md](web/DESIGN.md).

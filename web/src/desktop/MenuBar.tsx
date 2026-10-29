@@ -75,8 +75,9 @@ export function MenuBar({
       >
         <p className="font-semibold">A Mac in your browser</p>
         <p className="text-[12px] leading-snug text-os-text-2">
-          Commands go through Pilot’s real Brain and commands.json. The apps are stand-ins: nothing
-          here touches your computer.
+          Commands go through Pilot’s Brain, ported to TypeScript and passing all of its Swift
+          tests, and the real commands.json. The apps are stand-ins: nothing here touches your
+          computer.
         </p>
         <div className="flex items-center justify-between border-t border-os-line pt-2">
           <span className="text-[12px] text-os-text-2">Appearance</span>

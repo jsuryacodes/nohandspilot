@@ -2,6 +2,23 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 29 Oct: Website, checkpoint 4: polish, ready to ship
+- Lighthouse on the built site, both routes, phone and desktop presets: 100 everywhere except `/try`
+  on a phone (performance 94, a 3.0 s largest paint on a throttled phone) and the landing page on a
+  desktop (performance 99). Fixed on the way: a real `robots.txt`, no canonical tag that would have
+  called `/try` a copy of the home page, 24 px hit areas behind the traffic lights and tab close
+  buttons, and the address bar's label.
+- A Mac drawn smaller than 75% (the hero, phones) is now a picture: `inert`, so it adds no specks to
+  tap and no stops to Tab through. The full-size chips and command bar drive it, and clicking the
+  hero's opens `/try`.
+- Keyboard: every stop on both pages shows a ring (the command bar now too), "/" focuses the bar, and
+  the HUD speaks to screen readers once you've done something.
+- No sideways scrolling at 1440, 1024, 768 or 390 px, in either theme, on either route.
+- Copy re-read against the docs: the desktop's About menu now says the Brain is a TypeScript port
+  passing all of its Swift tests (not "the real Brain"), and the demo placeholder no longer promises
+  the video shows the same commands.
+- README: a Website section (run it, test it, refresh the stats).
+
 ## 29 Oct: Website, checkpoint 3: the landing page
 - The hero keeps the approved headline and puts the live Mac next to it: it plays the chain, YouTube,
   numbers, click 3, pause and study mode, round and round, until you touch it, and only while it's on

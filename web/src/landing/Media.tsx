@@ -40,7 +40,8 @@ export function Demo() {
                 <>
                   <p className="mt-6 font-display text-heading">The demo video is on its way.</p>
                   <p className="mt-2 text-small text-fg-2">
-                    Until then, the Mac at the top of this page runs the same commands.{' '}
+                    Until then, the Mac at the top of this page runs Pilot’s Brain and
+                    commands.json, right here.{' '}
                     <a href="/try" className="text-fg underline underline-offset-4">
                       Try it full size
                     </a>

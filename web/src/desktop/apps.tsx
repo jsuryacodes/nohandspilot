@@ -131,9 +131,11 @@ export function ChromeTabs({ d, act }: Ctx) {
               type="button"
               aria-label={`Close ${p.title}`}
               onClick={() => act((x) => closeTab(x, i))}
-              className="grid size-4 shrink-0 place-items-center rounded-full text-os-text-2 hover:bg-os-select"
+              className="group/x grid size-6 shrink-0 place-items-center text-os-text-2"
             >
-              <Icon d={Glyph.close} className="size-3" />
+              <span className="grid size-4 place-items-center rounded-full group-hover/x:bg-os-select">
+                <Icon d={Glyph.close} className="size-3" />
+              </span>
             </button>
           </div>
         );
@@ -178,10 +180,10 @@ export function ChromeBody(ctx: Ctx) {
         {tool('Forward', Glyph.forward, 'cmd+]', t.at >= t.history.length - 1)}
         {tool('Reload', Glyph.reload, 'cmd+r')}
         <div
-          aria-label="Address"
           className={`ml-1 flex h-[28px] min-w-0 flex-1 items-center gap-2 rounded-full bg-os-chrome px-3 ${editing ? 'outline-2 outline-os-text-2' : ''}`}
         >
           <Icon d={Glyph.search} className="size-3 shrink-0 text-os-text-2" />
+          <span className="sr-only">Address: </span>
           <span
             className={`truncate ${editing && !typed && address ? 'rounded-[3px] bg-os-select' : ''}`}
           >

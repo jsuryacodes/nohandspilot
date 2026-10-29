@@ -29,7 +29,7 @@ const SOURCES: { key: 'wispr' | 'voice' | 'bar'; label: string; note: string }[]
   {
     key: 'voice',
     label: 'Pilot’s own hearing',
-    note: 'wake word, before Wispr could hear',
+    note: 'wake word, when Wispr didn’t catch it',
   },
   { key: 'bar', label: 'Command bar', note: '⌃⌥P, typed or dictated' },
 ];

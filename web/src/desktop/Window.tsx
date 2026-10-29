@@ -75,30 +75,34 @@ export function Window(p: Props) {
   );
 }
 
+/** Close, minimise, full screen: Mac-size dots (coloured in the front window, or on hover) in 24 px hit areas. */
 function Lights({ label, active, onClose, onMinimise, onFull }: Props) {
   const lights = [
     {
       name: `Close ${label}`,
       on: onClose,
-      color: 'bg-os-close group-hover/lights:bg-os-close',
+      on_: 'bg-os-close',
+      hover: 'group-hover/lights:bg-os-close',
       glyph: 'M4 4l4 4m0-4-4 4',
     },
     {
       name: `Minimise ${label}`,
       on: onMinimise,
-      color: 'bg-os-min group-hover/lights:bg-os-min',
+      on_: 'bg-os-min',
+      hover: 'group-hover/lights:bg-os-min',
       glyph: 'M3.5 6h5',
     },
     {
       name: `Full screen ${label}`,
       on: onFull,
-      color: 'bg-os-zoom group-hover/lights:bg-os-zoom',
+      on_: 'bg-os-zoom',
+      hover: 'group-hover/lights:bg-os-zoom',
       glyph: 'M4 3.5h4.5V8M8 8.5H3.5V4',
     },
   ];
   return (
     <div
-      className="group/lights flex shrink-0 items-center gap-2 px-[13px]"
+      className="group/lights flex shrink-0 items-center px-[7px]"
       onPointerDown={(e) => e.stopPropagation()}
     >
       {lights.map((l) => (
@@ -107,18 +111,22 @@ function Lights({ label, active, onClose, onMinimise, onFull }: Props) {
           type="button"
           aria-label={l.name}
           onClick={l.on}
-          className={`grid size-3 place-items-center rounded-full ${active ? l.color : `bg-os-control ${l.color.split(' ')[1]}`}`}
+          className="grid size-6 place-items-center rounded-full"
         >
-          <svg
-            viewBox="0 0 12 12"
-            aria-hidden
-            className="size-2.5 stroke-black/55 opacity-0 group-hover/lights:opacity-100"
-            strokeWidth="1.4"
-            strokeLinecap="round"
-            fill="none"
+          <span
+            className={`grid size-3 place-items-center rounded-full ${active ? l.on_ : `bg-os-control ${l.hover}`}`}
           >
-            <path d={l.glyph} />
-          </svg>
+            <svg
+              viewBox="0 0 12 12"
+              aria-hidden
+              className="size-2.5 stroke-black/55 opacity-0 group-hover/lights:opacity-100"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              fill="none"
+            >
+              <path d={l.glyph} />
+            </svg>
+          </span>
         </button>
       ))}
     </div>

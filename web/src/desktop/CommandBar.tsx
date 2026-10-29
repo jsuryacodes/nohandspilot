@@ -127,7 +127,7 @@ export function CommandBar({
           window.clearTimeout(paste.current);
           onRun(value);
         }}
-        className="flex h-[52px] items-center gap-3 rounded-lg border border-line-strong bg-raised px-4 shadow-hud focus-within:border-fg-3"
+        className="flex h-[52px] items-center gap-3 rounded-lg border border-line-strong bg-raised px-4 shadow-hud focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-fg"
       >
         <Wave on={phase !== 'ready' || listening} />
         <label className="min-w-0 flex-1">
