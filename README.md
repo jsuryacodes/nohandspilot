@@ -42,7 +42,7 @@ Setup and permissions: [docs/setup.md](docs/setup.md).
 
 ## Website
 
-Live: _(link coming)_. Try Pilot in the browser at `/try`: a Mac that runs commands through Pilot's
+Live: https://nohandspilot.vercel.app. Try Pilot in the browser at `/try`: a Mac that runs commands through Pilot's
 Brain (ported to TypeScript, passing every BrainCheck case) and the real `commands/commands.json`.
 
 ```

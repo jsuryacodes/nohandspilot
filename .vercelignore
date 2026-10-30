@@ -1,0 +1,14 @@
+# Deploy only the site and the repo files it reads (the Mac app build stays home)
+/*
+!/web
+!/commands
+!/README.md
+!/app
+/app/*
+!/app/Sources
+/app/Sources/*
+!/app/Sources/PilotBrain
+/web/node_modules
+/web/dist
+/web/test-results
+/web/.vercel

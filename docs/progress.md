@@ -2,6 +2,21 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 31 Oct: The website is live at https://nohandspilot.vercel.app
+- Stats refreshed from your log: 637 commands, 28 to 30 Oct, 397 ran, 22 chains, median match 1.1 ms.
+  My live tests for this round went through Wispr into the same log (27 commands from 30 Oct 23:26
+  on, all my test phrases); they're moved, unchanged, to `usage-tests.jsonl` next to it, with a
+  backup of the whole log as `usage.jsonl.bak-31oct`, so the site counts only your own use.
+- Vercel project `nohandspilot` (Vite, Root Directory `web`). The build reads files outside `web/`
+  (commands.json, Brain.swift and the README for /try), so it deploys from the repo root, and
+  `.vercelignore` uploads only those and `web/`, not the 500 MB app build.
+- Checked live with Playwright: / and /try load (200), /try works on reload, og.png, favicon.svg,
+  stats.json and robots.txt load, the link-preview tags carry the absolute URL, the autoplay chain
+  finishes on /try (again after a reload), no sideways scrolling and no console errors at 1440×900 and
+  390×844. Screenshots looked right.
+- README has the live URL. demo.md is a new 2-minute script with the wake word, numbered ties, copy
+  link, Apple Music, editing by phrase and Terminal.
+
 ## 31 Oct: Select, copy, cut and delete text and links
 - Keyboard edits, anywhere, and they chain: select word / last word / last N words (⌥⇧← × N, a new
   `repeat` on keys commands), select line / to start / to end of line, select paragraph (⌥↑ ⌥⇧↓),

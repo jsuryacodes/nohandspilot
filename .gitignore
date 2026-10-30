@@ -30,3 +30,5 @@ coverage/
 # Local only
 docs/handoff.md
 app/build/
+.vercel
+.env*
