@@ -79,6 +79,7 @@ enum Hands {
             apps.forEach { $0.terminate() }
         case .keys(let spec):
             guard let (code, flags) = parseKeys(spec) else { return "Unknown keys \"\(spec)\"" }
+            if spec == "cmd+shift+3" { lastShot = Date() }   // for "paste the screenshot"
             press(code, flags)
         case .type(let text): type(text)
         case .hideApp(let name):
@@ -117,6 +118,7 @@ enum Hands {
         case .click(let target): return Screen.click(target, note: &note)
         case .numbers(let on): return Screen.numbers(on, note: &note)
         case .playMusic(let query): return playMusic(query, note: &note)
+        case .pasteScreenshot: return pasteScreenshot(note: &note)
         case .copyLink(let target): return Screen.click(target, link: true, note: &note)
         case .selectText(let phrase, let op, let click):
             guard let selected = Screen.selectInField(phrase) else {
@@ -287,7 +289,7 @@ enum Hands {
     /// Copies, cuts or pastes: uses the clipboard.
     static func usesClipboard(_ a: Action) -> Bool {
         switch a {
-        case .copyLink: return true
+        case .copyLink, .pasteScreenshot: return true
         case .keys(let k): return ["cmd+c", "cmd+x", "cmd+v"].contains(k)
         case .selectText(_, let op, _): return op == "copy" || op == "cut"
         default: return false
@@ -495,6 +497,49 @@ extension Hands {
         }
         let artist = subtitle(song)?.components(separatedBy: "·").last?.trimmingCharacters(in: .whitespaces.union(.init(charactersIn: "\u{202F}")))
         note = "▶ " + title + (artist.map { " — " + $0 } ?? "") + " (Apple Music)"
+        return nil
+    }
+}
+
+extension Hands {
+    /// When Pilot last took a screenshot (Hands queue only).
+    static var lastShot = Date.distantPast
+
+    /// Your newest screenshot in the folder macOS saves them to (the Desktop unless you changed it). Screenshots are
+    /// told apart from other images by the tag macOS puts on them (kMDItemIsScreenCapture).
+    static func latestScreenshot() -> (url: URL, created: Date)? {
+        let folder = UserDefaults(suiteName: "com.apple.screencapture")?.string(forKey: "location")
+            .map { URL(fileURLWithPath: ($0 as NSString).expandingTildeInPath) }
+            ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Desktop")
+        let files = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.creationDateKey])) ?? []
+        return files.lazy
+            .filter { getxattr($0.path, "com.apple.metadata:kMDItemIsScreenCapture", nil, 0, 0, 0) >= 0 }
+            .compactMap { url in (try? url.resourceValues(forKeys: [.creationDateKey]).creationDate).map { (url, $0) } }
+            .max { $0.created < $1.created }
+    }
+
+    /// "paste the screenshot": your latest screenshot goes on the clipboard just long enough to paste, then whatever you
+    /// had copied comes back, so plain "paste" still pastes your text or link.
+    static func pasteScreenshot(note: inout String?) -> String? {
+        // With the floating thumbnail on, macOS writes the file ~5 s after the shot: wait for one Pilot just took
+        var shot = latestScreenshot()
+        while Date() < lastShot + 8, (shot?.created ?? .distantPast) < lastShot - 1 {
+            usleep(200_000)
+            shot = latestScreenshot()
+        }
+        guard let shot, let png = try? Data(contentsOf: shot.url), let tiff = NSImage(data: png)?.tiffRepresentation else {
+            return "No screenshot yet. Say \"take a screenshot\" first"
+        }
+        let saved = clipboard()
+        NSPasteboard.general.clearContents()
+        let item = NSPasteboardItem()
+        item.setData(png, forType: .png)
+        item.setData(tiff, forType: .tiff)
+        NSPasteboard.general.writeObjects([item])
+        press(9, .maskCommand)   // V
+        usleep(600_000)          // the app reads the image in its own time
+        setClipboard(saved)
+        note = "Pasted " + shot.url.lastPathComponent
         return nil
     }
 }

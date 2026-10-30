@@ -308,6 +308,10 @@ describe('what only a Mac can do says so, with the keys from commands.json', () 
     ['start listening', 'On your Mac: listens for "Pilot" with its offline recognizer'],
     ['search this', "On your Mac: uses the text you've selected"],
     [
+      'paste the screenshot',
+      'On your Mac: pastes your latest screenshot, then puts back what you copied',
+    ],
+    [
       'play Florida on Apple Music',
       'On your Mac: plays "Florida" from your Music library, or the first song Apple Music finds',
     ],

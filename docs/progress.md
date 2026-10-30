@@ -2,6 +2,19 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 31 Oct: "Pilot, paste the screenshot"
+- Your ask: paste a screenshot by voice, while plain "paste" keeps pasting the text or page link you
+  copied. So the screenshot isn't put on the clipboard: "take a screenshot" saves it as before (⌘⇧3),
+  and "paste the screenshot" (also "paste screenshot", "paste my last screenshot") takes your newest
+  screenshot from the folder macOS saves them to, puts it on the clipboard just long enough to paste,
+  then puts your clipboard back. Screenshots are told from other images by the tag macOS gives them
+  (`kMDItemIsScreenCapture`). With the floating thumbnail on, macOS writes the file ~5 s after the
+  shot; right after one Pilot took, it waits up to 8 s for it.
+- New permission: the first time, macOS asks to let Pilot see your Desktop folder (you allowed it at
+  01:18; the command waited on that prompt, 18 s).
+- Tested live in TextEdit with "MY COPIED TEXT" copied: "paste the screenshot" put the image in (1.2 s),
+  then "paste" put in "MY COPIED TEXT", and the clipboard still held it. 5 BrainCheck and Vitest cases.
+
 ## 31 Oct: "Pilot, paste" typed "Paste"
 - Your report: saying "paste" typed the word instead of pasting. The log shows paste did run (⌘V in
   44 ms), but Wispr puts your clipboard back only ~0.5 s after its own paste, so ⌘V pasted what Wispr

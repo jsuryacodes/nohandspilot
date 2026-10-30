@@ -379,6 +379,13 @@ describe('select, copy, cut and delete (31 Oct): keyboard edits work anywhere an
   check('Pilot, redo', [keys('cmd+shift+z')]);
   check('Pilot, undo', [keys('cmd+z')]);
   check('Pilot, paste', [keys('cmd+v')]);
+  // screenshots (31 Oct): taken as before; "paste the screenshot" pastes the latest, plain "paste" stays your clipboard
+  const shot: Action = { kind: 'pasteScreenshot' };
+  check('Pilot, take a screenshot', [keys('cmd+shift+3')]);
+  check('Pilot, paste the screenshot', [shot]);
+  check('Pilot, paste my last screenshot', [shot]);
+  check('Pilot, take a screenshot, paste the screenshot', [keys('cmd+shift+3'), shot]);
+  check('Pilot, paste it', [keys('cmd+v')]);
 });
 
 describe('links: by name like click (a badge number while numbers are up); the page address in Chrome', () => {

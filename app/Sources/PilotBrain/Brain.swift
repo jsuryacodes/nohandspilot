@@ -68,7 +68,7 @@ public struct Command: Codable {
 }
 
 public struct ActionSpec: Codable {
-    public var type: String   // openApp quitApp hideApp previousApp openURL chromeProfile keys type sequence scroll media help click playMusic
+    public var type: String   // openApp quitApp hideApp previousApp openURL chromeProfile keys type sequence scroll media help click playMusic pasteScreenshot
     public var keys: String?
     public var text: String?
     public var url: String?
@@ -90,6 +90,7 @@ public enum Action: Equatable {
     case click(String)            // a visible element by name, normalised as in rule 3, or a badge number ("12")
     case numbers(Bool)            // show / hide numbered badges on everything clickable
     case playMusic(String)        // a song: from your Music library, else the first song Apple Music finds
+    case pasteScreenshot          // your latest screenshot, pasted; the clipboard is put back after
     case copyLink(String)         // a visible link's address to the clipboard, found like click (normalised, or a badge number)
     /// Text in the focused text field, as spoken: select it (nearest before the caret), then "delete", "cut", "copy" or
     /// just "select". Not in a text field: "select" clicks `click` instead ("select Downloads").
@@ -483,6 +484,7 @@ public final class Brain {
             actions = [.selectText(raw, op: a.op ?? "select", click: target(raw))]
         case "showNumbers", "hideNumbers": actions = [.numbers(a.type == "showNumbers")]
         case "playMusic": actions = [.playMusic(slots["query"] ?? "")]
+        case "pasteScreenshot": actions = [.pasteScreenshot]
         case "startListening", "stopListening": actions = [.listen(a.type == "startListening")]
         case "dictate": actions = [.dictate]
         case "openFile":

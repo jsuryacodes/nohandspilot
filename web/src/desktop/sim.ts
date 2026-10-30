@@ -203,6 +203,8 @@ export function describe(actions: Action[]): string {
         return `clicks "${a.target}"`;
       case 'numbers':
         return a.show ? 'numbers everything clickable' : 'hides the numbers';
+      case 'pasteScreenshot':
+        return 'pastes your latest screenshot, then puts back what you copied';
       case 'copyLink':
         return `copies the address of the link "${a.target}"`;
       case 'selectText':
@@ -274,7 +276,7 @@ function act(d: Desk, a: Action): Outcome {
       return ok(openFolder(activate(d, 'Finder'), a.name as Folder), `Opened ${a.name}`);
     case 'notConfigured':
       return fail(`Not set up yet: ${a.note}`);
-    default: // chromeProfile, menu, listen, dictate, playMusic
+    default: // chromeProfile, menu, listen, dictate, playMusic, pasteScreenshot
       return MAC;
   }
 }

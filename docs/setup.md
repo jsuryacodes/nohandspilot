@@ -209,6 +209,8 @@ Works in the focused app, and chains ("Pilot, select last 3 words, cut").
 | "cut" / "cut that" / "cut it", "copy that", "delete that" / "delete it" / "delete selection" | ⌘X, ⌘C, ⌫ |
 | "delete word" / "delete last 3 words" / "delete line" | ⌥⌫ once / 3 times, ⌘⌫ |
 | "undo", "redo" | ⌘Z, ⌘⇧Z |
+| "take a screenshot" | ⌘⇧3, saved where macOS saves screenshots (the Desktop) |
+| "paste the screenshot" | Pastes your latest screenshot, then puts back what you'd copied, so plain "paste" still pastes your text or link. The first time, macOS asks to let Pilot see your Desktop folder |
 | "copy link Docs" / "copy the Docs link" | The address of the visible link named Docs, on the clipboard. Two or more: numbered, then "copy link 2" |
 | "copy page link" / "copy this link" / "copy url" (Chrome) | ⌘L ⌘C Esc |
 | "select see you soon" in a text field | Selects that phrase (of several, the one nearest before the caret) |
