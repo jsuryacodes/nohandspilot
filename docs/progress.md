@@ -28,7 +28,7 @@ Newest first. Each entry matches a commit on `main`.
   with two "Docs" links: badges, then "copy link number 2" → `https://example.com/docs/v2`, which
   survived Wispr's clipboard restore. Finder: "select Downloads" clicked the sidebar item.
 - Website: /try copies link addresses from its pages and deletes, cuts and copies phrases in Claude's
-  message box; the keyboard edits say "On your Mac: presses ⌥⇧←". 41 BrainCheck cases, 41 Vitest
+  message box; the keyboard edits say "On your Mac: presses ⌥⇧←". 36 BrainCheck cases, 36 Vitest
   cases, 5 desktop tests.
 
 ## 31 Oct: "Pilot, play Florida on Apple Music" plays it

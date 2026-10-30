@@ -1,15 +1,15 @@
 {
-  "exportedAt": "2026-10-29T10:15:15+05:30",
+  "exportedAt": "2026-10-31T00:16:33+05:30",
   "firstDay": "2026-10-28",
-  "lastDay": "2026-10-29",
-  "commands": 551,
-  "ok": 350,
-  "failed": 201,
-  "chains": 17,
+  "lastDay": "2026-10-30",
+  "commands": 637,
+  "ok": 397,
+  "failed": 240,
+  "chains": 22,
   "sources": {
     "bar": 2,
-    "wispr": 452,
-    "voice": 97
+    "wispr": 507,
+    "voice": 128
   },
   "days": [
     {
@@ -21,31 +21,44 @@
       "date": "2026-10-29",
       "commands": 166,
       "ok": 103
+    },
+    {
+      "date": "2026-10-30",
+      "commands": 86,
+      "ok": 47
     }
   ],
   "top": [
     {
       "id": "click",
-      "count": 117
+      "count": 137
     },
     {
       "id": "open_app",
-      "count": 38
+      "count": 43
     },
     {
       "id": "scroll_up",
-      "count": 34
+      "count": 38
     },
     {
       "id": "scroll_down",
-      "count": 28
-    },
-    {
-      "id": "quit_app",
-      "count": 18
+      "count": 35
     },
     {
       "id": "show_numbers",
+      "count": 21
+    },
+    {
+      "id": "quit_app",
+      "count": 20
+    },
+    {
+      "id": "new_tab",
+      "count": 19
+    },
+    {
+      "id": "chrome_search",
       "count": 18
     },
     {
@@ -54,23 +67,15 @@
     },
     {
       "id": "space_right",
-      "count": 13
-    },
-    {
-      "id": "chrome_search",
-      "count": 11
-    },
-    {
-      "id": "music_search",
-      "count": 11
+      "count": 14
     }
   ],
   "matchMs": {
     "median": 1.1,
-    "p95": 96.8
+    "p95": 87.3
   },
   "totalMs": {
-    "median": 115,
-    "p95": 1092
+    "median": 114,
+    "p95": 992
   }
 }
