@@ -52,6 +52,7 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp .build/release/Pilot "$APP/Contents/MacOS/Pilot"
 cp "$REPO/commands/commands.json" "$APP/Contents/Resources/commands.json"
+cp Resources/AppIcon.icns Resources/MenuIcon.png Resources/MenuIcon@2x.png "$APP/Contents/Resources/"   # from web: npm run app-icon
 cat > "$APP/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -61,6 +62,8 @@ cat > "$APP/Contents/Info.plist" <<EOF
   <key>CFBundleName</key><string>Pilot</string>
   <key>CFBundleDisplayName</key><string>Pilot</string>
   <key>CFBundleExecutable</key><string>Pilot</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
+  <key>CFBundleIconName</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>0.1</string>
   <key>CFBundleVersion</key><string>$(date +%Y%m%d%H%M)</string>
@@ -81,5 +84,6 @@ pkill -x Pilot 2>/dev/null && sleep 0.5 || true
 mkdir -p "$HOME/Applications"
 rm -rf "$DEST"
 cp -R "$APP" "$DEST"
+touch "$DEST"   # nudge Finder/Dock to pick up a changed icon
 echo "Installed $DEST"
 [ "${1:-}" = "--no-launch" ] || open "$DEST"

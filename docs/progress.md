@@ -2,6 +2,15 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 31 Oct: Saying "No Hands Pilot" doesn't wake Pilot
+- Your ask. Wispr's text was already safe ("No Hands Pilot …" doesn't start with "Pilot"); the wake word
+  wasn't: Apple's recognizer heard "pilot" inside the project's name and started Wispr (01:59:12 in the
+  log: "Nohandspilot.vercel.app" then ran as a command). Now the wake word ignores "pilot" right after
+  "hands"; "Pilot" on its own, anywhere else in a sentence, still wakes it.
+- Tested live: "This is No Hands Pilot." and "The project is called No Hands Pilot.": no wake. Then
+  "Pilot" … "volume up": woke and ran. (A first try, "I built No Hands Pilot …", woke on "I built",
+  before the name was said: Apple heard "built" as the name. Worth knowing for the demo voiceover.)
+
 ## 31 Oct: "Pilot, remove the screenshot"
 - Your ask: remove an uploaded screenshot by voice. The submission form's × on the thumbnail is a
   button named "Remove image 1" (read from the page, nothing pressed), so "click remove image" already

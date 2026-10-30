@@ -84,7 +84,11 @@ final class CommandBar: NSObject, NSTextFieldDelegate {
         bg.state = .active
         bg.wantsLayer = true
         bg.layer?.cornerRadius = 14
-        field.frame = bg.bounds.insetBy(dx: 16, dy: 12)
+        let mark = NSImageView(frame: NSRect(x: 14, y: 14, width: 28, height: 28))
+        mark.image = NSApp.applicationIconImage
+        mark.autoresizingMask = [.maxXMargin]
+        bg.addSubview(mark)
+        field.frame = NSRect(x: 50, y: 12, width: bg.bounds.width - 66, height: bg.bounds.height - 24)
         field.autoresizingMask = [.width, .height]
         field.font = .systemFont(ofSize: 22)
         field.isBordered = false

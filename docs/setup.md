@@ -177,6 +177,7 @@ The rule: The only word Pilot acts on from its own speech recognizer is "Pilot".
 5. "Pilot", then "dictate", then talk: Wispr types it into the focused box. Pilot stops Wispr after
    2 s of quiet (the mic's loudness).
 6. "Pilot", then "stop listening" turns it off (the mic closes).
+   Saying the project's name, "No Hands Pilot", never wakes it.
 7. Terminal with Secure Keyboard Entry on: works too, through the clipboard (section 8).
 8. Hold fn and say "Pilot, scroll down": it scrolls once, and the log says `with fn held`.
 

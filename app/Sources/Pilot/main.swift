@@ -289,7 +289,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         pilot.reloadIfChanged()
         HelpWindow.shared.text = { [pilot] in pilot.helpText() }
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusItem.button?.image = NSImage(systemSymbolName: "airplane", accessibilityDescription: "Pilot")
+        // The site's mark as a template image, so macOS tints it for light and dark menu bars.
+        let mark = Bundle.main.image(forResource: "MenuIcon") ?? NSImage(systemSymbolName: "airplane", accessibilityDescription: nil)
+        mark?.size = NSSize(width: 18, height: 18)
+        mark?.isTemplate = true
+        mark?.accessibilityDescription = "Pilot"
+        statusItem.button?.image = mark
         statusItem.menu = NSMenu()
         statusItem.menu?.delegate = self
 

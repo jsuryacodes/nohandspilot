@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "og": "node scripts/og.mjs",
+    "app-icon": "node scripts/app-icon.mjs",
     "e2e": "vite build && playwright test"
   },
   "dependencies": {

@@ -192,7 +192,8 @@ final class WakeWord {
         guard split != words else { return }
         words = split
         lastChange = Date()
-        guard words.contains(where: Self.names.contains) else { return }
+        // the name on its own: "pilot" in "No Hands Pilot" (the project's name) isn't you calling it
+        guard words.indices.contains(where: { Self.names.contains(words[$0]) && ($0 == 0 || words[$0 - 1] != "hands") }) else { return }
         // Holding Wispr's fn key: already dictating. The key itself (63), not the fn flag, which a shortcut any app sends
         // can leave on until you next touch the keyboard.
         if CGEventSource.keyState(.hidSystemState, key: 63) {
