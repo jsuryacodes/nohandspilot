@@ -24,12 +24,12 @@ const SOURCES: { key: 'wispr' | 'voice' | 'bar'; label: string; note: string }[]
   {
     key: 'wispr',
     label: 'Wispr Flow typed it',
-    note: 'Wispr’s key or its hands-free mode',
+    note: 'Wispr’s key, or after the wake word',
   },
   {
     key: 'voice',
-    label: 'Pilot’s own hearing (removed 30 Oct)',
-    note: 'the old wake word, when Wispr didn’t catch it',
+    label: 'Pilot’s own hearing',
+    note: 'wake word, when Wispr didn’t catch it',
   },
   { key: 'bar', label: 'Command bar', note: '⌃⌥P, typed or dictated' },
 ];

@@ -15,7 +15,7 @@ your Mac before recording. Tip: use Wispr's hands-free mode so your hands stay v
 | 1:10 | Click into Claude's box | *Normal dictation:* "Explain it like I'm five." Text types normally: **anything not starting with "Pilot" is untouched.** |
 | 1:18 | | "Pilot, open VS Code, toggle terminal." |
 | 1:25 | | "Pilot, switch back." |
-| 1:30–1:50 | Pilot menu → "Today: N commands (M via Wispr)", then `usage.jsonl` | *(voiceover)* "No AI round-trip: matching takes about 2 milliseconds, fully offline. I've used it every day since 28 October, and here are the real numbers." |
+| 1:30–1:50 | Pilot menu → "Today: N commands (M via Wispr)", then `usage.jsonl` | *(voiceover)* "No AI round-trip: matching takes about 2 milliseconds, fully offline. I've used it every day since 25 October, and here are the real numbers." |
 | 1:50–2:00 | Wispr → Insights → Your usage | *(voiceover)* "Built by voice with Wispr, for Wispr." |
 
 ## Before recording
@@ -23,5 +23,7 @@ your Mac before recording. Tip: use Wispr's hands-free mode so your hands stay v
 - Pilot menu → Open at Login (so it's clearly a daily tool), and say "Pilot, what can I say?" once to
   show the command list.
 - Close apps that make noise; quit Pilot's command bar if it's open.
+- No hands: say a chain ("open Chrome, new tab, …") without a long stop at the commas. A stop of 0.6 s
+  after a whole command ("open Chrome") ends it there.
 - If a line misfires, the toast says "Didn't catch … Try …". Add the phrase you naturally used to
   `commands/commands.json`; it applies on the next command, no rebuild needed.

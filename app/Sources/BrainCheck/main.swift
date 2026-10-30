@@ -170,12 +170,18 @@ check("Pilot, click a hundred and five", [.click("105")])
 check("Pilot, click #3.", [.click("3")])
 check("Pilot, show numbers, click 4", [.numbers(true), .click("4")])
 
-// said without punctuation (Wispr in hands-free mode often drops it)
+// no hands: wake word on/off, dictation
+check("Pilot, start listening.", [.listen(true)])
+check("Pilot, stop listening", [.listen(false)])
+check("start listening", trigger: false, [.listen(true)])
+check("Pilot, dictate", [.dictate])
+check("Dictate.", trigger: false, [.dictate])
+check("Pilot, start dictation", [.dictate])
+// what Apple's recognizer hands over after the wake word, said in one breath: no punctuation
 check("Pilot scroll right across space", [.keys("ctrl+right")])
+check("Pilot dictate", [.dictate])
 check("Pilot open Chrome then new tab", [chrome, .keys("cmd+t")])
 check("Pilot open Chrome new tab", [chrome, .keys("cmd+t")])
-check("Pilot, start listening", nil)   // removed 30 Oct: Pilot never opens the microphone
-check("Pilot, dictate", nil)
 
 // teaching (rule 1b): parsed before chain splitting; taught phrases then match like macros
 func expect(_ text: String, _ plan: Plan, line: Int = #line) {
@@ -230,6 +236,37 @@ check("Pilot, ask Claude about this", app: "Claude", askSel)   // not Claude's o
 check("Pilot, ask Claude about black holes", [.openApp("Claude"), .keys("cmd+n"), .wait(600), .type("black holes"), .wait(100), .keys("enter")])
 check("Pilot, search for this week's news", app: "Google Chrome", [.keys("cmd+l"), .type("this week's news"), .keys("enter")])
 check("Pilot, type the", nil)   // free text needs one real word
+
+// wake word (29 Oct): Apple's words after "Pilot", then Wispr's from where they line up with the end of Apple's
+func joined(_ said: String, _ wispr: String, app: String? = nil) -> String {
+    brain.joinWake(said: said.split(separator: " ").map(String.init), wispr: wispr, frontmostApp: app)
+}
+check(joined("scroll right a cross base", "Across space."), trigger: false, [.keys("ctrl+right")])   // clean join; Pilot misheard the end
+check(joined("scroll right across base", "Cross space."), trigger: false, [.keys("ctrl+right")])   // Wispr caught the end of "across"
+check(joined("scroll right across space", "Scroll right across space."), trigger: false, [.keys("ctrl+right")])   // paused after "Pilot"
+check(joined("scroll write across space", "right across space"), trigger: false, [.keys("ctrl+right")])   // Wispr's word wins where both heard it
+check(joined("search for docker net walking", "Docker networking.", app: "Google Chrome"), app: "Google Chrome", trigger: false,
+      [.keys("cmd+l"), .type("Docker networking"), .keys("enter")])   // Wispr's words win for free text
+check(joined("search for docker", "Docker networking.", app: "Google Chrome"), app: "Google Chrome", trigger: false,
+      [.keys("cmd+l"), .type("Docker networking"), .keys("enter")])   // both heard "docker": once
+check(joined("open chrome", "Rome."), trigger: false, [chrome])   // Wispr only caught a scrap
+check(joined("", "Open Chrome."), trigger: false, [chrome])   // Pilot heard nothing, Wispr did
+check(joined("open chrome", "Open Google Chrome."), trigger: false, [chrome])   // Wispr heard a word Pilot didn't
+// real joins from 29 Oct 03:27–03:29, all wrong before (timing put Wispr's text one word too early)
+check(joined("open Wi-Fi settings", "Settings "), trigger: false, [.openURL("x-apple.systempreferences:com.apple.wifi-settings-extension")])   // was "open Settings"
+check(joined("open network settings", "Settings "), trigger: false, [.openURL("x-apple.systempreferences:com.apple.Network-Settings.extension")])
+check(joined("hide Numbers", "Numbers "), trigger: false, [.numbers(false)])   // was "Numbers": showed them
+check(joined("open privacy settings", "See settings. "), trigger: false, [.openURL("x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension")])
+check(joined("close Claude", "Odd "), trigger: false, [.quitApp("Claude")])
+check(joined("show number", "Share. "), trigger: false, [.numbers(true)])
+
+// training sentences for the speech recognizer: slots filled, no braces left
+let training = brain.trainingPhrases()
+for t in ["open chrome", "scroll right across space", "click 12", "pause video", "study mode", "switch to College profile"] where !training.contains(t) {
+    failures += 1; print("FAIL: training sentences lack \"\(t)\"")
+}
+if training.contains(where: { $0.contains("{") }) { failures += 1; print("FAIL: a training sentence still has a slot") }
+print("training sentences: \(training.count)")
 
 // speed: the brain must be far under 100 ms
 let t0 = Date()

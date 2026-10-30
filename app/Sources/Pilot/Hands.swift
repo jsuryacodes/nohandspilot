@@ -116,6 +116,8 @@ enum Hands {
         case .menu(let app, let path): return Screen.pressMenu(app, path)
         case .click(let target): return Screen.click(target, note: &note)
         case .numbers(let on): return Screen.numbers(on, note: &note)
+        case .listen(let on): DispatchQueue.main.async { WakeWord.shared.setOn(on) }
+        case .dictate: DispatchQueue.main.async { WakeWord.shared.dictate() }
         case .openFile(let name, let folder, let reveal):
             let start = Date()
             guard let url = name.hasPrefix("/") ? URL(fileURLWithPath: name) : spotlight(name, folder: folder) else {
@@ -207,7 +209,7 @@ enum Hands {
         for down in [true, false] {
             let e = CGEvent(keyboardEventSource: source, virtualKey: code, keyDown: down)
             // The key up has no modifiers, as if you'd let go of them. With them, macOS kept them "held" until your next
-            // real key press: after Ctrl+→, fn stayed on (29 Oct)
+            // real key press: after Ctrl+→, fn stayed on (the wake word took every "Pilot" for Wispr's fn key, 29 Oct)
             // and so did Control (a click Pilot made next carried it).
             e?.flags = down ? flags : []
             e?.post(tap: .cghidEventTap)
@@ -337,7 +339,13 @@ extension Hands {
     /// Hardware media keys (NX_KEYTYPE_*), so they work with Music, Spotify, YouTube in Chrome, and the volume HUD.
     /// Play and pause first look for the player on screen (Screen.playPause), so "pause" never starts anything.
     static func media(_ key: String, note: inout String?) {
-        if ["play", "pause", "playPause"].contains(key), Screen.playPause(key, note: &note) { return }
+        if ["play", "pause", "playPause"].contains(key) {
+            // Wispr pauses whatever is playing while it records and resumes it when it stops; act after that.
+            // Tune here: 0.7 s after Pilot stops Wispr (its resume time isn't measured yet).
+            let wait = DispatchQueue.main.sync { WakeWord.shared.wisprStopped }.timeIntervalSinceNow + 0.7
+            if wait > 0 { usleep(useconds_t(wait * 1_000_000)) }
+            if Screen.playPause(key, note: &note) { return }
+        }
         let codes: [String: Int] = ["volumeUp": 0, "volumeDown": 1, "mute": 7, "play": 16, "pause": 16, "playPause": 16, "next": 17, "previous": 18]
         guard let code = codes[key] else { return }
         for down in [true, false] {

@@ -49,6 +49,8 @@ const click = (target: string): Action => ({ kind: 'click', target });
 const numbers = (show: boolean): Action => ({ kind: 'numbers', show });
 const profile = (p: string): Action => ({ kind: 'chromeProfile', profile: p });
 const menu = (app: string, path: string[]): Action => ({ kind: 'menu', app, path });
+const listen = (on: boolean): Action => ({ kind: 'listen', on });
+const dictate: Action = { kind: 'dictate' };
 const openFile = (name: string, folder: boolean, reveal: boolean): Action => ({
   kind: 'openFile',
   name,
@@ -343,12 +345,18 @@ describe('show numbers (1c): numbers go to click as digits; "close/hide numbers"
   check('Pilot, show numbers, click 4', [numbers(true), click('4')]);
 });
 
-describe('said without punctuation (Wispr in hands-free mode often drops it)', () => {
+describe('no hands: wake word on/off, dictation', () => {
+  check('Pilot, start listening.', [listen(true)]);
+  check('Pilot, stop listening', [listen(false)]);
+  check('start listening', [listen(true)], { trigger: false });
+  check('Pilot, dictate', [dictate]);
+  check('Dictate.', [dictate], { trigger: false });
+  check('Pilot, start dictation', [dictate]);
+  // what Apple's recognizer hands over after the wake word, said in one breath: no punctuation
   check('Pilot scroll right across space', [keys('ctrl+right')]);
+  check('Pilot dictate', [dictate]);
   check('Pilot open Chrome then new tab', [chrome, keys('cmd+t')]);
   check('Pilot open Chrome new tab', [chrome, keys('cmd+t')]);
-  check('Pilot, start listening', undefined); // removed 30 Oct: Pilot never opens the microphone
-  check('Pilot, dictate', undefined);
 });
 
 describe('teaching (rule 1b): parsed before chain splitting; taught phrases then match like macros', () => {
@@ -448,6 +456,60 @@ describe('selected text (4): "this" is a filler, so free text needs a real word;
     { app: 'Google Chrome' },
   );
   check('Pilot, type the', undefined); // free text needs one real word
+});
+
+describe("wake word (29 Oct): Apple's words after \"Pilot\", then Wispr's from where they line up with the end of Apple's", () => {
+  function joined(said: string, wispr: string, expected: Action[], app?: string) {
+    test(`${said} + ${wispr}`, () => {
+      const text = brain.joinWake(said.split(' ').filter(Boolean), wispr, app);
+      expect(actions(brain, text, app, false)).toEqual(expected);
+    });
+  }
+  joined('scroll right a cross base', 'Across space.', [keys('ctrl+right')]); // clean join; Pilot misheard the end
+  joined('scroll right across base', 'Cross space.', [keys('ctrl+right')]); // Wispr caught the end of "across"
+  joined('scroll right across space', 'Scroll right across space.', [keys('ctrl+right')]); // paused after "Pilot"
+  joined('scroll write across space', 'right across space', [keys('ctrl+right')]); // Wispr's word wins where both heard it
+  joined(
+    'search for docker net walking',
+    'Docker networking.',
+    [keys('cmd+l'), typed('Docker networking'), keys('enter')],
+    'Google Chrome',
+  ); // Wispr's words win for free text
+  joined(
+    'search for docker',
+    'Docker networking.',
+    [keys('cmd+l'), typed('Docker networking'), keys('enter')],
+    'Google Chrome',
+  ); // both heard "docker": once
+  joined('open chrome', 'Rome.', [chrome]); // Wispr only caught a scrap
+  joined('', 'Open Chrome.', [chrome]); // Pilot heard nothing, Wispr did
+  joined('open chrome', 'Open Google Chrome.', [chrome]); // Wispr heard a word Pilot didn't
+  // real joins from 29 Oct 03:27–03:29, all wrong before (timing put Wispr's text one word too early)
+  joined('open Wi-Fi settings', 'Settings ', [
+    url('x-apple.systempreferences:com.apple.wifi-settings-extension'),
+  ]); // was "open Settings"
+  joined('open network settings', 'Settings ', [
+    url('x-apple.systempreferences:com.apple.Network-Settings.extension'),
+  ]);
+  joined('hide Numbers', 'Numbers ', [numbers(false)]); // was "Numbers": showed them
+  joined('open privacy settings', 'See settings. ', [
+    url('x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension'),
+  ]);
+  joined('close Claude', 'Odd ', [quitApp('Claude')]);
+  joined('show number', 'Share. ', [numbers(true)]);
+});
+
+describe('training sentences for the speech recognizer: slots filled, no braces left', () => {
+  const training = brain.trainingPhrases();
+  test.each([
+    'open chrome',
+    'scroll right across space',
+    'click 12',
+    'pause video',
+    'study mode',
+    'switch to College profile',
+  ])('has "%s"', (t) => expect(training).toContain(t));
+  test('no slot left', () => expect(training.filter((t) => t.includes('{'))).toEqual([]));
 });
 
 test('speed: a chain plans in far under 15 ms', () => {
