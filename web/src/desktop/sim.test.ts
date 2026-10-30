@@ -162,6 +162,36 @@ describe('YouTube: play lofi beats, show numbers, click 3, pause', () => {
   });
 });
 
+describe('copy link, and edits in a text field (31 Oct)', () => {
+  test('copy link by name: the address, never opened', () => {
+    const r = say(after('open github'), 'copy link GitHub');
+    expect(r.lines).toEqual(['Copied link: https://github.com']);
+    expect(r.desk.chrome.tabs.length).toBe(after('open github').chrome.tabs.length);
+  });
+  test('only links count', () => {
+    expect(say(after('open Finder'), 'copy link Downloads').lines).toEqual([
+      'Couldn\'t find a link "downloads" on screen',
+    ]);
+  });
+  test("delete, cut and copy a phrase in Claude's message box", () => {
+    const typed = after('open Claude', 'new chat', 'type see you soon and good luck');
+    const del = say(typed, 'delete good luck');
+    expect(del.lines).toEqual(['Deleted "good luck"']);
+    expect(del.desk.claude.draft).toBe('see you soon and ');
+    expect(say(typed, 'cut see you soon').desk.claude.draft).toBe(' and good luck');
+    expect(say(typed, 'copy good luck').desk.claude.draft).toBe('see you soon and good luck');
+    expect(say(typed, 'delete hello').lines).toEqual(['No text field here with "hello" in it']);
+  });
+  test('select X with no text field is a click', () => {
+    expect(say(after('open Finder'), 'select Downloads').desk.finder.folder).toBe('Downloads');
+  });
+  test('keyboard edits say what they would press', () => {
+    expect(say(after('open Claude', 'new chat'), 'select last word').lines).toEqual([
+      'On your Mac: presses ⌥⇧←',
+    ]);
+  });
+});
+
 describe('click by name', () => {
   test('a Finder sidebar item', () => {
     const r = say(after('open Finder'), 'click Downloads');

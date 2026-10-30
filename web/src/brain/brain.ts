@@ -18,6 +18,8 @@ export interface ActionSpec {
   note?: string;
   folder?: boolean;
   reveal?: boolean;
+  repeat?: boolean; // keys: press them {n} times
+  op?: string; // selectText: select, delete, cut or copy
 }
 
 export interface Command {
@@ -56,6 +58,10 @@ export type Action =
   | { kind: 'menu'; app: string; path: string[] } // app, title path: ("Google Chrome", ["Tab", "Duplicate Tab"])
   | { kind: 'click'; target: string } // a visible element by name, normalised as in rule 3, or a badge number ("12")
   | { kind: 'numbers'; show: boolean }
+  | { kind: 'copyLink'; target: string } // a visible link's address to the clipboard, found like click
+  // Text in the focused text field, as spoken: select it (nearest before the caret), then delete, cut, copy or just
+  // select. Not in a text field: "select" clicks `click` instead ("select Downloads").
+  | { kind: 'selectText'; phrase: string; op: string; click: string }
   | { kind: 'playMusic'; query: string } // a song: from your Music library, else the first song Apple Music finds
   | { kind: 'openFile'; name: string; folder: boolean; reveal: boolean }
   | { kind: 'listen'; on: boolean }
@@ -578,9 +584,18 @@ export class Brain {
         actions = [{ kind: 'help' }];
         break;
       case 'click': {
-        const raw = slots.target ?? '';
-        const n = spokenNumber(this.normalize(raw.replaceAll('-', ' ')));
-        actions = [{ kind: 'click', target: n !== undefined ? String(n) : this.normalize(raw) }];
+        actions = [{ kind: 'click', target: this.target(slots.target ?? '') }];
+        break;
+      }
+      case 'copyLink': {
+        actions = [{ kind: 'copyLink', target: this.target(slots.target ?? '') }];
+        break;
+      }
+      case 'selectText': {
+        const raw = slots.phrase ?? '';
+        actions = [
+          { kind: 'selectText', phrase: raw, op: a.op ?? 'select', click: this.target(raw) },
+        ];
         break;
       }
       case 'showNumbers':
@@ -643,11 +658,10 @@ export class Brain {
       }
       case 'keys': {
         const k = fill(a.keys ?? 'TODO');
-        actions = [
-          k.toUpperCase().startsWith('TODO')
-            ? { kind: 'notConfigured', note: a.note ?? cmd.id }
-            : { kind: 'keys', keys: k },
-        ];
+        const one: Action = k.toUpperCase().startsWith('TODO')
+          ? { kind: 'notConfigured', note: a.note ?? cmd.id }
+          : { kind: 'keys', keys: k };
+        actions = Array.from({ length: a.repeat ? Number(slots.n) || 1 : 1 }, () => one);
         break;
       }
       case 'sequence':
@@ -678,6 +692,12 @@ export class Brain {
       slots,
       freeKey: Object.keys(slots).find((k) => this.isFree(k)),
     };
+  }
+
+  /** click's target: a badge number ("twenty-one" → "21") or the name, normalised as in rule 3. */
+  private target(raw: string): string {
+    const n = spokenNumber(this.normalize(raw.replaceAll('-', ' ')));
+    return n !== undefined ? String(n) : this.normalize(raw);
   }
 
   /** For "Didn't catch": the phrase sharing the most words with what was said. */

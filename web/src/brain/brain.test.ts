@@ -355,6 +355,62 @@ describe('click by name (1b): the target is normalised; literal phrases still wi
   check('Pilot, select everything', [keys('cmd+a')]);
 });
 
+describe('select, copy, cut and delete (31 Oct): keyboard edits work anywhere and chain', () => {
+  const optLeft = keys('opt+shift+left');
+  check('Pilot, select word', [optLeft]);
+  check('Pilot, select the last word', [optLeft]);
+  check('Pilot, select last 3 words', [optLeft, optLeft, optLeft]);
+  check('Pilot, select the last three words, cut', [optLeft, optLeft, optLeft, keys('cmd+x')]);
+  check('Pilot, select line', [keys('cmd+left'), keys('cmd+shift+right')]);
+  check('Pilot, select to the start of the line', [keys('cmd+shift+left')]);
+  check('Pilot, select to end of line', [keys('cmd+shift+right')]);
+  check('Pilot, select paragraph', [keys('opt+up'), keys('opt+shift+down')]);
+  check('Pilot, cut', [keys('cmd+x')]);
+  check('Pilot, cut that', [keys('cmd+x')]);
+  check('Pilot, cut it', [keys('cmd+x')]);
+  check('Pilot, copy that', [keys('cmd+c')]);
+  check('Pilot, copy', [keys('cmd+c')]);
+  check('Pilot, delete that', [keys('delete')]);
+  check('Pilot, delete it', [keys('delete')]);
+  check('Pilot, delete selection', [keys('delete')]);
+  check('Pilot, delete word', [keys('opt+delete')]);
+  check('Pilot, delete the last 2 words', [keys('opt+delete'), keys('opt+delete')]);
+  check('Pilot, delete line', [keys('cmd+delete')]);
+  check('Pilot, redo', [keys('cmd+shift+z')]);
+  check('Pilot, undo', [keys('cmd+z')]);
+  check('Pilot, paste', [keys('cmd+v')]);
+});
+
+describe('links: by name like click (a badge number while numbers are up); the page address in Chrome', () => {
+  const copyLink = (target: string): Action => ({ kind: 'copyLink', target });
+  check('Pilot, copy link Docs', [copyLink('docs')]);
+  check('Pilot, copy the Docs link', [copyLink('docs')]);
+  check('Pilot, copy link 2', [copyLink('2')]);
+  check('Pilot, copy link number two', [copyLink('2')]);
+  const pageLink = [keys('cmd+l'), keys('cmd+c'), wait(100), keys('esc')];
+  check('Pilot, copy page link', pageLink, { app: 'Google Chrome' });
+  check('Pilot, copy this link', pageLink, { app: 'Google Chrome' });
+  check('Pilot, copy the URL', pageLink, { app: 'Google Chrome' });
+});
+
+describe('a phrase in the focused text field; "select X" outside one is still a click', () => {
+  const sel = (phrase: string, op: string, click: string): Action => ({
+    kind: 'selectText',
+    phrase,
+    op,
+    click,
+  });
+  check('Pilot, select hello world', [sel('hello world', 'select', 'hello world')]);
+  check('Pilot, select Downloads', [sel('Downloads', 'select', 'downloads')]);
+  check('Pilot, select 3', [sel('3', 'select', '3')]);
+  check('Pilot, delete the quick brown fox', [
+    sel('the quick brown fox', 'delete', 'quick brown fox'),
+  ]);
+  check('Pilot, cut see you soon', [sel('see you soon', 'cut', 'see you soon')]);
+  check('Pilot, copy my address', [sel('my address', 'copy', 'address')]);
+  check('Pilot, select all', [keys('cmd+a')]); // still select all
+});
+
 describe('show numbers (1c): numbers go to click as digits; "close/hide numbers" never touches the Numbers app', () => {
   check('Pilot, show labels', [numbers(true)]);
   check('Pilot, hide numbers', [numbers(false)]);

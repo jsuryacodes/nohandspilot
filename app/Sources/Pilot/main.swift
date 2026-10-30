@@ -217,6 +217,11 @@ final class Pilot {
                         steps = steps.map { var s = $0; s.actions = s.actions.map { Hands.withSelection($0, text) }; return s }
                     } else { error = "Select some text first" }
                 }
+                // Wispr puts your clipboard back ~0.5 s after its paste: anything Pilot copies before that would be lost
+                if source == "wispr", steps.contains(where: { $0.actions.contains(where: Hands.writesClipboard) }) {
+                    let until = Date() + 0.8
+                    while NSPasteboard.general.changeCount == clip, Date() < until { usleep(20_000) }
+                }
                 outer: for step in steps where error == nil {
                     var note: String?
                     for action in step.actions { if let e = Hands.perform(action, note: &note) { error = e; break outer } }

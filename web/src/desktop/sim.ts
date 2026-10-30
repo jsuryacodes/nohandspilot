@@ -203,6 +203,10 @@ export function describe(actions: Action[]): string {
         return `clicks "${a.target}"`;
       case 'numbers':
         return a.show ? 'numbers everything clickable' : 'hides the numbers';
+      case 'copyLink':
+        return `copies the address of the link "${a.target}"`;
+      case 'selectText':
+        return `${{ select: 'selects', delete: 'deletes', cut: 'cuts' }[a.op] ?? 'copies'} "${a.phrase}" in the text field`;
       case 'playMusic':
         return `plays "${a.query}" from your Music library, or the first song Apple Music finds`;
       case 'openFile':
@@ -259,6 +263,10 @@ function act(d: Desk, a: Action): Outcome {
       return ok(raise(open(activate(d, 'NoHandsPilot', false), 'Help'), 'Help'));
     case 'click':
       return click(d, a.target);
+    case 'copyLink':
+      return click(d, a.target, true);
+    case 'selectText':
+      return selectText(d, a.phrase, a.op, a.click);
     case 'numbers':
       return numbers(d, a.show);
     case 'openFile':
@@ -689,6 +697,7 @@ export interface Clickable {
   id: string;
   name: string;
   press: (d: Desk) => Outcome;
+  url?: string; // a link's address, for "copy link"
 }
 export const cid = (w: Win, key: string) => `${w}:${key}`;
 
@@ -703,14 +712,15 @@ export function clickables(d: Desk, w: Win): Clickable[] {
     case 'Google Chrome': {
       const t = tabOf(d);
       if (!t) return [];
-      return page(urlOf(t)).items.map((it) =>
-        item(it.name, it.play ? (t.playing ? 'Pause (k)' : 'Play (k)') : it.name, (x) => {
+      return page(urlOf(t)).items.map((it) => ({
+        ...item(it.name, it.play ? (t.playing ? 'Pause (k)' : 'Play (k)') : it.name, (x) => {
           if (it.play) return media(x, 'playPause');
           if (it.focus) return ok({ ...setTab(x, { draft: undefined }), focus: 'address' });
           if (it.link) return ok(x, undefined, it.link);
           return ok(navigate(x, it.to ?? NEW_TAB));
         }),
-      );
+        url: it.link ?? it.to,
+      }));
     }
     case 'Finder': {
       const side = d.finder.sidebar
@@ -840,13 +850,41 @@ export function ordinal(t: string, count: number): number | undefined {
   return i < 0 ? undefined : i + 1;
 }
 
+/** Hands' selectText on the one text field here, Claude's message box: the phrase (ignoring case, the last one),
+ *  then delete, cut, copy or just select. With nothing to type into, "select X" is a click. */
+function selectText(d: Desk, phrase: string, op: string, target: string): Outcome {
+  if (d.focus === 'composer' && d.front === 'Claude') {
+    const draft = d.claude.draft;
+    const at = draft.toLowerCase().lastIndexOf(phrase.toLowerCase());
+    if (at < 0) return fail(`No text field here with "${phrase}" in it`);
+    const found = draft.slice(at, at + phrase.length);
+    const gone = op === 'delete' || op === 'cut';
+    const verb =
+      ({ delete: 'Deleted', cut: 'Cut', copy: 'Copied' } as Record<string, string>)[op] ??
+      'Selected';
+    return ok(
+      gone
+        ? {
+            ...d,
+            claude: { ...d.claude, draft: draft.slice(0, at) + draft.slice(at + phrase.length) },
+          }
+        : d,
+      `${verb} "${found}"`,
+    );
+  }
+  if (d.focus) return MAC; // the address bar, a search field, the prompt: no mock selection there
+  return op === 'select' ? click(d, target) : fail(`No text field here with "${phrase}" in it`);
+}
+
 /** Screen.click: a badge's number while numbers are up, else the element whose name equals the target, starts
  *  with it, or contains all its words (best tier wins). Two or more at the same tier get numbers of their own. */
-function click(d: Desk, target: string): Outcome {
+function click(d: Desk, target: string, link = false): Outcome {
   const w = frontWindow(d);
-  if (!w || !target) return fail('Nothing to click');
-  const items = clickables(d, w);
+  if (!w || !target) return fail(link ? 'No link to copy' : 'Nothing to click');
+  const verb = link ? 'copy link' : 'click';
+  const items = clickables(d, w).filter((c) => !link || c.url);
   const run = (c: Clickable, note: string): Outcome => {
+    if (link) return ok({ ...d, numbers: false }, `Copied link: ${c.url}`);
     const r = c.press(d);
     return 'desk' in r ? { ...r, desk: { ...r.desk, numbers: false }, note: r.note ?? note } : r;
   };
@@ -885,14 +923,14 @@ function click(d: Desk, target: string): Outcome {
   let hits = best(target);
   const suffix = / (button|link|tab|icon|field|box|checkbox|option)$/;
   if (!hits.length && suffix.test(target)) hits = best(target.replace(suffix, '')); // "the send button"
-  if (!hits.length) return fail(`Couldn't find "${target}" on screen`);
+  if (!hits.length) return fail(`Couldn't find ${link ? 'a link ' : ''}"${target}" on screen`);
   if (hits.length > 1) {
     // a tie: number just those, in reading order, and let you pick
     const n = hits.length;
     return ok(
       { ...d, numbers: hits.map((c) => c.id) },
       `${n} × "${hits[0].name}": say ` +
-        (n === 2 ? '"click 1" or "click 2"' : `"click 1" to "click ${n}"`),
+        (n === 2 ? `"${verb} 1" or "${verb} 2"` : `"${verb} 1" to "${verb} ${n}"`),
     );
   }
   return run(hits[0], `Clicked "${hits[0].name}"`);

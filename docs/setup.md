@@ -197,6 +197,27 @@ grep -E "Wake word|Ran |Cmd\+V" ~/Library/Application\ Support/Pilot/debug.log |
 If no song comes up within ~3 s, or its play button can't be pressed, the results stay on screen and
 the toast says so.
 
+## 7c. Select, copy, cut and delete (31 Oct)
+
+Works in the focused app, and chains ("Pilot, select last 3 words, cut").
+
+| Say | Does |
+|---|---|
+| "select word" / "select last word" / "select last 3 words" | ⌥⇧← once / once / 3 times |
+| "select line" / "select to start of line" / "select to end of line" | ⌘← then ⌘⇧→ / ⌘⇧← / ⌘⇧→ |
+| "select paragraph" | ⌥↑ then ⌥⇧↓ (from the end of a paragraph; from its start it takes the one before) |
+| "cut" / "cut that" / "cut it", "copy that", "delete that" / "delete it" / "delete selection" | ⌘X, ⌘C, ⌫ |
+| "delete word" / "delete last 3 words" / "delete line" | ⌥⌫ once / 3 times, ⌘⌫ |
+| "undo", "redo" | ⌘Z, ⌘⇧Z |
+| "copy link Docs" / "copy the Docs link" | The address of the visible link named Docs, on the clipboard. Two or more: numbered, then "copy link 2" |
+| "copy page link" / "copy this link" / "copy url" (Chrome) | ⌘L ⌘C Esc |
+| "select see you soon" in a text field | Selects that phrase (of several, the one nearest before the caret) |
+| "delete / cut / copy see you soon" in a text field | Selects it, then ⌫ / ⌘X / ⌘C |
+| "select Downloads" with no text field holding it | A click, as before |
+
+Checked on 31 Oct: phrases in TextEdit, a Chrome `<textarea>` and Claude's message box. Pilot waits
+for Wispr to put your clipboard back before it copies, so the copied link stays.
+
 ## 8. Terminal (30 Oct)
 
 "Pilot, …" works in Terminal with **Secure Keyboard Entry** on or off (Terminal menu → Secure

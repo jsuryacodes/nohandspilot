@@ -79,6 +79,8 @@ public struct ActionSpec: Codable {
     public var note: String?
     public var folder: Bool?   // openFile: folders only
     public var reveal: Bool?   // openFile: show in Finder instead of opening
+    public var `repeat`: Bool?  // keys: press them {n} times
+    public var op: String?     // selectText: select, delete, cut or copy
 }
 
 public enum Action: Equatable {
@@ -88,6 +90,10 @@ public enum Action: Equatable {
     case click(String)            // a visible element by name, normalised as in rule 3, or a badge number ("12")
     case numbers(Bool)            // show / hide numbered badges on everything clickable
     case playMusic(String)        // a song: from your Music library, else the first song Apple Music finds
+    case copyLink(String)         // a visible link's address to the clipboard, found like click (normalised, or a badge number)
+    /// Text in the focused text field, as spoken: select it (nearest before the caret), then "delete", "cut", "copy" or
+    /// just "select". Not in a text field: "select" clicks `click` instead ("select Downloads").
+    case selectText(String, op: String, click: String)
     case openFile(String, folder: Bool, reveal: Bool)   // a name to search for, or a known folder's path
     case listen(Bool)             // wake word on / off: hearing "Pilot" starts the dictation app hands-free
     case dictate                  // start hands-free dictation; the text is typed, not run
@@ -470,9 +476,11 @@ public final class Brain {
         case "previousApp": actions = [.previousApp]
         case "chromeProfile": actions = [.chromeProfile(slots["profile"] ?? "")]
         case "help": actions = [.help]
-        case "click":
-            let raw = slots["target"] ?? ""
-            actions = [.click(spokenNumber(normalize(raw.replacingOccurrences(of: "-", with: " "))).map(String.init) ?? normalize(raw))]
+        case "click": actions = [.click(target(slots["target"] ?? ""))]
+        case "copyLink": actions = [.copyLink(target(slots["target"] ?? ""))]
+        case "selectText":
+            let raw = slots["phrase"] ?? ""
+            actions = [.selectText(raw, op: a.op ?? "select", click: target(raw))]
         case "showNumbers", "hideNumbers": actions = [.numbers(a.type == "showNumbers")]
         case "playMusic": actions = [.playMusic(slots["query"] ?? "")]
         case "startListening", "stopListening": actions = [.listen(a.type == "startListening")]
@@ -495,7 +503,8 @@ public final class Brain {
             else { actions = [.notConfigured("no URL for \(cmd.id)")] }
         case "keys":
             let k = fill(a.keys ?? "TODO")
-            actions = [k.uppercased().hasPrefix("TODO") ? .notConfigured(a.note ?? cmd.id) : .keys(k)]
+            actions = Array(repeating: k.uppercased().hasPrefix("TODO") ? .notConfigured(a.note ?? cmd.id) : .keys(k),
+                            count: a.repeat == true ? Int(slots["n"] ?? "") ?? 1 : 1)
         case "sequence":
             actions = (a.steps ?? []).map { s in
                 if s.hasPrefix("type:") { return .type(fill(String(s.dropFirst(5)))) }
@@ -509,6 +518,11 @@ public final class Brain {
         var say = cmd.say ?? cmd.id
         for (k, v) in slots { say = say.replacingOccurrences(of: "{\(k)}", with: slotValues[k]?.first { $0.value == v }?.key ?? v) }   // spoken name, not a path
         return Step(id: cmd.id, say: say, actions: actions, slots: slots, freeKey: slots.keys.first(where: isFree))
+    }
+
+    /// click's target: a badge number ("twenty-one" → "21") or the name, normalised as in rule 3.
+    private func target(_ raw: String) -> String {
+        spokenNumber(normalize(raw.replacingOccurrences(of: "-", with: " "))).map(String.init) ?? normalize(raw)
     }
 
     /// For "Didn't catch": the phrase sharing the most words with what was said.

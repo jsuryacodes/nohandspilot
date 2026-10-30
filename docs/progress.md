@@ -2,6 +2,35 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 31 Oct: Select, copy, cut and delete text and links
+- Keyboard edits, anywhere, and they chain: select word / last word / last N words (⌥⇧← × N, a new
+  `repeat` on keys commands), select line / to start / to end of line, select paragraph (⌥↑ ⌥⇧↓),
+  cut / cut that / cut it (⌘X), copy that, delete that / it / selection (⌫), delete word / last N words
+  (⌥⌫ × N), delete line (⌘⌫). Copy, paste, select all, undo and redo were already there.
+- Links: "copy link Docs" / "copy the Docs link" finds the link the way click does (same ranking, only
+  links), reads its `AXURL` and puts it on the clipboard: "Copied link: <url>". A tie numbers just
+  those, and "copy link 2" copies that badge. "copy page link" / "copy this link" / "copy url" in Chrome:
+  ⌘L ⌘C Esc.
+- "select <phrase>" in an editable field (one whose selected range can be set): selects it, ignoring
+  case, the occurrence nearest before the caret (then "the" dropped from the front if that misses).
+  "delete / cut / copy <phrase>" select it, then act. No such field: "select X" is the old click
+  ("select Downloads"), the others say "No text field here with "X" in it". Web pages you can't edit
+  aren't touched.
+- Found while testing: Wispr puts your clipboard back ~0.5 s after its paste, which could wipe a link
+  Pilot just copied. Commands that copy or cut now wait for that (up to 0.8 s) when Wispr sent them.
+- Phrase conflicts: "select all" / "select everything", "copy" / "copy it", "paste" keep their old
+  meaning (more literal words win). "select {target}" moved from click to the new select command.
+- Tested live. TextEdit: "delete see you soon", "cut the lazy dog" (clipboard: "the lazy dog"),
+  "select quick" (the later of 2), "copy brown fox", "select last 2 words, cut" (cut "line here."),
+  "delete last 2 words", "select to start of line, copy that", "select paragraph, delete that". Chrome
+  textarea: select, cut and delete by phrase. Claude's message box: select and delete by phrase.
+  Chrome page: "copy link docs" → `https://example.com/docs`; "copy page link"; through the wake word
+  with two "Docs" links: badges, then "copy link number 2" → `https://example.com/docs/v2`, which
+  survived Wispr's clipboard restore. Finder: "select Downloads" clicked the sidebar item.
+- Website: /try copies link addresses from its pages and deletes, cuts and copies phrases in Claude's
+  message box; the keyboard edits say "On your Mac: presses ⌥⇧←". 41 BrainCheck cases, 41 Vitest
+  cases, 5 desktop tests.
+
 ## 31 Oct: "Pilot, play Florida on Apple Music" plays it
 - Before: "play X" in Music was its search (⌘F, type, Return), so nothing played. Now a new action,
   `playMusic`. First your library, through AppleScript: track name equal to what you said, then

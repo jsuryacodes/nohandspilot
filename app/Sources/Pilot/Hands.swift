@@ -117,6 +117,19 @@ enum Hands {
         case .click(let target): return Screen.click(target, note: &note)
         case .numbers(let on): return Screen.numbers(on, note: &note)
         case .playMusic(let query): return playMusic(query, note: &note)
+        case .copyLink(let target): return Screen.click(target, link: true, note: &note)
+        case .selectText(let phrase, let op, let click):
+            guard let selected = Screen.selectInField(phrase) else {
+                return op == "select" ? Screen.click(click, note: &note) : "No text field here with \"\(phrase)\" in it"
+            }
+            usleep(50_000)
+            switch op {
+            case "delete": press(51, [])
+            case "cut": press(7, .maskCommand)    // X
+            case "copy": press(8, .maskCommand)   // C
+            default: break
+            }
+            note = ["delete": "Deleted", "cut": "Cut", "copy": "Copied"][op, default: "Selected"] + " \"\(selected)\""
         case .listen(let on): DispatchQueue.main.async { WakeWord.shared.setOn(on) }
         case .dictate: DispatchQueue.main.async { WakeWord.shared.dictate() }
         case .openFile(let name, let folder, let reveal):
@@ -269,6 +282,16 @@ enum Hands {
             for (t, data) in types { item.setData(data, forType: t) }
             return item
         })
+    }
+
+    /// Copies or cuts: writes the clipboard.
+    static func writesClipboard(_ a: Action) -> Bool {
+        switch a {
+        case .copyLink: return true
+        case .keys(let k): return ["cmd+c", "cmd+x"].contains(k)
+        case .selectText(_, let op, _): return op == "copy" || op == "cut"
+        default: return false
+        }
     }
 
     /// "{selection}" in a command's URL or text, filled in once when the run starts, before any app switch.

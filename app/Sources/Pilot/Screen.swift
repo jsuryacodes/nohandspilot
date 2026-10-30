@@ -136,9 +136,11 @@ enum Screen {
     }
 
     /// Runs on the Hands queue. `target` is normalised. Order: exact name, then name starting with it, then
-    /// containing all its words; window before menus, controls before plain text. Ties: don't guess.
-    static func click(_ target: String, note: inout String?) -> String? {
-        guard let app = Screen.front, let front = appName(app), !target.isEmpty else { return "Nothing to click" }
+    /// containing all its words; window before menus, controls before plain text. Ties: badges on just those.
+    /// `link`: copy a link's address instead of pressing it (links only).
+    static func click(_ target: String, link: Bool = false, note: inout String?) -> String? {
+        guard let app = Screen.front, let front = appName(app), !target.isEmpty else { return link ? "No link to copy" : "Nothing to click" }
+        let verb = link ? "copy link" : "click"
         // badges up: a number means that badge. Any click clears them (the screen is about to change).
         // "the second one" / "the last one" while badges are up means that badge.
         let (shown, badge, n) = DispatchQueue.main.sync { () -> (Bool, Element?, Int?) in
@@ -150,11 +152,12 @@ enum Screen {
         }
         if shown {
             guard let badge, let n else { return "No number \(target) on screen" }
+            if link { return copyURL(badge, note: &note) }
             note = "Clicked \(n)" + (badge.name.isEmpty ? "" : " \"\(badge.name)\"")
             Log.debug("Click badge \(n) in \(front): \(badge.role) \"\(badge.name)\"")
             return press(badge, app: front)
         }
-        let all = elements(of: app, text: true)
+        let all = link ? elements(of: app, text: false).filter { $0.role == "AXLink" } : elements(of: app, text: true)
             + DispatchQueue.main.sync { menus(of: front) }.map { Element(el: nil, menu: $0, role: "AXMenuItem", name: $0.last ?? "", frame: .zero) }
         let named = all.map { (e: $0, n: normalize($0.name)) }.filter { !$0.n.isEmpty }
         func best(_ t: String) -> [Element] {
@@ -177,18 +180,64 @@ enum Screen {
         if hits.isEmpty, let r = target.range(of: " (button|link|tab|icon|field|box|checkbox|option)$", options: .regularExpression) {
             hits = best(String(target[..<r.lowerBound]))   // "the send button"
         }
-        Log.debug("Click \"\(target)\" in \(front): " + (hits.isEmpty ? "no match" : hits.map { "\($0.role) \"\($0.name)\"" }.joined(separator: ", ")))
-        guard let hit = hits.first else { return "Couldn't find \"\(target)\" on screen" }
+        Log.debug("\(link ? "Copy link" : "Click") \"\(target)\" in \(front): " + (hits.isEmpty ? "no match" : hits.map { "\($0.role) \"\($0.name)\"" }.joined(separator: ", ")))
+        guard let hit = hits.first else { return "Couldn't find \(link ? "a link " : "")\"\(target)\" on screen" }
         if hits.count > 1 {
             // a tie: number just those, in reading order, and let you pick. Menu items have no frame to badge.
             let tied = hits.filter { $0.menu == nil }.sorted(by: readingOrder)
             guard tied.count > 1 else { return "\(hits.count) matches for \"\(target)\". Say \"show numbers\"" }
             DispatchQueue.main.sync { NumberOverlay.shared.show(tied, pid: app.processIdentifier) }
-            note = "\(tied.count) × \"\(hit.name)\": say " + (tied.count == 2 ? "\"click 1\" or \"click 2\"" : "\"click 1\" to \"click \(tied.count)\"")
+            note = "\(tied.count) × \"\(hit.name)\": say " + (tied.count == 2 ? "\"\(verb) 1\" or \"\(verb) 2\"" : "\"\(verb) 1\" to \"\(verb) \(tied.count)\"")
             return nil
         }
+        if link { return copyURL(hit, note: &note) }
         note = "Clicked \"\(hit.name)\""
         return press(hit, app: front)
+    }
+
+    /// A link's address (AXURL) to the clipboard.
+    static func copyURL(_ e: Element, note: inout String?) -> String? {
+        guard let el = e.el, let url = (attr(el, "AXURL") as? URL)?.absoluteString else { return "\"\(e.name)\" isn't a link" }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(url, forType: .string)
+        note = "Copied link: \(url)"
+        return nil
+    }
+
+    /// "select hello world" in the focused text field: selects the phrase (ignoring case; of several, the one nearest
+    /// before the caret) by setting the field's selected range. Returns what was selected, or nil if the focused
+    /// element isn't an editable field with that text (a web page you can't edit isn't).
+    static func selectInField(_ phrase: String) -> String? {
+        guard let app = front else { return nil }
+        let root = AXUIElementCreateApplication(app.processIdentifier)
+        if boost(app, root) { usleep(300_000) }
+        var settable: DarwinBoolean = false
+        guard let field = element(attr(root, kAXFocusedUIElementAttribute)), let text = attr(field, kAXValueAttribute) as? String,
+              AXUIElementIsAttributeSettable(field, kAXSelectedTextRangeAttribute as CFString, &settable) == .success, settable.boolValue else {
+            Log.debug("Select \"…\": the focused element isn't an editable text field")
+            return nil
+        }
+        let ns = text as NSString
+        var caret = CFRange(location: ns.length, length: 0)
+        if let v = attr(field, kAXSelectedTextRangeAttribute), CFGetTypeID(v) == AXValueGetTypeID() { AXValueGetValue(v as! AXValue, .cfRange, &caret) }
+        // as spoken, then without a leading "the"
+        for p in [phrase, phrase.replacingOccurrences(of: "^the ", with: "", options: [.regularExpression, .caseInsensitive])] where !p.isEmpty {
+            var hits: [NSRange] = [], from = 0
+            while from < ns.length {
+                let r = ns.range(of: p, options: .caseInsensitive, range: NSRange(location: from, length: ns.length - from))
+                if r.location == NSNotFound { break }
+                hits.append(r)
+                from = r.location + 1
+            }
+            guard let hit = hits.last(where: { $0.location < caret.location }) ?? hits.first else { continue }
+            var range = CFRange(location: hit.location, length: hit.length)
+            guard let value = AXValueCreate(.cfRange, &range),
+                  AXUIElementSetAttributeValue(field, kAXSelectedTextRangeAttribute as CFString, value) == .success else { return nil }
+            Log.debug("Selected \(hit.length) characters in the text field (\(hits.count) match\(hits.count == 1 ? "" : "es"))")
+            return ns.substring(with: hit)
+        }
+        Log.debug("Select: the text field (\(ns.length) characters) doesn't contain it")
+        return nil
     }
 
     /// Top to bottom (rows of 12 pt), then left to right: how badges are numbered.
