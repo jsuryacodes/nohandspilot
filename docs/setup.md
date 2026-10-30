@@ -212,6 +212,7 @@ Works in the focused app, and chains ("Pilot, select last 3 words, cut").
 | "take a screenshot" | ⌘⇧3, saved where macOS saves screenshots (the Desktop) |
 | "paste the screenshot" | Pastes your latest screenshot, then puts back what you'd copied, so plain "paste" still pastes your text or link. The first time, macOS asks to let Pilot see your Desktop folder |
 | "upload the screenshot" (or "choose / attach / select the screenshot") with a file picker open | ⌘⇧G, the screenshot's path, Return, Return: the picker selects it and opens it. Over 5 MB (a full-screen PNG is ~10 MB), a JPEG copy goes up instead. Nothing is typed if no picker is open. Chains: "click Add images, upload the screenshot" |
+| "remove the screenshot" / "delete the screenshot" / "remove the image" | Clicks the upload's remove button ("Remove image 1" on the submission form). Same as "click remove image" |
 | "copy link Docs" / "copy the Docs link" | The address of the visible link named Docs, on the clipboard. Two or more: numbered, then "copy link 2" |
 | "copy page link" / "copy this link" / "copy url" (Chrome) | ⌘L ⌘C Esc |
 | "select see you soon" in a text field | Selects that phrase (of several, the one nearest before the caret) |

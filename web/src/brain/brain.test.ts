@@ -388,6 +388,9 @@ describe('select, copy, cut and delete (31 Oct): keyboard edits work anywhere an
   check('Pilot, paste it', [keys('cmd+v')]);
   const upload: Action = { kind: 'uploadScreenshot' };
   check('Pilot, upload the screenshot', [upload]);
+  check('Pilot, remove the screenshot', [click('remove image')]); // the form's × is "Remove image 1"
+  check('Pilot, delete the screenshot', [click('remove image')]); // the macro, not "delete {phrase}"
+  check('Pilot, remove the uploaded image', [click('remove image')]);
   check('Pilot, select the screenshot', [upload]); // not "select {phrase}"
   check('Pilot, take a screenshot, click Add images, upload the screenshot', [
     keys('cmd+shift+3'),

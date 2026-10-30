@@ -236,6 +236,11 @@
   ],
   "macros": {
     "study mode": ["open chrome", "new tab", "open claude", "new chat"],
-    "coding mode": ["open visual studio code", "toggle terminal", "open chrome"]
+    "coding mode": ["open visual studio code", "toggle terminal", "open chrome"],
+    "remove screenshot": ["click remove image"],
+    "delete screenshot": ["click remove image"],
+    "remove uploaded screenshot": ["click remove image"],
+    "remove image": ["click remove image"],
+    "remove uploaded image": ["click remove image"]
   }
 }

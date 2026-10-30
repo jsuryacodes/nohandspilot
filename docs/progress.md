@@ -2,6 +2,14 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 31 Oct: "Pilot, remove the screenshot"
+- Your ask: remove an uploaded screenshot by voice. The submission form's × on the thumbnail is a
+  button named "Remove image 1" (read from the page, nothing pressed), so "click remove image" already
+  pressed it. Added the phrases you'd say: "remove the screenshot", "delete the screenshot", "remove
+  the (uploaded) image", as macros for "click remove image" (a macro wins over "delete {phrase}").
+- Tested on a copy of the thumbnail in a local page, not your real form: "remove the screenshot" →
+  `AXButton "Remove image 1"`, the image went (0.4 s). 3 BrainCheck and Vitest cases.
+
 ## 31 Oct: "Pilot, upload the screenshot"
 - Your ask: in the demo, take a screenshot and upload it to the submission form by voice. "click Add
   images" already opened the file picker; picking the file was missing. Now "upload the screenshot"

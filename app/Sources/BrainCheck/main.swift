@@ -201,6 +201,9 @@ check("Pilot, paste my last screenshot", [.pasteScreenshot])
 check("Pilot, take a screenshot, paste the screenshot", [.keys("cmd+shift+3"), .pasteScreenshot])
 check("Pilot, paste it", [.keys("cmd+v")])
 check("Pilot, upload the screenshot", [.uploadScreenshot])
+check("Pilot, remove the screenshot", [.click("remove image")])   // the form's × is "Remove image 1"
+check("Pilot, delete the screenshot", [.click("remove image")])    // the macro, not "delete {phrase}"
+check("Pilot, remove the uploaded image", [.click("remove image")])
 check("Pilot, select the screenshot", [.uploadScreenshot])   // not "select {phrase}"
 check("Pilot, take a screenshot, click Add images, upload the screenshot", [.keys("cmd+shift+3"), .click("add images"), .uploadScreenshot])
 // links: by name like click (a badge number while numbers are up); the page's own address in Chrome
