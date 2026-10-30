@@ -148,6 +148,7 @@
     { "id": "app_windows", "phrases": ["scroll down across space", "scroll down across spaces"], "action": { "type": "keys", "keys": "ctrl+down" }, "say": "This app's windows" },
     { "id": "mission_control", "phrases": ["mission control", "show all windows", "show windows", "scroll up across space", "scroll up across spaces"], "action": { "type": "keys", "keys": "ctrl+up" }, "say": "Mission Control" },
     { "id": "screenshot", "phrases": ["take screenshot", "screenshot", "capture screen"], "action": { "type": "keys", "keys": "cmd+shift+3" }, "say": "Screenshot saved. \"Paste the screenshot\" pastes it" },
+    { "id": "upload_screenshot", "phrases": ["upload screenshot", "upload last screenshot", "choose screenshot", "attach screenshot", "select screenshot", "pick screenshot", "add screenshot"], "action": { "type": "uploadScreenshot" }, "say": "Uploaded the screenshot" },
     { "id": "paste_screenshot", "phrases": ["paste screenshot", "paste last screenshot", "paste latest screenshot"], "action": { "type": "pasteScreenshot" }, "say": "Pasted the screenshot" },
     { "id": "spotlight", "phrases": ["open spotlight", "spotlight", "show spotlight", "spotlight search"], "action": { "type": "keys", "keys": "cmd+space" }, "say": "Spotlight" },
     { "id": "lock_screen", "phrases": ["lock screen", "lock mac", "lock computer"], "action": { "type": "keys", "keys": "ctrl+cmd+q" }, "say": "Locked" },

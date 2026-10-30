@@ -119,6 +119,7 @@ enum Hands {
         case .numbers(let on): return Screen.numbers(on, note: &note)
         case .playMusic(let query): return playMusic(query, note: &note)
         case .pasteScreenshot: return pasteScreenshot(note: &note)
+        case .uploadScreenshot: return uploadScreenshot(note: &note)
         case .copyLink(let target): return Screen.click(target, link: true, note: &note)
         case .selectText(let phrase, let op, let click):
             guard let selected = Screen.selectInField(phrase) else {
@@ -289,7 +290,7 @@ enum Hands {
     /// Copies, cuts or pastes: uses the clipboard.
     static func usesClipboard(_ a: Action) -> Bool {
         switch a {
-        case .copyLink, .pasteScreenshot: return true
+        case .copyLink, .pasteScreenshot, .uploadScreenshot: return true
         case .keys(let k): return ["cmd+c", "cmd+x", "cmd+v"].contains(k)
         case .selectText(_, let op, _): return op == "copy" || op == "cut"
         default: return false
@@ -518,16 +519,79 @@ extension Hands {
             .max { $0.created < $1.created }
     }
 
-    /// "paste the screenshot": your latest screenshot goes on the clipboard just long enough to paste, then whatever you
-    /// had copied comes back, so plain "paste" still pastes your text or link.
-    static func pasteScreenshot(note: inout String?) -> String? {
-        // With the floating thumbnail on, macOS writes the file ~5 s after the shot: wait for one Pilot just took
+    /// The latest screenshot. With the floating thumbnail on, macOS writes the file ~5 s after the shot, so right after
+    /// one Pilot took, this waits for it (up to 8 s after the shot).
+    static func screenshotReady() -> (url: URL, created: Date)? {
         var shot = latestScreenshot()
         while Date() < lastShot + 8, (shot?.created ?? .distantPast) < lastShot - 1 {
             usleep(200_000)
             shot = latestScreenshot()
         }
-        guard let shot, let png = try? Data(contentsOf: shot.url), let tiff = NSImage(data: png)?.tiffRepresentation else {
+        return shot
+    }
+
+    /// Is a file picker (an Open panel or sheet) up in the front app: a "Cancel" button next to Open / Choose / Upload?
+    static func filePicker() -> Bool {
+        guard let app = Screen.front else { return false }
+        let root = AXUIElementCreateApplication(app.processIdentifier)
+        let start = Date()
+        var cancel = false, open = false, nodes = 0
+        func visit(_ el: AXUIElement, _ depth: Int) {
+            guard !(cancel && open), depth < 25, nodes < 4000, Date().timeIntervalSince(start) < 0.5 else { return }
+            nodes += 1
+            if Screen.attr(el, kAXRoleAttribute) as? String == kAXButtonRole, let t = Screen.attr(el, kAXTitleAttribute) as? String {
+                if t == "Cancel" { cancel = true }
+                if ["Open", "Choose", "Upload", "Select", "Attach", "Insert"].contains(t) { open = true }
+            }
+            Screen.children(el).forEach { visit($0, depth + 1) }
+        }
+        for w in Screen.attr(root, kAXWindowsAttribute) as? [AXUIElement] ?? [] {
+            cancel = false; open = false
+            visit(w, 0)
+            if cancel && open { return true }
+        }
+        return false
+    }
+
+    /// "upload the screenshot" with a file picker open (after "click Add images"): ⌘⇧G, the screenshot's full path,
+    /// Return (the picker goes to it and selects it), Return (Open). Never types anywhere else.
+    static func uploadScreenshot(note: inout String?) -> String? {
+        let appear = Date() + 3   // in a chain the picker is still opening
+        while !filePicker(), Date() < appear { usleep(200_000) }
+        guard filePicker() else { return "No file picker is open. Open one first (\"click Add images\"), then say it again" }
+        guard let shot = screenshotReady() else { return "No screenshot yet. Say \"take a screenshot\" first" }
+        // A full-screen Retina PNG is ~10 MB, over the 5 MB many upload forms allow (the No Hands submission form too):
+        // then a JPEG copy goes up instead, and the PNG stays as it is.
+        var file = shot.url, smaller = ""
+        let size = (try? file.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+        if size > 5_000_000, let rep = NSImage(contentsOf: file).flatMap({ $0.tiffRepresentation }).flatMap(NSBitmapImageRep.init(data:)),
+           let jpeg = rep.representation(using: .jpeg, properties: [.compressionFactor: 0.8]) {
+            let dir = Log.dir.appendingPathComponent("uploads")
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            let copy = dir.appendingPathComponent(file.deletingPathExtension().lastPathComponent + ".jpg")
+            if (try? jpeg.write(to: copy)) != nil {
+                file = copy
+                smaller = String(format: " (as a %.1f MB JPEG: the PNG is %.1f MB)", Double(jpeg.count) / 1e6, Double(size) / 1e6)
+            }
+        }
+        press(5, [.maskCommand, .maskShift])   // G: "Go to the folder"
+        usleep(500_000)
+        paste(file.path)
+        usleep(300_000)
+        press(36, [])                          // Return: goes there and selects the file
+        usleep(800_000)
+        press(36, [])                          // Return: Open
+        let until = Date() + 2
+        while filePicker(), Date() < until { usleep(150_000) }
+        if filePicker() { return "The file picker is still open: \(file.lastPathComponent) may not be selected" }
+        note = "Uploaded " + file.lastPathComponent + smaller
+        return nil
+    }
+
+    /// "paste the screenshot": your latest screenshot goes on the clipboard just long enough to paste, then whatever you
+    /// had copied comes back, so plain "paste" still pastes your text or link.
+    static func pasteScreenshot(note: inout String?) -> String? {
+        guard let shot = screenshotReady(), let png = try? Data(contentsOf: shot.url), let tiff = NSImage(data: png)?.tiffRepresentation else {
             return "No screenshot yet. Say \"take a screenshot\" first"
         }
         let saved = clipboard()

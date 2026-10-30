@@ -58,6 +58,7 @@ export type Action =
   | { kind: 'menu'; app: string; path: string[] } // app, title path: ("Google Chrome", ["Tab", "Duplicate Tab"])
   | { kind: 'click'; target: string } // a visible element by name, normalised as in rule 3, or a badge number ("12")
   | { kind: 'numbers'; show: boolean }
+  | { kind: 'uploadScreenshot' } // your latest screenshot, chosen in the open file picker
   | { kind: 'pasteScreenshot' } // your latest screenshot, pasted; the clipboard is put back after
   | { kind: 'copyLink'; target: string } // a visible link's address to the clipboard, found like click
   // Text in the focused text field, as spoken: select it (nearest before the caret), then delete, cut, copy or just
@@ -608,6 +609,9 @@ export class Brain {
         break;
       case 'pasteScreenshot':
         actions = [{ kind: 'pasteScreenshot' }];
+        break;
+      case 'uploadScreenshot':
+        actions = [{ kind: 'uploadScreenshot' }];
         break;
       case 'startListening':
       case 'stopListening':

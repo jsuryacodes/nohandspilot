@@ -386,6 +386,14 @@ describe('select, copy, cut and delete (31 Oct): keyboard edits work anywhere an
   check('Pilot, paste my last screenshot', [shot]);
   check('Pilot, take a screenshot, paste the screenshot', [keys('cmd+shift+3'), shot]);
   check('Pilot, paste it', [keys('cmd+v')]);
+  const upload: Action = { kind: 'uploadScreenshot' };
+  check('Pilot, upload the screenshot', [upload]);
+  check('Pilot, select the screenshot', [upload]); // not "select {phrase}"
+  check('Pilot, take a screenshot, click Add images, upload the screenshot', [
+    keys('cmd+shift+3'),
+    click('add images'),
+    upload,
+  ]);
 });
 
 describe('links: by name like click (a badge number while numbers are up); the page address in Chrome', () => {

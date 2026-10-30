@@ -200,6 +200,9 @@ check("Pilot, paste the screenshot", [.pasteScreenshot])
 check("Pilot, paste my last screenshot", [.pasteScreenshot])
 check("Pilot, take a screenshot, paste the screenshot", [.keys("cmd+shift+3"), .pasteScreenshot])
 check("Pilot, paste it", [.keys("cmd+v")])
+check("Pilot, upload the screenshot", [.uploadScreenshot])
+check("Pilot, select the screenshot", [.uploadScreenshot])   // not "select {phrase}"
+check("Pilot, take a screenshot, click Add images, upload the screenshot", [.keys("cmd+shift+3"), .click("add images"), .uploadScreenshot])
 // links: by name like click (a badge number while numbers are up); the page's own address in Chrome
 check("Pilot, copy link Docs", [.copyLink("docs")])
 check("Pilot, copy the Docs link", [.copyLink("docs")])

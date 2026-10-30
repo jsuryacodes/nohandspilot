@@ -2,6 +2,21 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 31 Oct: "Pilot, upload the screenshot"
+- Your ask: in the demo, take a screenshot and upload it to the submission form by voice. "click Add
+  images" already opened the file picker; picking the file was missing. Now "upload the screenshot"
+  (also choose / attach / select / pick / add) with a picker open: ⌘⇧G, Pilot pastes the newest
+  screenshot's full path, Return (the picker goes there and selects it), Return (Open), and checks the
+  picker closed. It first checks a picker is really up (a "Cancel" button next to Open / Choose /
+  Upload, waiting up to 3 s so it chains after the click), so ⌘⇧G is never sent to a page.
+- Found while testing: a full-screen Retina screenshot is 10.7 MB, over the form's "up to 5 MB each".
+  Over 5 MB, Pilot uploads a JPEG copy (80% quality, kept in Pilot's own folder) and the toast says
+  so; your PNG isn't touched.
+- Tested in Chrome on a local page with a file input: "click add images no file chosen, upload the
+  screenshot" opened the picker and the page received "Screenshot 2026-10-31 at 1.43.28 AM.jpg"
+  (1,640,454 bytes), 3.4 s in all. Earlier, without the JPEG step, the 10,743,320-byte PNG. Not tried
+  on the real submission form. 3 BrainCheck and Vitest cases; demo.md has the step.
+
 ## 31 Oct: "Pilot, paste the screenshot"
 - Your ask: paste a screenshot by voice, while plain "paste" keeps pasting the text or page link you
   copied. So the screenshot isn't put on the clipboard: "take a screenshot" saves it as before (⌘⇧3),
