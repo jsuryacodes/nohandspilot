@@ -14,6 +14,12 @@ Takes about 10 minutes. Pilot is already built and installed at `~/Applications/
 
 Rebuilding (`app/build.sh`) keeps this permission. You shouldn't need to grant it again.
 
+## 1b. Let Pilot control Music (once, the first time you say "play … on Apple Music")
+
+macOS asks **"Pilot" wants access to control "Music"**. Click **Allow**. Pilot uses it only to find
+and play a song from your library. If you click Don't Allow, "play X" still works through Apple
+Music's search; change it later in System Settings → Privacy & Security → Automation → Pilot → Music.
+
 ## 2. Wispr dictionary (once)
 
 Wispr Flow → Dictionary → add **Pilot**, so it's never heard as "Pilate" or "pilot's".
@@ -177,6 +183,19 @@ The rule: The only word Pilot acts on from its own speech recognizer is "Pilot".
 ```
 grep -E "Wake word|Ran |Cmd\+V" ~/Library/Application\ Support/Pilot/debug.log | tail -30
 ```
+
+## 7b. Play a song in Apple Music (30 Oct)
+
+| Say | Expected |
+|---|---|
+| "Pilot, play Florida on Apple Music" (in your library) | It plays. Toast "▶ Florida!!! (feat. Florence + the Machine) — Taylor Swift" |
+| "Pilot, play Bohemian Rhapsody in Music" (not in your library) | Music searches Apple Music and plays the first song result. Toast "▶ Bohemian Rhapsody — Queen (Apple Music)" |
+| "Pilot, play Florida" with Music in front | Same as the first row |
+| "Pilot, search for Florida" in Music | Search only, nothing plays |
+| "Pilot, play" / "Pilot, pause" | Unchanged: the player's own button, or the media key |
+
+If no song comes up within ~3 s, or its play button can't be pressed, the results stay on screen and
+the toast says so.
 
 ## 8. Terminal (30 Oct)
 

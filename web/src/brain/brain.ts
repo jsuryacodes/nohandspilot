@@ -56,6 +56,7 @@ export type Action =
   | { kind: 'menu'; app: string; path: string[] } // app, title path: ("Google Chrome", ["Tab", "Duplicate Tab"])
   | { kind: 'click'; target: string } // a visible element by name, normalised as in rule 3, or a badge number ("12")
   | { kind: 'numbers'; show: boolean }
+  | { kind: 'playMusic'; query: string } // a song: from your Music library, else the first song Apple Music finds
   | { kind: 'openFile'; name: string; folder: boolean; reveal: boolean }
   | { kind: 'listen'; on: boolean }
   | { kind: 'dictate' }
@@ -585,6 +586,9 @@ export class Brain {
       case 'showNumbers':
       case 'hideNumbers':
         actions = [{ kind: 'numbers', show: a.type === 'showNumbers' }];
+        break;
+      case 'playMusic':
+        actions = [{ kind: 'playMusic', query: slots.query ?? '' }];
         break;
       case 'startListening':
       case 'stopListening':

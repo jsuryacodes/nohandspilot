@@ -2,6 +2,31 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 31 Oct: "Pilot, play Florida on Apple Music" plays it
+- Before: "play X" in Music was its search (⌘F, type, Return), so nothing played. Now a new action,
+  `playMusic`. First your library, through AppleScript: track name equal to what you said, then
+  starting with it, then containing it (AppleScript ignores case), and it plays. Toast: "▶ <track> —
+  <artist>". Not in your library: Music's search on Apple Music (the scope set to Apple Music first),
+  wait up to 3 s for the search field to hold your words and a "Song · …" result in Top Results, move
+  the pointer onto it (that's when its play button exists: an `AXCheckBox "Play"`), press it. Toast "▶
+  <song> — <artist> (Apple Music)". Otherwise the results stay on screen and the toast says it couldn't
+  press play. Found while building it: the subtitle's "·" sits between narrow no-break spaces (U+202F),
+  and pressing a result opens its album instead of playing.
+- Phrases: "play {query}" in Music, plus "on/in Apple Music" and "on/in Music" from any app ("apple
+  music" is now a name for the Music app). "play lofi beats on YouTube" is still YouTube; "search for X"
+  in Music still only searches; bare "play" / "pause" are unchanged. "the song" in front is dropped.
+- Automation: `NSAppleEventsUsageDescription` in the Info.plist. Pilot checks the permission without
+  waiting, so the one-time "Pilot wants to control Music" prompt never holds up a command; until it's
+  allowed (or if it's refused), "play X" goes straight to Apple Music's search and the toast says how
+  to allow it. Setup docs and the site's setup steps mention the prompt.
+- Tested live through the wake word: "play Florida on Apple Music" → `played "Florida!!! (feat.
+  Florence + the Machine) — Taylor Swift" in 142 ms`. "play Bohemian Rhapsody on Apple Music" (not in
+  the library) → no library match, Apple Music search, the first song's play button: Music's player
+  showed "Bohemian Rhapsody" and Pause. The prompt appeared on the first try and was answered with
+  Allow at 23:59 (TCC: dev.jsurya.pilot → com.apple.Music allowed).
+- 10 new BrainCheck and Vitest cases; /try says "On your Mac: plays "Florida" from your Music library,
+  or the first song Apple Music finds".
+
 ## 30 Oct: Clicking a name that matches two or more things
 - Before: "N matches for X. Say "show numbers"". Now Pilot puts numbered badges on just the tied
   matches, top to bottom then left to right, and says `2 × "Sign in": say "click 1" or "click 2"` (3 or

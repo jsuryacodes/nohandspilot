@@ -203,6 +203,8 @@ export function describe(actions: Action[]): string {
         return `clicks "${a.target}"`;
       case 'numbers':
         return a.show ? 'numbers everything clickable' : 'hides the numbers';
+      case 'playMusic':
+        return `plays "${a.query}" from your Music library, or the first song Apple Music finds`;
       case 'openFile':
         return a.reveal
           ? `shows "${a.name}" in Finder`
@@ -264,7 +266,7 @@ function act(d: Desk, a: Action): Outcome {
       return ok(openFolder(activate(d, 'Finder'), a.name as Folder), `Opened ${a.name}`);
     case 'notConfigured':
       return fail(`Not set up yet: ${a.note}`);
-    default: // chromeProfile, menu, listen, dictate
+    default: // chromeProfile, menu, listen, dictate, playMusic
       return MAC;
   }
 }

@@ -58,7 +58,8 @@
     "whats app": "WhatsApp",
     "wispr": "Wispr Flow",
     "whisper": "Wispr Flow",
-    "whisper flow": "Wispr Flow"
+    "whisper flow": "Wispr Flow",
+    "apple music": "Music"
   },
   "browser": "Google Chrome",
   "sites": {
@@ -190,7 +191,8 @@
     { "id": "claude_ask_selection", "app": "Claude", "phrases": ["ask claude about this", "ask about this"], "action": { "type": "sequence", "steps": ["open:Claude", "cmd+n", "wait:600", "type:{selection}", "wait:100", "enter"] }, "say": "Asked Claude about the selection" },
     { "id": "claude_ask", "app": "Claude", "phrases": ["ask {query}"], "action": { "type": "sequence", "steps": ["cmd+n", "wait:600", "type:{query}", "wait:100", "enter"] }, "say": "Asked Claude: {query}" },
 
-    { "id": "music_search", "app": "Music", "phrases": ["search for {query}", "find {query}", "play {query}"], "action": { "type": "sequence", "steps": ["cmd+f", "wait:250", "type:{query}", "enter"] }, "say": "Music: {query}" },
+    { "id": "music_search", "app": "Music", "phrases": ["search for {query}", "find {query}"], "action": { "type": "sequence", "steps": ["cmd+f", "wait:250", "type:{query}", "enter"] }, "say": "Music: {query}" },
+    { "id": "music_play", "app": "Music", "phrases": ["play {query}"], "action": { "type": "playMusic" }, "say": "Playing {query}" },
     { "id": "whatsapp_search", "app": "WhatsApp", "phrases": ["search for {query}", "find {query}", "find chat {query}"], "action": { "type": "sequence", "steps": ["cmd+f", "wait:250", "type:{query}"] }, "say": "WhatsApp: {query}" },
 
     { "id": "code_sidebar", "app": "Visual Studio Code", "phrases": ["toggle sidebar", "open sidebar", "close sidebar", "sidebar", "show sidebar", "hide sidebar"], "action": { "type": "keys", "keys": "cmd+b" }, "say": "Sidebar" },

@@ -906,6 +906,10 @@ const STEPS: ReactNode[] = [
     <b>Input Monitoring</b>.
   </>,
   <>
+    <b>Music (once).</b> The first time you say “play … on Apple Music”, macOS asks “Pilot wants to
+    control Music”. Click Allow, so Pilot can play songs from your library.
+  </>,
+  <>
     <b>Wispr Flow → Dictionary:</b> add “Pilot”, so it’s never heard as “Pilate”.
   </>,
   <>

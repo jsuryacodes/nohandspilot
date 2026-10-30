@@ -100,6 +100,18 @@ check("Pilot, open GitHub in Chrome", [.openURL("https://github.com")])
 // chains stay in the app they switched to; display names; reserved phrases (real misses, 28 Oct)
 check("Pilot, can you open music and search Florida?", [.openApp("Music"), .keys("cmd+f"), .wait(250), .type("Florida"), .keys("enter")])
 check("Pilot, search for Florida", app: "Music", [.keys("cmd+f"), .wait(250), .type("Florida"), .keys("enter")])
+// "play X" plays in Music (30 Oct): "apple music" is the Music app; site search and bare play/pause are unchanged
+let music = Action.openApp("Music")
+check("Pilot, play Florida on Apple Music", [music, .playMusic("Florida")])
+check("Pilot, play Florida in Music", app: "Google Chrome", [music, .playMusic("Florida")])
+check("Pilot, play Florida on music", [music, .playMusic("Florida")])
+check("Pilot, play Florida", app: "Music", [.playMusic("Florida")])
+check("Pilot, play the song Florida on Apple Music", [music, .playMusic("the song Florida")])   // Hands drops "the song"
+check("Pilot, play", app: "Music", [.media("play")])
+check("Pilot, pause", app: "Music", [.media("pause")])
+check("Pilot, play lofi beats on YouTube", app: "Music", [.openURL("https://www.youtube.com/results?search_query=lofi%20beats")])
+check("Pilot, search for Florida on Apple Music", [music, .keys("cmd+f"), .wait(250), .type("Florida"), .keys("enter")])   // search stays search
+check("Pilot, open Apple Music", [music])
 check("Pilot, open finder, search for report", [.openApp("Finder"), .keys("cmd+f"), .wait(150), .type("report")])
 check("Pilot, open chrome, ask claude what is jazz", [chrome, .openApp("Claude"), .keys("cmd+n"), .wait(600), .type("what is jazz"), .wait(100), .keys("enter")])
 check("Pilot, open chrome, open claude", [chrome, .openApp("Claude")])

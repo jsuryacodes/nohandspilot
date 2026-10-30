@@ -47,6 +47,7 @@ const media = (key: string): Action => ({ kind: 'media', key });
 const wait = (ms: number): Action => ({ kind: 'wait', ms });
 const click = (target: string): Action => ({ kind: 'click', target });
 const numbers = (show: boolean): Action => ({ kind: 'numbers', show });
+const playMusic = (query: string): Action => ({ kind: 'playMusic', query });
 const profile = (p: string): Action => ({ kind: 'chromeProfile', profile: p });
 const menu = (app: string, path: string[]): Action => ({ kind: 'menu', app, path });
 const listen = (on: boolean): Action => ({ kind: 'listen', on });
@@ -229,6 +230,28 @@ describe('chains stay in the app they switched to; display names; reserved phras
   check('Pilot, search for Florida', [keys('cmd+f'), wait(250), typed('Florida'), keys('enter')], {
     app: 'Music',
   });
+  // "play X" plays in Music (30 Oct): "apple music" is the Music app; site search and bare play/pause are unchanged
+  const music = openApp('Music');
+  check('Pilot, play Florida on Apple Music', [music, playMusic('Florida')]);
+  check('Pilot, play Florida in Music', [music, playMusic('Florida')], { app: 'Google Chrome' });
+  check('Pilot, play Florida on music', [music, playMusic('Florida')]);
+  check('Pilot, play Florida', [playMusic('Florida')], { app: 'Music' });
+  check('Pilot, play the song Florida on Apple Music', [music, playMusic('the song Florida')]); // Hands drops "the song"
+  check('Pilot, play', [media('play')], { app: 'Music' });
+  check('Pilot, pause', [media('pause')], { app: 'Music' });
+  check(
+    'Pilot, play lofi beats on YouTube',
+    [url('https://www.youtube.com/results?search_query=lofi%20beats')],
+    { app: 'Music' },
+  );
+  check('Pilot, search for Florida on Apple Music', [
+    music,
+    keys('cmd+f'),
+    wait(250),
+    typed('Florida'),
+    keys('enter'),
+  ]); // search stays search
+  check('Pilot, open Apple Music', [music]);
   check('Pilot, open finder, search for report', [
     openApp('Finder'),
     keys('cmd+f'),

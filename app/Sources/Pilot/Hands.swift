@@ -116,6 +116,7 @@ enum Hands {
         case .menu(let app, let path): return Screen.pressMenu(app, path)
         case .click(let target): return Screen.click(target, note: &note)
         case .numbers(let on): return Screen.numbers(on, note: &note)
+        case .playMusic(let query): return playMusic(query, note: &note)
         case .listen(let on): DispatchQueue.main.async { WakeWord.shared.setOn(on) }
         case .dictate: DispatchQueue.main.async { WakeWord.shared.dictate() }
         case .openFile(let name, let folder, let reveal):
@@ -355,5 +356,122 @@ extension Hands {
             ev?.cgEvent?.post(tap: .cghidEventTap)
         }
         usleep(40_000)
+    }
+}
+
+extension Hands {
+    /// "play Florida on Apple Music": the best match in your Music library (name equal, then starting with, then
+    /// containing the words, ignoring case: "Florida" finds "Florida!!!"), played through AppleScript. Not in your
+    /// library: Music's own search on Apple Music, and the first song result's play button. If that can't be pressed,
+    /// the results stay on screen and the toast says so.
+    static func playMusic(_ spoken: String, note: inout String?) -> String? {
+        let query = spoken.replacingOccurrences(of: "^(the )?(song|track) ", with: "", options: [.regularExpression, .caseInsensitive])
+        if !NSWorkspace.shared.runningApplications.contains(where: { $0.bundleIdentifier == "com.apple.Music" }) {
+            if let e = openApp("Music") { return e }
+        }
+        // Asking first never blocks: the one-time "Pilot wants to control Music" prompt would hold the Hands queue.
+        var target = AEAddressDesc()
+        let id = "com.apple.Music"
+        _ = id.withCString { AECreateDesc(typeApplicationBundleID, $0, id.utf8.count, &target) }
+        defer { AEDisposeDesc(&target) }
+        // Without Automation (not asked yet, or refused), Apple Music's search still works: it needs only Accessibility.
+        let ask = "allow Pilot to control Music to play from your library"
+        switch AEDeterminePermissionToAutomateTarget(&target, typeWildCard, typeWildCard, false) {
+        case noErr: break
+        case OSStatus(errAEEventWouldRequireUserConsent):
+            DispatchQueue.global().async {   // the prompt; answering it never holds up a command
+                var t = AEAddressDesc()
+                _ = id.withCString { AECreateDesc(typeApplicationBundleID, $0, id.utf8.count, &t) }
+                _ = AEDeterminePermissionToAutomateTarget(&t, typeWildCard, typeWildCard, true)
+                AEDisposeDesc(&t)
+            }
+            let e = playFromCatalogue(query, note: &note)
+            note = note.map { $0 + ". To use your library, \(ask) (the prompt on screen)" }
+            return e
+        case let err:
+            Log.debug("Music Automation: \(err == OSStatus(errAEEventNotPermitted) ? "refused" : "error \(err)")")
+            let e = playFromCatalogue(query, note: &note)
+            note = note.map { $0 + ". To use your library, \(ask): System Settings → Privacy & Security → Automation" }
+            return e
+        }
+        let q = query.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+        let script = """
+        tell application "Music"
+            set lib to library playlist 1
+            set hits to (every track of lib whose name is "\(q)")
+            if hits is {} then set hits to (every track of lib whose name starts with "\(q)")
+            if hits is {} then set hits to (every track of lib whose name contains "\(q)")
+            if hits is {} then return ""
+            set t to item 1 of hits
+            play t
+            return (name of t) & tab & (artist of t)
+        end tell
+        """
+        let start = Date()
+        var err: NSDictionary?
+        let found = NSAppleScript(source: script)?.executeAndReturnError(&err).stringValue ?? ""
+        Log.debug(String(format: "Music library search for \"%@\": %@ in %.0f ms", query, found.isEmpty ? "no match" : "played \"\(found.replacingOccurrences(of: "\t", with: " — "))\"", Date().timeIntervalSince(start) * 1000)
+                  + (err.map { " (error \($0[NSAppleScript.errorNumber] ?? "?"))" } ?? ""))
+        if !found.isEmpty {
+            let parts = found.components(separatedBy: "\t")
+            note = "▶ " + parts[0] + (parts.count > 1 && !parts[1].isEmpty ? " — " + parts[1] : "")
+            return nil
+        }
+        return playFromCatalogue(query, note: &note)
+    }
+
+    /// Music's search on Apple Music, as music_search does it, then the first song in Top Results: hovering a result
+    /// shows its play button (an AXCheckBox "Play"), which is pressed.
+    private static func playFromCatalogue(_ query: String, note: inout String?) -> String? {
+        if let e = openApp("Music") { return e }
+        guard let app = Screen.running("Music") else { return "Music isn't running" }
+        let root = AXUIElementCreateApplication(app.processIdentifier)
+        func all(_ el: AXUIElement, _ out: inout [AXUIElement]) { out.append(el); Screen.children(el).forEach { all($0, &out) } }
+        func window() -> [AXUIElement] { var out: [AXUIElement] = []; if let w = Screen.window(root) { all(w, &out) }; return out }
+        func str(_ el: AXUIElement, _ a: String) -> String? { Screen.attr(el, a) as? String }
+        // search Apple Music, not your library
+        if let scope = window().first(where: { str($0, kAXRoleAttribute) == kAXRadioButtonRole && str($0, kAXTitleAttribute) == "Apple Music" }),
+           (Screen.attr(scope, kAXValueAttribute) as? Int) != 1 {
+            AXUIElementPerformAction(scope, kAXPressAction as CFString)
+        }
+        press(3, .maskCommand)     // F
+        usleep(250_000)
+        press(0, .maskCommand)     // A: replace any earlier search
+        type(query)
+        press(36, [])              // Return
+        // the first result whose second line is "Song · <artist>" ("Song", a narrow no-break space, "·"), up to 3 s
+        func subtitle(_ cell: AXUIElement) -> String? {
+            Screen.children(cell).compactMap { str($0, kAXValueAttribute) }.first { $0.split(whereSeparator: { !$0.isLetter }).first == "Song" }
+        }
+        var song: AXUIElement?
+        let deadline = Date() + 3
+        repeat {
+            usleep(150_000)
+            let els = window()
+            let typed = els.first { str($0, kAXSubroleAttribute) == kAXSearchFieldSubrole }.flatMap { str($0, kAXValueAttribute) }
+            guard typed?.lowercased() == query.lowercased() else { continue }   // results of an earlier search don't count
+            var inTop = false
+            for el in els {
+                if str(el, kAXRoleAttribute) == kAXListRole { inTop = str(el, kAXDescriptionAttribute) == "Top Results" }
+                if inTop, str(el, kAXRoleAttribute) == kAXCellRole, subtitle(el) != nil { song = el; break }
+            }
+        } while song == nil && Date() < deadline
+        guard let song, let frame = Screen.rect(Screen.attr(song, kAXPositionAttribute), Screen.attr(song, kAXSizeAttribute)) else {
+            return "No song came up for \"\(query)\" on Apple Music. The results are on screen"
+        }
+        CGEvent(mouseEventSource: source, mouseType: .mouseMoved, mouseCursorPosition: CGPoint(x: frame.midX, y: frame.midY), mouseButton: .left)?
+            .post(tap: .cghidEventTap)
+        var play: AXUIElement?
+        for _ in 0..<10 where play == nil {   // the button appears under the pointer
+            usleep(80_000)
+            play = Screen.children(song).first { str($0, kAXRoleAttribute) == kAXCheckBoxRole }
+        }
+        let title = str(song, kAXDescriptionAttribute) ?? query
+        guard let play, AXUIElementPerformAction(play, kAXPressAction as CFString) == .success else {
+            return "Couldn't press play on \"\(title)\". The results are on screen"
+        }
+        let artist = subtitle(song)?.components(separatedBy: "·").last?.trimmingCharacters(in: .whitespaces.union(.init(charactersIn: "\u{202F}")))
+        note = "▶ " + title + (artist.map { " — " + $0 } ?? "") + " (Apple Music)"
+        return nil
     }
 }

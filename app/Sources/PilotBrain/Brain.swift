@@ -68,7 +68,7 @@ public struct Command: Codable {
 }
 
 public struct ActionSpec: Codable {
-    public var type: String   // openApp quitApp hideApp previousApp openURL chromeProfile keys type sequence scroll media help click
+    public var type: String   // openApp quitApp hideApp previousApp openURL chromeProfile keys type sequence scroll media help click playMusic
     public var keys: String?
     public var text: String?
     public var url: String?
@@ -87,6 +87,7 @@ public enum Action: Equatable {
     case menu(String, [String])   // app, title path: ("Google Chrome", ["Tab", "Duplicate Tab"])
     case click(String)            // a visible element by name, normalised as in rule 3, or a badge number ("12")
     case numbers(Bool)            // show / hide numbered badges on everything clickable
+    case playMusic(String)        // a song: from your Music library, else the first song Apple Music finds
     case openFile(String, folder: Bool, reveal: Bool)   // a name to search for, or a known folder's path
     case listen(Bool)             // wake word on / off: hearing "Pilot" starts the dictation app hands-free
     case dictate                  // start hands-free dictation; the text is typed, not run
@@ -473,6 +474,7 @@ public final class Brain {
             let raw = slots["target"] ?? ""
             actions = [.click(spokenNumber(normalize(raw.replacingOccurrences(of: "-", with: " "))).map(String.init) ?? normalize(raw))]
         case "showNumbers", "hideNumbers": actions = [.numbers(a.type == "showNumbers")]
+        case "playMusic": actions = [.playMusic(slots["query"] ?? "")]
         case "startListening", "stopListening": actions = [.listen(a.type == "startListening")]
         case "dictate": actions = [.dictate]
         case "openFile":

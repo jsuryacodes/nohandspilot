@@ -277,6 +277,10 @@ describe('what only a Mac can do says so, with the keys from commands.json', () 
     ['volume up', 'On your Mac: turns the volume up'],
     ['start listening', 'On your Mac: listens for "Pilot" with its offline recognizer'],
     ['search this', "On your Mac: uses the text you've selected"],
+    [
+      'play Florida on Apple Music',
+      'On your Mac: plays "Florida" from your Music library, or the first song Apple Music finds',
+    ],
     ['switch to college profile', 'On your Mac: opens Chrome in the College profile'],
     ['open file resume', 'On your Mac: finds "resume" with Spotlight and opens it'],
   ])('%s', (text, line) => expect(say(initial, text).lines).toEqual([line]));

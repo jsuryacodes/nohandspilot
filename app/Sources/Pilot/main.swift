@@ -224,7 +224,8 @@ final class Pilot {
                 }
                 let totalMs = Date().timeIntervalSince(start) * 1000
                 if !steps.contains(where: { $0.actions == [.help] }) {
-                    HUD.show(error.map { "⚠︎ \($0)" } ?? "✓ " + said.joined(separator: " → "))
+                    let done = said.joined(separator: " → ")
+                    HUD.show(error.map { "⚠︎ \($0)" } ?? (done.hasPrefix("▶") ? done : "✓ " + done))
                 }
                 Log.usage(source: source, text: text, matched: steps.map(\.id), ok: error == nil, error: error, matchMs: matchMs, totalMs: totalMs)
                 Log.debug(String(format: "Ran %@ in %.0f ms (match %.1f ms)%@", steps.map(\.id).joined(separator: ","), totalMs, matchMs, error.map { " error: \($0)" } ?? ""))
