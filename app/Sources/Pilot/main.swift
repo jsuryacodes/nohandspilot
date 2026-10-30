@@ -74,6 +74,12 @@ final class Pilot {
         wakeTaken = false
     }
 
+    /// The wake was "No Hands Pilot": whatever Wispr sends now is dropped, nothing shown.
+    func wakeCancelled() {
+        wakeUntil = Date() + 3
+        wakeTaken = true
+    }
+
     /// Wake word, once you went quiet and Pilot stopped Wispr. Only Wispr's text ever runs: if none comes, nothing does.
     func wakeCommand(spoke: Bool) {
         guard spoke else {
@@ -316,6 +322,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         startTapWhenTrusted()
         WakeWord.shared.onWake = { [pilot] in pilot.wakeStarted() }
+        WakeWord.shared.onCancel = { [pilot] in pilot.wakeCancelled() }
         WakeWord.shared.onListening = { HUD.show("🎙 Listening…", seconds: 3) }
         WakeWord.shared.onCommand = { [pilot] spoke in pilot.wakeCommand(spoke: spoke) }
         if WakeWord.shared.isOn { WakeWord.shared.setOn(true) }

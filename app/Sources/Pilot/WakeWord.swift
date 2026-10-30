@@ -1,6 +1,7 @@
 // Wake word: Pilot hears its name, "Pilot", with Apple's offline speech recognizer and at once starts Wispr Flow's
-// hands-free mode through Wispr's own link. The name is the only word Pilot ever takes from Apple's recognizer: the
-// moment it's heard the transcript is cancelled, so nothing after it is transcribed, run, typed or logged. Wispr writes
+// hands-free mode through Wispr's own link. The name is the only word Pilot ever takes from Apple's recognizer: one
+// second after it the transcript is cancelled (that second is read only to see it wasn't "No Hands Pilot"), and
+// nothing after the name is run, typed or logged. Wispr writes
 // every command. When the microphone goes quiet (its loudness, not words) Pilot stops Wispr, and Wispr's paste is the
 // command. Wispr's mic needs ~0.37 s to open, so the HUD says "🎙 Listening…" only then. "Pilot, dictate" starts
 // Wispr for free text and stops it when you go quiet. Off unless you switch it on (Pilot menu, or "start listening").
@@ -14,6 +15,8 @@ final class WakeWord {
     static let shared = WakeWord()
     /// "Pilot" was heard: Wispr is starting.
     var onWake: () -> Void = {}
+    /// It wasn't you calling Pilot after all: Wispr was stopped, drop whatever it sends.
+    var onCancel: () -> Void = {}
     /// Wispr's mic is on: say the command now.
     var onListening: () -> Void = {}
     /// You went quiet and Pilot stopped Wispr: whether you spoke while its mic was on (only then can its text follow).
@@ -42,7 +45,7 @@ final class WakeWord {
     private var task: SFSpeechRecognitionTask?
     private var generation = 0, words: [String] = []   // the transcript while listening for the name, lowercased letters
     private var taskStarted = Date(), lastChange = Date(), sessionStarted = Date(), lastRestart = Date.distantPast
-    private var wisprStarted = Date(), nameAt: Date?
+    private var wisprStarted = Date(), checkUntil = Date.distantPast
     private(set) var wisprStopped = Date.distantPast
     private var timer: Timer?
     private var languageModel: Any?, trained: [String] = []   // an SFSpeechLanguageModel.Configuration (macOS 14+)
@@ -88,6 +91,7 @@ final class WakeWord {
         Task {
             let data = SFCustomLanguageModelData(locale: locale, identifier: "dev.jsurya.pilot", version: "1")
             data.insert(phraseCount: .init(phrase: "Pilot", count: 50))
+            for name in ["No Hands Pilot", "nohandspilot", "nohandspilot dot vercel dot app"] { data.insert(phraseCount: .init(phrase: name, count: 50)) }   // so "No…" isn't heard as "Pilot"
             for s in sentences.dropFirst() { data.insert(phraseCount: .init(phrase: s, count: 10)) }
             do {
                 try await data.export(to: asset)
@@ -173,7 +177,7 @@ final class WakeWord {
         lock.lock(); request?.endAudio(); request = r; lock.unlock()
         generation += 1
         let gen = generation
-        words = []; nameAt = nil; taskStarted = Date()
+        words = []; taskStarted = Date()
         task = recognizer.recognitionTask(with: r) { [weak self] result, error in
             guard let self, gen == generation else { return }   // a task already replaced
             if let result { heard(result.bestTranscription.segments.map(\.substring)) }
@@ -202,17 +206,26 @@ final class WakeWord {
         guard split != words else { return }
         words = split
         lastChange = Date()
-        // The recognizer first writes "No…" as "Pilot", then corrects it: decide only once a word follows the name or
-        // 0.6 s pass without one (tick), so "Pilot no hands pilot" is seen whole.
-        guard words.indices.contains(where: { Self.calls(words, at: $0) }) else { nameAt = nil; return }
-        if nameAt == nil { nameAt = Date() }
-        guard let last = words.last, !Self.names.contains(last) else { return }
+        if mode == .command {   // the first second after waking: was it "No Hands Pilot" after all? Nothing else is read
+            if Date() < checkUntil, words.contains(where: Self.names.contains), !words.indices.contains(where: { Self.calls(words, at: $0) }) { cancelWake() }
+            return
+        }
+        guard mode == .listening, words.indices.contains(where: { Self.calls(words, at: $0) }) else { return }
         wake()
     }
 
-    /// The name was heard and stood: start Wispr.
+    /// The recognizer corrected itself ("Pilot" was the "No" of "No Hands Pilot"): stop Wispr, drop its text.
+    private func cancelWake() {
+        openWispr("stop-hands-free")
+        wisprStopped = Date()
+        mode = .listening
+        Log.debug("Wake word: it was \"No Hands Pilot\", stopped Wispr")
+        onCancel()
+        newTask()
+    }
+
+    /// The name was heard: start Wispr at once.
     private func wake() {
-        nameAt = nil
         // Holding Wispr's fn key: already dictating. The key itself (63), not the fn flag, which a shortcut any app sends
         // can leave on until you next touch the keyboard.
         if CGEventSource.keyState(.hidSystemState, key: 63) {
@@ -228,16 +241,21 @@ final class WakeWord {
     /// Stops transcribing (the name was the last word Apple's recognizer gets) and starts Wispr.
     private func begin(_ m: Mode) {
         mode = m
-        generation += 1   // any late result of the old transcript is ignored
-        task?.cancel()
-        task = nil
-        lock.lock(); request?.endAudio(); request = nil; lock.unlock()
-        words = []
+        if m == .command { checkUntil = Date() + 1 } else { stopTranscript() }   // a command keeps it 1 s, to check the name
         sessionStarted = Date()
         let wait = max(0, wisprStopped.timeIntervalSinceNow + 0.5)   // Wispr ignores a start while it finishes the last session
         wisprStarted = Date() + wait
         DispatchQueue.main.asyncAfter(deadline: .now() + wait) { self.openWispr("start-hands-free") }
         DispatchQueue.main.asyncAfter(deadline: .now() + wait + wisprMicDelay) { [self] in if mode == m { onListening() } }
+    }
+
+    /// No more transcript: nothing after the name is heard by Apple's recognizer.
+    private func stopTranscript() {
+        generation += 1   // any late result of the old transcript is ignored
+        task?.cancel()
+        task = nil
+        lock.lock(); request?.endAudio(); request = nil; lock.unlock()
+        words = []
     }
 
     private func tick() {
@@ -252,13 +270,10 @@ final class WakeWord {
             return
         }
         if mode == .listening {
-            if let at = nameAt, Date().timeIntervalSince(at) > 0.6 {   // the name, then quiet: you're waiting for Wispr
-                if words.indices.contains(where: { Self.calls(words, at: $0) }) { wake() } else { nameAt = nil }
-                return
-            }
             if Date().timeIntervalSince(taskStarted) > 60, Date().timeIntervalSince(lastChange) > 1 { newTask() }   // never mid-word
             return
         }
+        if task != nil, Date() > checkUntil { stopTranscript() }
         let spoke = loud > wisprStarted + wisprMicDelay   // only what Wispr's mic could hear counts
         let quiet = Date().timeIntervalSince(loud), elapsed = Date().timeIntervalSince(sessionStarted)
         let pause = mode == .command ? quietAfterCommand : quietAfterDictation

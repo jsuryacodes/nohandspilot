@@ -2,6 +2,19 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 31 Oct: Wispr starts sooner after "Pilot", and "No Hands Pilot" stops it
+- Your report: still woke on "No Hands Pilot", and the 0.6 s wait made Wispr start late. The wait is
+  gone: Wispr starts the moment the recognizer writes "Pilot" (~0.3 s after you say it, plus Wispr's own
+  ~0.37 s to open its mic, which Pilot can't shorten).
+- Instead, the transcript runs one more second after the name, read only to check it: if "Pilot" turns
+  out to sit next to "no" / "hands" (the recognizer writes "No…" as "Pilot", then corrects itself to
+  "Pilot no hands pilot"), Pilot stops Wispr at once and drops its text, no toast. Nothing from that
+  second is run, typed or logged.
+- The recognizer's language model is now also taught "No Hands Pilot", "nohandspilot" and
+  "nohandspilot dot vercel dot app", so it has the project's name to choose instead of "Pilot".
+- What's left: on a false start, Wispr's bar can flash for a moment before it's stopped. Not tested here,
+  at your request.
+
 ## 31 Oct: "No Hands Pilot" still woke Pilot: fixed at the cause
 - Your report: it still woke. Recorded the recognizer's partial results on test audio (a throwaway
   probe signed as Pilot, never Pilot itself, transcript deleted after): saying "No…", it first writes
