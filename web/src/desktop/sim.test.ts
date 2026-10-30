@@ -264,7 +264,6 @@ describe('what only a Mac can do says so, with the keys from commands.json', () 
     ['lock screen', 'On your Mac: presses ⌃⌘Q'],
     ['scroll right across space', 'On your Mac: presses ⌃→'],
     ['volume up', 'On your Mac: turns the volume up'],
-    ['start listening', 'On your Mac: listens for "Pilot" with its offline recognizer'],
     ['search this', "On your Mac: uses the text you've selected"],
     ['switch to college profile', 'On your Mac: opens Chrome in the College profile'],
     ['open file resume', 'On your Mac: finds "resume" with Spotlight and opens it'],

@@ -2,6 +2,23 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 30 Oct: Wispr is the only ears (Apple's speech recognition removed)
+- Pilot never opens the microphone. `WakeWord.swift` is gone (git history keeps it), with every
+  Speech and AVFoundation import, the Microphone and Speech Recognition keys in the Info.plist, the
+  "Listen for Pilot" menu item, the wake-word join (`Brain.joinWake`) and its training sentences.
+  `grep -ri "SFSpeech\|AVAudio\|Microphone\|SpeechRecognition" app/` (outside the build output) finds nothing.
+- The commands `listen_on`, `listen_off` and `dictate` are out of commands.json; "start listening"
+  and "dictate" now say "Didn't catch". A Wispr paste goes straight to `handle`. For no hands, use
+  Wispr Flow's own hands-free mode.
+- "play" / "pause" no longer wait 0.7 s after Pilot stopped Wispr (Pilot never starts or stops it now).
+- The menu line is now "Catching "Pilot, …" from Wispr" (it never listened).
+- Website: How it works, the /try setup steps and the design notes say "Pilot never opens your
+  microphone. Wispr Flow is the only thing that listens." Past usage stays honest: the "voice" source
+  is labelled "Pilot's own hearing (removed 30 Oct)". The demo script's first day is now 28 Oct.
+- Rebuilt and relaunched: Accessibility still granted (the log says `Accessibility: true`);
+  `--run "start listening"` doesn't match, `--run "volume up"` ran in 78 ms. BrainCheck passes;
+  220 Vitest tests pass (the 28 wake-word and training cases are gone).
+
 ## 29 Oct: Website, checkpoint 4: polish, ready to ship
 - Lighthouse on the built site, both routes, phone and desktop presets: 100 everywhere except `/try`
   on a phone (performance 94, a 3.0 s largest paint on a throttled phone) and the landing page on a

@@ -68,8 +68,6 @@ cat > "$APP/Contents/Info.plist" <<EOF
   <key>LSUIElement</key><true/>
   <key>NSHighResolutionCapable</key><true/>
   <key>PilotCommandsPath</key><string>$REPO/commands/commands.json</string>
-  <key>NSMicrophoneUsageDescription</key><string>Pilot listens for the word "Pilot" so it can start Wispr Flow without a key, only while you switch it on.</string>
-  <key>NSSpeechRecognitionUsageDescription</key><string>Pilot recognises the word "Pilot" on this Mac, offline, to start Wispr Flow.</string>
 </dict>
 </plist>
 EOF

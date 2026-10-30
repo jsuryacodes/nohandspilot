@@ -88,9 +88,6 @@
     { "id": "hide_front", "phrases": ["hide", "hide window", "hide app"], "action": { "type": "keys", "keys": "cmd+h" }, "say": "Hidden" },
     { "id": "previous_app", "phrases": ["switch back", "previous app", "last app", "switch to previous app", "switch to last app", "back to previous app"], "action": { "type": "previousApp" }, "say": "Switched back" },
     { "id": "help", "phrases": ["what can i say", "help", "show commands", "list commands"], "action": { "type": "help" }, "say": "Commands" },
-    { "id": "listen_on", "phrases": ["start listening", "listen for pilot", "wake word on"], "action": { "type": "startListening" }, "say": "Listening for \"Pilot\"" },
-    { "id": "listen_off", "phrases": ["stop listening", "wake word off", "go to sleep"], "action": { "type": "stopListening" }, "say": "Stopped listening" },
-    { "id": "dictate", "phrases": ["dictate", "start dictation", "start dictating", "take dictation"], "action": { "type": "dictate" }, "say": "Dictating: talk, then pause" },
     { "id": "show_numbers", "phrases": ["show numbers", "show number", "show labels", "show hints", "numbers"], "action": { "type": "showNumbers" }, "say": "Numbers on" },
     { "id": "hide_numbers", "phrases": ["hide numbers", "hide number", "hide labels", "hide hints", "clear numbers", "close numbers", "no numbers"], "action": { "type": "hideNumbers" }, "say": "Numbers off" },
 

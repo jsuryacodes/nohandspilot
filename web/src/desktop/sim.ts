@@ -207,12 +207,6 @@ export function describe(actions: Action[]): string {
         return a.reveal
           ? `shows "${a.name}" in Finder`
           : `finds "${a.name}" with Spotlight and opens it`;
-      case 'listen':
-        return a.on
-          ? 'listens for "Pilot" with its offline recognizer'
-          : 'stops listening for "Pilot"';
-      case 'dictate':
-        return 'starts Wispr Flow to type what you say next';
       case 'notConfigured':
         return 'nothing yet';
     }
@@ -264,7 +258,7 @@ function act(d: Desk, a: Action): Outcome {
       return ok(openFolder(activate(d, 'Finder'), a.name as Folder), `Opened ${a.name}`);
     case 'notConfigured':
       return fail(`Not set up yet: ${a.note}`);
-    default: // chromeProfile, menu, listen, dictate
+    default: // chromeProfile, menu
       return MAC;
   }
 }

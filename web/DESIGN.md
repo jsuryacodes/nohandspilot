@@ -165,8 +165,7 @@ other colours are the traffic lights and the app tiles in the Dock.
 - **First person, from the maker.** "I built Pilot because …", "my real usage". Not "we", not "users love".
 - **Plain and concrete.** Say what it does with a real command. Numbers only from `stats.json` or the
   docs, always with their date range. If a claim can't be sourced, it doesn't go on the page.
-- **Honest about the edges.** Wispr does the transcribing; Pilot's own recognizer only hears its
-  name. Anything the website can't really do says "On your Mac: …".
+- **Honest about the edges.** Wispr does all the transcribing; Pilot never opens the microphone. Anything the website can't really do says "On your Mac: …".
 - **Product names:** Wispr Flow (text only, never styled like Wispr's brand), Pilot, No Hands Pilot.
 - **Words we don't use:** supercharge, seamless, effortless, magic, revolutionary, unleash,
   AI-powered, 10x, "the future of".

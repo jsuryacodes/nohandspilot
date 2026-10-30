@@ -142,14 +142,11 @@ export function HowItWorks({ stats }: { stats?: Stats }) {
         <Card className="p-7">
           <h3 className="text-lead font-semibold">No hands at all</h3>
           <p className="mt-3 text-small text-fg-2">
-            Turn on listening and just say “Pilot”. Pilot uses Apple’s speech recognizer, offline on
-            your Mac, to listen for its name. When it hears it, it starts Wispr Flow hands-free, and
-            Wispr writes the command.
+            Start Wispr Flow’s own hands-free mode and say “Pilot, …” the way you always do. Wispr
+            writes the command and Pilot catches it, the same as with Wispr’s key.
           </p>
           <p className="mt-3 text-small text-fg-2">
-            Wispr’s microphone takes about a third of a second to open. So if you say it all in one
-            breath, Pilot fills in your first words from its own hearing and lines them up with
-            Wispr’s.
+            Pilot never opens your microphone. Wispr Flow is the only thing that listens.
           </p>
         </Card>
         <Card className="p-7">

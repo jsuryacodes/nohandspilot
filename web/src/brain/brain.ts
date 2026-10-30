@@ -57,8 +57,6 @@ export type Action =
   | { kind: 'click'; target: string } // a visible element by name, normalised as in rule 3, or a badge number ("12")
   | { kind: 'numbers'; show: boolean }
   | { kind: 'openFile'; name: string; folder: boolean; reveal: boolean }
-  | { kind: 'listen'; on: boolean }
-  | { kind: 'dictate' }
   | { kind: 'notConfigured'; note: string };
 
 export interface Step {
@@ -187,102 +185,6 @@ export class Brain {
       this.typos = true;
       this.menus = true;
     }
-  }
-
-  /**
-   * Wake word: Apple's recognizer heard `said` after "Pilot", and Wispr, whose mic opens ~0.4 s after the word, typed
-   * `wispr`: the end of the same command, or all of it if you paused. Returns Apple's words up to where Wispr's begin,
-   * then Wispr's, at the point where Wispr's words line up best with the end of Apple's (word edit distance; a word
-   * Wispr half heard, "Rome" for "chrome", lines up with Apple's whole word). If no word of Wispr's equals one of
-   * Apple's, Apple's words go first. The first of these that is a command wins.
-   */
-  joinWake(said: string[], wispr: string, frontmostApp?: string): string {
-    const norm = (w: string) => w.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
-    const heard = wispr.split(' ').filter((w) => norm(w));
-    const a = said.map(norm);
-    const w = heard.map(norm);
-    type Cell = { cost: number; equal: number };
-    const better = (x: Cell, y: Cell) =>
-      x.cost < y.cost || (x.cost === y.cost && x.equal > y.equal);
-    const align = (s: number): Cell => {
-      // Wispr's words against Apple's from index s on
-      const b = a.slice(s);
-      const d: Cell[][] = Array.from({ length: w.length + 1 }, () =>
-        Array.from({ length: b.length + 1 }, () => ({ cost: 0, equal: 0 })),
-      );
-      for (let i = 0; i <= w.length; i++) {
-        for (let j = 0; j <= b.length; j++) {
-          if (i + j === 0) continue;
-          const options: Cell[] = [];
-          if (i > 0) options.push({ cost: d[i - 1][j].cost + 1, equal: d[i - 1][j].equal });
-          if (j > 0) options.push({ cost: d[i][j - 1].cost + 1, equal: d[i][j - 1].equal });
-          if (i > 0 && j > 0) {
-            const x = w[i - 1];
-            const y = b[j - 1];
-            const c =
-              x === y
-                ? 0
-                : (x.length > 1 && y.endsWith(x)) || (y.length > 1 && x.endsWith(y))
-                  ? 0.5
-                  : 1;
-            options.push({
-              cost: d[i - 1][j - 1].cost + c,
-              equal: d[i - 1][j - 1].equal + (c === 0 ? 1 : 0),
-            });
-          }
-          d[i][j] = options.reduce((m, o) => (better(o, m) ? o : m));
-        }
-      }
-      return d[w.length][b.length];
-    };
-    let best = { s: 0, r: align(0) }; // ties: the smallest s, so more of Wispr's
-    for (let s = 1; s <= a.length; s++) {
-      const r = align(s);
-      if (r.cost < best.r.cost) best = { s, r };
-    }
-    const joined = [...said.slice(0, best.s), ...heard];
-    const patched = [...said.slice(0, best.s + 1), ...heard.slice(1)]; // Wispr's first word was a scrap
-    const texts = (best.r.equal > 0 ? [joined, patched, said] : [said, joined, patched])
-      .map((t) => t.join(' '))
-      .filter(Boolean);
-    return (
-      texts.find(
-        (t) => this.plan(t, frontmostApp, { requireTrigger: false }).kind !== 'unmatched',
-      ) ??
-      texts[0] ??
-      wispr
-    );
-  }
-
-  /** Every phrase with its slots filled in by example values, plus macro names: sentences for a speech recognizer. */
-  trainingPhrases(): string[] {
-    const examples: Record<string, string[]> = {
-      app: [...new Set([...Object.keys(this.config.apps), ...this.installedApps])],
-      site: Object.keys(this.config.sites ?? {}),
-      n: ['1', '2', '3', 'one', 'two', 'three', 'last'],
-      url: ['docker.com', 'github.com'],
-      query: ['docker networking', 'lofi beats', 'the weather'],
-      text: ['hello how are you'],
-      target: [
-        'sign in',
-        'send',
-        'downloads',
-        'settings',
-        ...Array.from({ length: 30 }, (_, i) => String(i + 1)),
-      ],
-    };
-    for (const [slot, values] of Object.entries(this.slotValues))
-      examples[slot] = values.map(([k]) => k);
-    const out = new Set(Object.keys(this.config.macros));
-    for (const phrase of this.config.commands.flatMap((c) => c.phrases)) {
-      let filled = [phrase];
-      for (const [slot, values] of Object.entries(examples)) {
-        if (!phrase.includes(`{${slot}}`)) continue;
-        filled = filled.flatMap((p) => values.map((v) => p.replaceAll(`{${slot}}`, v)));
-      }
-      for (const f of filled) if (!f.includes('{')) out.add(f);
-    }
-    return [...out].sort();
   }
 
   /** Rule 1b, on the raw text so commas stay inside: "when I say X, do A, B", "teach that: A", "that means A", "forget X". */
@@ -644,13 +546,6 @@ export class Brain {
       case 'showNumbers':
       case 'hideNumbers':
         actions = [{ kind: 'numbers', show: a.type === 'showNumbers' }];
-        break;
-      case 'startListening':
-      case 'stopListening':
-        actions = [{ kind: 'listen', on: a.type === 'startListening' }];
-        break;
-      case 'dictate':
-        actions = [{ kind: 'dictate' }];
         break;
       case 'openFile': {
         const name = this.canon(this.tokenize(slots.query ?? '')); // "my resume" → "resume"

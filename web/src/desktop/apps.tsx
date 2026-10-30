@@ -901,7 +901,7 @@ const STEPS: ReactNode[] = [
   <>
     <b>Accessibility.</b> When macOS says “Pilot would like to control this computer”, click Open
     System Settings and turn Pilot on under Privacy &amp; Security → Accessibility. Within about 2
-    seconds Pilot’s menu says it’s listening for “Pilot, …” in Wispr. If it doesn’t, quit Pilot from
+    seconds Pilot’s menu says it’s catching “Pilot, …” from Wispr. If it doesn’t, quit Pilot from
     its menu and open it again; if it still doesn’t, also add Pilot under Privacy &amp; Security →{' '}
     <b>Input Monitoring</b>.
   </>,
@@ -914,8 +914,8 @@ const STEPS: ReactNode[] = [
     Return. Then hold your Wispr key anywhere and say “Pilot, open Finder”.
   </>,
   <>
-    <b>No hands (optional).</b> Pilot menu → Listen for “Pilot”, then allow{' '}
-    <b>Speech Recognition</b> and the <b>Microphone</b>. Now say “Pilot” and the command.
+    <b>No hands.</b> Start Wispr Flow’s own hands-free mode and say “Pilot, …” as usual. Pilot never
+    opens your microphone. Wispr Flow is the only thing that listens.
   </>,
 ];
 
