@@ -4,7 +4,7 @@ Newest first. Each entry matches a commit on `main`.
 
 ## 31 Oct: The website is live at https://nohandspilot.vercel.app
 - Stats refreshed from your log: 637 commands, 28 to 30 Oct, 397 ran, 22 chains, median match 1.1 ms.
-  My live tests for this round went through Wispr into the same log (27 commands from 30 Oct 23:26
+  My live tests for this round went through Wispr into the same log (29 commands from 30 Oct 23:26
   on, all my test phrases); they're moved, unchanged, to `usage-tests.jsonl` next to it, with a
   backup of the whole log as `usage.jsonl.bak-31oct`, so the site counts only your own use.
 - Vercel project `nohandspilot` (Vite, Root Directory `web`). The build reads files outside `web/`
