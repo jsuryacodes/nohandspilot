@@ -2,6 +2,16 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 31 Oct: "Pilot, paste" typed "Paste"
+- Your report: saying "paste" typed the word instead of pasting. The log shows paste did run (⌘V in
+  44 ms), but Wispr puts your clipboard back only ~0.5 s after its own paste, so ⌘V pasted what Wispr
+  had just written ("Paste.").
+- Fix: when Wispr sent the command, paste now waits for that, like copy and cut (up to 1 s). If Wispr
+  never puts the clipboard back, Pilot doesn't paste and says "Wispr hasn't put your clipboard back
+  yet, so pasting would type what you said. Say it again".
+- Tested live in TextEdit with "CLIPBOARD TEXT" copied: "Pilot" … "paste" pasted "CLIPBOARD TEXT"
+  (ran in 550 ms). The test is moved out of your usage log like the others.
+
 ## 31 Oct: The website is live at https://nohandspilot.vercel.app
 - Stats refreshed from your log: 637 commands, 28 to 30 Oct, 397 ran, 22 chains, median match 1.1 ms.
   My live tests for this round went through Wispr into the same log (29 commands from 30 Oct 23:26

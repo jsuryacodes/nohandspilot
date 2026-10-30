@@ -284,11 +284,11 @@ enum Hands {
         })
     }
 
-    /// Copies or cuts: writes the clipboard.
-    static func writesClipboard(_ a: Action) -> Bool {
+    /// Copies, cuts or pastes: uses the clipboard.
+    static func usesClipboard(_ a: Action) -> Bool {
         switch a {
         case .copyLink: return true
-        case .keys(let k): return ["cmd+c", "cmd+x"].contains(k)
+        case .keys(let k): return ["cmd+c", "cmd+x", "cmd+v"].contains(k)
         case .selectText(_, let op, _): return op == "copy" || op == "cut"
         default: return false
         }
