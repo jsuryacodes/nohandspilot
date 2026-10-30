@@ -915,7 +915,9 @@ const STEPS: ReactNode[] = [
   </>,
   <>
     <b>No hands (optional).</b> Pilot menu → Listen for “Pilot”, then allow{' '}
-    <b>Speech Recognition</b> and the <b>Microphone</b>. Now say “Pilot” and the command.
+    <b>Speech Recognition</b> and the <b>Microphone</b>. Pilot listens on-device for its name only,
+    then starts Wispr Flow, which transcribes every command. Say “Pilot”, wait for 🎙 Listening…,
+    then the command.
   </>,
 ];
 

@@ -189,72 +189,13 @@ export class Brain {
     }
   }
 
-  /**
-   * Wake word: Apple's recognizer heard `said` after "Pilot", and Wispr, whose mic opens ~0.4 s after the word, typed
-   * `wispr`: the end of the same command, or all of it if you paused. Returns Apple's words up to where Wispr's begin,
-   * then Wispr's, at the point where Wispr's words line up best with the end of Apple's (word edit distance; a word
-   * Wispr half heard, "Rome" for "chrome", lines up with Apple's whole word). If no word of Wispr's equals one of
-   * Apple's, Apple's words go first. The first of these that is a command wins.
-   */
-  joinWake(said: string[], wispr: string, frontmostApp?: string): string {
-    const norm = (w: string) => w.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
-    const heard = wispr.split(' ').filter((w) => norm(w));
-    const a = said.map(norm);
-    const w = heard.map(norm);
-    type Cell = { cost: number; equal: number };
-    const better = (x: Cell, y: Cell) =>
-      x.cost < y.cost || (x.cost === y.cost && x.equal > y.equal);
-    const align = (s: number): Cell => {
-      // Wispr's words against Apple's from index s on
-      const b = a.slice(s);
-      const d: Cell[][] = Array.from({ length: w.length + 1 }, () =>
-        Array.from({ length: b.length + 1 }, () => ({ cost: 0, equal: 0 })),
-      );
-      for (let i = 0; i <= w.length; i++) {
-        for (let j = 0; j <= b.length; j++) {
-          if (i + j === 0) continue;
-          const options: Cell[] = [];
-          if (i > 0) options.push({ cost: d[i - 1][j].cost + 1, equal: d[i - 1][j].equal });
-          if (j > 0) options.push({ cost: d[i][j - 1].cost + 1, equal: d[i][j - 1].equal });
-          if (i > 0 && j > 0) {
-            const x = w[i - 1];
-            const y = b[j - 1];
-            const c =
-              x === y
-                ? 0
-                : (x.length > 1 && y.endsWith(x)) || (y.length > 1 && x.endsWith(y))
-                  ? 0.5
-                  : 1;
-            options.push({
-              cost: d[i - 1][j - 1].cost + c,
-              equal: d[i - 1][j - 1].equal + (c === 0 ? 1 : 0),
-            });
-          }
-          d[i][j] = options.reduce((m, o) => (better(o, m) ? o : m));
-        }
-      }
-      return d[w.length][b.length];
-    };
-    let best = { s: 0, r: align(0) }; // ties: the smallest s, so more of Wispr's
-    for (let s = 1; s <= a.length; s++) {
-      const r = align(s);
-      if (r.cost < best.r.cost) best = { s, r };
-    }
-    const joined = [...said.slice(0, best.s), ...heard];
-    const patched = [...said.slice(0, best.s + 1), ...heard.slice(1)]; // Wispr's first word was a scrap
-    const texts = (best.r.equal > 0 ? [joined, patched, said] : [said, joined, patched])
-      .map((t) => t.join(' '))
-      .filter(Boolean);
-    return (
-      texts.find(
-        (t) => this.plan(t, frontmostApp, { requireTrigger: false }).kind !== 'unmatched',
-      ) ??
-      texts[0] ??
-      wispr
-    );
+  /** Wake word: Wispr's text is the whole command (Pilot never runs its own recognizer's words). Wispr may have
+   *  caught the name too ("Pilot, open Chrome"): that's dropped. */
+  wakeCommand(wispr: string): string {
+    return this.stripTrigger(wispr) ?? wispr;
   }
 
-  /** Every phrase with its slots filled in by example values, plus macro names: sentences for a speech recognizer. */
+  /** Every phrase with its slots filled in by example values, plus macro names: the contexts the name "Pilot" comes in, so the recognizer hears it reliably. */
   trainingPhrases(): string[] {
     const examples: Record<string, string[]> = {
       app: [...new Set([...Object.keys(this.config.apps), ...this.installedApps])],

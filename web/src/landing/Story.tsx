@@ -142,14 +142,14 @@ export function HowItWorks({ stats }: { stats?: Stats }) {
         <Card className="p-7">
           <h3 className="text-lead font-semibold">No hands at all</h3>
           <p className="mt-3 text-small text-fg-2">
-            Turn on listening and just say “Pilot”. Pilot uses Apple’s speech recognizer, offline on
-            your Mac, to listen for its name. When it hears it, it starts Wispr Flow hands-free, and
-            Wispr writes the command.
+            With the wake word on, Pilot listens on-device for its name only, then starts Wispr
+            Flow. Wispr transcribes every command. Say “Pilot”, wait for 🎙 Listening…, then say the
+            command.
           </p>
           <p className="mt-3 text-small text-fg-2">
-            Wispr’s microphone takes about a third of a second to open. So if you say it all in one
-            breath, Pilot fills in your first words from its own hearing and lines them up with
-            Wispr’s.
+            The only word Pilot acts on from its own speech recognizer is “Pilot”. Every word after
+            it comes from Wispr Flow. Nothing Apple’s recognizer transcribes besides the name is
+            ever run, typed, joined into a command or logged.
           </p>
         </Card>
         <Card className="p-7">

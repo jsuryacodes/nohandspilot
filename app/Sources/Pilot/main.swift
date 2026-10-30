@@ -60,56 +60,62 @@ final class Pilot {
     private(set) var learned: [String: [String]] = [:]
     private var loadedAt: [Date?] = []
     private var lastMiss: String?   // for "teach that"
-    /// A wake-word command whose text Wispr is still sending (`wakes` counts them), and until when Wispr's pastes belong to one.
-    private var wake: [String]?, wakes = 0
-    private var swallowWisprUntil = Date.distantPast
+    /// Wake word: until when Wispr's next paste is the command it's writing, and whether one already came. `wakes` counts them.
+    private var wakeUntil = Date.distantPast, wakeTaken = false, wakes = 0
     /// Called with each newly loaded Brain (the app teaches the wake word its sentences).
     var onLoad: (Brain) -> Void = { _ in }
+    static let noWispr = "Didn't get that from Wispr. Say it again"
+    static let secureInput = "Terminal's Secure Keyboard Entry is on. Pilot can't see Wispr here. Turn it off in Terminal's menu → Secure Keyboard Entry"
 
-    /// Wake word, once you paused: Apple's recognizer heard `said` after "Pilot". If you were still talking once Wispr's
-    /// mic was on, its paste brings the command (`wisprPaste`). If Wispr isn't recording, heard none of it, or sends
-    /// nothing, Apple's words run.
-    func wakeCommand(_ said: [String], wispr: Bool, wisprHeard: Bool) {
-        let mine = said.joined(separator: " ")
-        func runMine() { if !mine.isEmpty { handle(mine, source: "voice", frontApp: appName(NSWorkspace.shared.frontmostApplication)) } }
-        guard wispr, wisprHeard || said.isEmpty else {
-            if wispr { swallowWisprUntil = Date() + 1.5 }   // you'd finished before Wispr's mic was on: drop any scrap it sends
-            runMine()
+    /// Wake word heard: Wispr is writing the command. Its paste is the command, whatever it starts with.
+    func wakeStarted() {
+        wakes += 1
+        wakeUntil = .distantFuture
+        wakeTaken = false
+    }
+
+    /// Wake word, once you went quiet and Pilot stopped Wispr. Only Wispr's text ever runs: if none comes, nothing does.
+    func wakeCommand(spoke: Bool) {
+        guard spoke else {
+            wakeUntil = Date() + 1.5   // drop any scrap Wispr sends
+            HUD.show(Self.noWispr, seconds: 3)
             return
         }
-        wake = said
-        wakes += 1
-        let id = wakes
-        swallowWisprUntil = Date() + 4   // even if Wispr is late, its text of this is never typed
         // Wispr's text comes 0.4 s after the stop (median of 2,598 in its history), within 1.1 s for 95%.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [self] in
-            guard wake != nil, wakes == id else { return }
-            wake = nil
-            Log.debug("Wake word: no text from Wispr in 1.2 s, running what Pilot heard")
-            runMine()
+        wakeUntil = Date() + 2.5
+        let id = wakes
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [self] in
+            guard wakes == id, !wakeTaken else { return }
+            wakeUntil = Date() + 2   // late text is still never typed
+            Log.debug("Wake word: no text from Wispr in 2.5 s, ran nothing")
+            HUD.show(IsSecureEventInputEnabled() ? Self.secureInput : Self.noWispr, seconds: 4)
         }
     }
 
-    /// For ending a wake-word command sooner: is this already a whole command? (Doesn't read menus.)
-    func isCommand(_ text: String) -> Bool {
-        guard let brain, case .run = brain.plan(text, frontmostApp: appName(NSWorkspace.shared.frontmostApplication), requireTrigger: false, menus: false) else { return false }
+    /// A paste Wispr wrote after the wake word: true if it belongs to one (then it's run once, or dropped).
+    private func wakePaste(_ text: String) -> Bool {
+        guard Date() < wakeUntil else { return false }
+        if wakeTaken { Log.debug("Wake word: a second paste from Wispr, dropped"); return true }
+        wakeTaken = true
+        wakeUntil = Date() + 1   // a scrap right after is dropped; "Pilot, dictate"'s own text comes later and types
+        reloadIfChanged()
+        let command = brain?.wakeCommand(text) ?? text
+        Log.debug("Wake word: Wispr typed \"\(text)\"")
+        handle("Pilot, " + command, source: "wispr", frontApp: appName(NSWorkspace.shared.frontmostApplication))
         return true
     }
 
     /// Every paste from Wispr. Returns true to swallow it.
     func wisprPaste(_ text: String) -> Bool {
-        let front = appName(NSWorkspace.shared.frontmostApplication)
-        guard let w = wake else {
-            if Date() < swallowWisprUntil { Log.debug("Wake word: Wispr's text of a command that already ran, dropped"); return true }
-            return handle(text, source: "wispr", frontApp: front)
-        }
-        wake = nil
-        swallowWisprUntil = .distantPast
-        reloadIfChanged()
-        let command = brain?.joinWake(said: w, wispr: text, frontmostApp: front) ?? text
-        Log.debug("Wake word: Wispr typed \"\(text)\" → \"\(command)\"")
-        handle("Pilot, " + command, source: "wispr", frontApp: front)
-        return true
+        wakePaste(text) || handle(text, source: "wispr", frontApp: appName(NSWorkspace.shared.frontmostApplication))
+    }
+
+    /// Wispr's text already landed (secure input hid its paste): if it's a command, erase exactly it (never Ctrl+U, which
+    /// takes what you typed before) and run it.
+    func landedPaste(_ text: String) {
+        guard reloadIfChanged() == nil, (Date() < wakeUntil && !wakeTaken) || brain?.stripTrigger(text) != nil else { return }
+        Hands.queue.async { Hands.backspace(text.count) }
+        _ = wisprPaste(text)
     }
 
     /// Reloads commands.json and learned.json if either changed since last time. Returns an error message if one is broken.
@@ -231,7 +237,7 @@ final class Pilot {
         guard let c = brain?.config else { return "commands.json didn't load." }
         var out = "Start with \"Pilot\" when dictating with Wispr (not needed in the command bar).\nChain with commas: \"Pilot, open Chrome, new tab, search for cats\".\nAdd \"in <app>\" to run a command in another app.\n"
             + "Teach it: \"when I say focus time, do open Notion, mute\", or right after a miss \"teach that: new tab\".\n"
-            + "No hands: \"start listening\", then say \"Pilot\" and the command in one go (\"Pilot, scroll down\"). \"Pilot, dictate\" starts Wispr to type what you say next.\n"
+            + "No hands: \"start listening\", then say \"Pilot\", wait for 🎙 Listening…, and say the command: Wispr writes it. \"Pilot, dictate\" starts Wispr to type what you say next.\n"
         let groups = [nil] + Array(Set(c.commands.compactMap(\.app))).sorted()
         for app in groups {
             out += "\n" + (app ?? "Anywhere") + "\n"
@@ -278,12 +284,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem.menu?.delegate = self
 
         interceptor.onWisprPaste = { [pilot] text in pilot.wisprPaste(text) }
-        interceptor.onLandedPaste = { [pilot] text in
-            // Wispr's text is already at your prompt: erase exactly it (never Ctrl+U, which takes what you typed before), then run
-            guard pilot.reloadIfChanged() == nil, pilot.brain?.stripTrigger(text) != nil else { return }
-            Hands.queue.async { Hands.backspace(text.count) }
-            pilot.handle(text, source: "wispr", frontApp: appName(NSWorkspace.shared.frontmostApplication))
-        }
+        interceptor.onLandedPaste = { [pilot] text in pilot.landedPaste(text) }
         CommandBar.shared.onSubmit = { [pilot] text, previous in
             pilot.handle(text, source: "bar", frontApp: appName(previous), waitForFocusFrom: true)
         }
@@ -294,9 +295,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary)
         }
         startTapWhenTrusted()
-        WakeWord.shared.onWake = { HUD.show("🎙 Listening…", seconds: 2) }
-        WakeWord.shared.onCommand = { [pilot] said, wispr, heard in pilot.wakeCommand(said, wispr: wispr, wisprHeard: heard) }
-        WakeWord.shared.isCommand = { [pilot] in pilot.isCommand($0) }
+        WakeWord.shared.onWake = { [pilot] in pilot.wakeStarted() }
+        WakeWord.shared.onListening = { HUD.show("🎙 Listening…", seconds: 3) }
+        WakeWord.shared.onCommand = { [pilot] spoke in pilot.wakeCommand(spoke: spoke) }
         if WakeWord.shared.isOn { WakeWord.shared.setOn(true) }
         Log.debug("Pilot started. Accessibility: \(AXIsProcessTrusted()). Terminal's Secure Keyboard Entry: "
                   + (UserDefaults(suiteName: "com.apple.Terminal")?.bool(forKey: "SecureKeyboardEntry") == true ? "on" : "off"))

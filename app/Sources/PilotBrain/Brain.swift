@@ -177,42 +177,12 @@ public final class Brain {
         }
     }
 
-    /// Wake word: Apple's recognizer heard `said` after "Pilot", and Wispr, whose mic opens ~0.4 s after the word, typed
-    /// `wispr`: the end of the same command, or all of it if you paused. Returns Apple's words up to where Wispr's begin,
-    /// then Wispr's. That point is where Wispr's words line up best with the end of Apple's (word edit distance; a word
-    /// Wispr half heard, "Rome" for "chrome", lines up with Apple's whole word), not a guess from timing: on 29 Oct the
-    /// timing guess turned "open Wi-Fi settings" + "Settings" into "open Settings". If no word of Wispr's equals one of
-    /// Apple's, Apple's words go first ("close Claude" + "Odd"). The first of these that is a command wins.
-    public func joinWake(said: [String], wispr: String, frontmostApp: String?) -> String {
-        func norm(_ w: String) -> String { w.lowercased().filter { $0.isLetter || $0.isNumber } }
-        let heard = wispr.split(separator: " ").map(String.init).filter { !norm($0).isEmpty }
-        let a = said.map(norm), w = heard.map(norm)
-        func align(_ s: Int) -> (cost: Double, equal: Int) {   // Wispr's words against Apple's from index s on
-            let b = Array(a[s...])
-            var d = [[(cost: Double, equal: Int)]](repeating: .init(repeating: (0, 0), count: b.count + 1), count: w.count + 1)
-            for i in 0...w.count {
-                for j in 0...b.count where i + j > 0 {
-                    var options: [(cost: Double, equal: Int)] = []
-                    if i > 0 { options.append((d[i - 1][j].cost + 1, d[i - 1][j].equal)) }
-                    if j > 0 { options.append((d[i][j - 1].cost + 1, d[i][j - 1].equal)) }
-                    if i > 0, j > 0 {
-                        let x = w[i - 1], y = b[j - 1]
-                        let c = x == y ? 0 : (x.count > 1 && y.hasSuffix(x)) || (y.count > 1 && x.hasSuffix(y)) ? 0.5 : 1
-                        options.append((d[i - 1][j - 1].cost + c, d[i - 1][j - 1].equal + (c == 0 ? 1 : 0)))
-                    }
-                    d[i][j] = options.min { ($0.cost, -$0.equal) < ($1.cost, -$1.equal) }!
-                }
-            }
-            return d[w.count][b.count]
-        }
-        let best = (0...a.count).map { (s: $0, r: align($0)) }.min { ($0.r.cost, $0.s) < ($1.r.cost, $1.s) }!   // ties: more of Wispr's
-        let joined = Array(said.prefix(best.s)) + heard, patched = Array(said.prefix(best.s + 1)) + heard.dropFirst()   // patched: Wispr's first word was a scrap
-        let texts = (best.r.equal > 0 ? [joined, patched, said] : [said, joined, patched]).map { $0.joined(separator: " ") }.filter { !$0.isEmpty }
-        return texts.first { if case .unmatched = plan($0, frontmostApp: frontmostApp, requireTrigger: false) { return false }; return true } ?? texts.first ?? wispr
-    }
+    /// Wake word: Wispr's text is the whole command (Pilot never runs its own recognizer's words). Wispr may have
+    /// caught the name too ("Pilot, open Chrome"): that's dropped.
+    public func wakeCommand(_ wispr: String) -> String { stripTrigger(wispr) ?? wispr }
 
-    /// Every phrase with its slots filled in by example values, plus macro names: sentences that teach a speech
-    /// recognizer what Pilot listens for.
+    /// Every phrase with its slots filled in by example values, plus macro names: sentences that teach the speech
+    /// recognizer the contexts the name "Pilot" comes in, so it hears the name reliably.
     public func trainingPhrases() -> [String] {
         var examples: [String: [String]] = [
             "app": Array(Set(config.apps.keys).union(installedApps)), "site": Array((config.sites ?? [:]).keys),

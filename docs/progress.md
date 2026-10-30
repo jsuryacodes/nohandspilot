@@ -2,6 +2,35 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 30 Oct: The wake word hears only "Pilot"; Wispr writes every command
+- Change of plan: the wake word stays (you're recording the demo with it). The removal is undone with
+  `git revert` (WakeWord.swift, the mic and speech keys, the menu item, listen/dictate, the tests and
+  the copy are back); the Terminal fix stays.
+- The rule now: the only word Pilot acts on from its own speech recognizer is "Pilot". Every word after
+  it comes from Wispr Flow. Nothing Apple's recognizer transcribes besides the name is ever run, typed,
+  joined into a command or logged.
+- How: the moment the name is heard, the transcript is cancelled (Apple transcribes nothing after it)
+  and Wispr starts. "🎙 Listening…" shows when Wispr's mic is on (0.37 s). The end of a command (1 s of
+  quiet) and of a dictation (2 s) come from the mic's loudness, counted only from when Wispr's mic is
+  on. Wispr's paste is the command; a leading "Pilot" in it is dropped (`Brain.wakeCommand`). Nothing
+  from Wispr in 2.5 s, or nothing said: nothing runs, "Didn't get that from Wispr. Say it again" (or
+  the Secure Keyboard Entry message if secure input is on). Gone: running Apple's words, the one-breath
+  join (`joinWake`), ending early on Apple's words (`isCommand`), and logging what Apple heard (the
+  log says "heard the name").
+- With secure input on, the Terminal clipboard fallback takes the wake-word paste too (it doesn't start
+  with "Pilot"): erased and run.
+- Tested live (`say` through the speakers, both mics hear it): "Pilot" … "open Chrome, new tab, search
+  for Docker networking" ran all three from Wispr's text ("Open Chrome, new tab, search for Docker
+  networking."), stopped 6.1 s after the name. "Pilot" then silence: stopped after 6.4 s, "nothing
+  said", nothing ran. "Pilot" … "dictate" … "Hello from the wake word." typed exactly that into
+  TextEdit. "Pilot" … "open Finder" in Terminal with Secure Keyboard Entry on: read from the clipboard,
+  erased from the prompt, Finder came forward.
+- BrainCheck and Vitest: the 14 join cases are now 7 `wakeCommand` cases (a scrap like "Rome." runs
+  nothing). Copy everywhere says: with the wake word on, Pilot listens on-device for its name only, then
+  starts Wispr Flow; Wispr transcribes every command. The usage chart's "Pilot's own hearing" is now
+  explained as commands the wake word started, in Apple's words, before 30 Oct. Demo script: first day
+  28 Oct; the tip is "say Pilot, wait for 🎙 Listening…, then say the command".
+
 ## 30 Oct: "Pilot, …" in Terminal, with Secure Keyboard Entry on
 - Your report: "Pilot, <command>" with Wispr does nothing in Terminal. Confirmed:
   `defaults read com.apple.Terminal SecureKeyboardEntry` = 1, and while Terminal is in front

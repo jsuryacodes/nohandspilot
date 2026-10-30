@@ -13,12 +13,11 @@ Status: in development for No Hands: The Wispr Challenge (Oct 2026). See [docs/p
 - **Trigger A:** Wispr pastes dictated text with Cmd+V. Pilot watches for Cmd+V sent *by Wispr*,
   reads the text, and swallows the paste if it starts with "Pilot".
 - **Trigger B:** Control+Option+P opens a command bar you can dictate or type into.
-- **No hands (optional):** with listening on, say "Pilot" and the command ("Pilot scroll right across
-  space"). Apple's on-device speech recognizer hears "Pilot", offline, and Pilot starts Wispr's
-  hands-free mode through Wispr's own link in that moment; Wispr transcribes the command. Wispr's mic
-  takes ~0.36 s to open (with its fn key too), so in one breath the first words come from Apple's
-  transcript, lined up word by word with Wispr's text. Apple's recognizer is taught Pilot's own
-  sentences (a custom language model built on the Mac). "Pilot, dictate" starts Wispr for free text.
+- **No hands (optional):** with the wake word on, Pilot listens on-device for its name only, then
+  starts Wispr Flow. Wispr transcribes every command. Say "Pilot", wait for "🎙 Listening…" (Wispr's
+  mic takes ~0.37 s to open), then the command. When you go quiet (the mic's loudness), Pilot stops
+  Wispr and runs what Wispr wrote; if Wispr sends nothing, nothing runs. The only word Pilot acts on from its own speech recognizer is "Pilot". Every word after it comes from Wispr Flow. Nothing Apple's recognizer transcribes besides the name is ever run, typed, joined into a command or logged. "Pilot, dictate"
+  starts Wispr for free text.
 - **Play / pause:** "Pilot, pause the video" presses the player's own button in the front window
   (YouTube, Netflix, Spotify, Music), so "pause" never starts anything; with no player on screen it
   presses the media key.

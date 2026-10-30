@@ -144,52 +144,39 @@ app and whether you use more than one display.
 | "Pilot, ask Claude about this" | Claude opens a new chat with the text and sends it |
 | "Pilot, search this" with nothing selected | "Select some text first"; your clipboard is unchanged |
 
-## 7. No hands: say "Pilot" (29 Oct)
+## 7. No hands: say "Pilot" (30 Oct)
+
+With the wake word on, Pilot listens on-device for its name only, then starts Wispr Flow. Wispr
+transcribes every command.
+
+The rule: The only word Pilot acts on from its own speech recognizer is "Pilot". Every word after it comes from Wispr Flow. Nothing Apple's recognizer transcribes besides the name is ever run, typed, joined into a command or logged.
 
 1. Turn it on once: Pilot menu → **Listen for "Pilot"**, or say/type "start listening". Allow the
-   Microphone and Speech Recognition prompts. The log says `taught the recognizer 3502 sentences`
-   ~3 s after Pilot starts; from then on Apple's recognizer knows Pilot's phrases.
-2. Two ways to say it, both keep Wispr:
-   - **One breath:** "Pilot scroll right across space". Wispr's mic opens ~0.7 s after you say "Pilot",
-     so Pilot's own hearing supplies the first words and Wispr the rest. If you'd already finished
-     (short ones: "Pilot pause"), it runs at once (~1 s after you stop) instead of waiting for Wispr.
-   - **Pause after "Pilot"** until Wispr's bar or start sound appears, then the command: Wispr hears
-     all of it. Runs ~1.3 s after you stop (Wispr's text takes ~0.4 s).
-3. Play/pause: open a YouTube video in Chrome.
+   Microphone and Speech Recognition prompts. It stays off until you do.
+2. Say **"Pilot"**, wait for the toast **🎙 Listening…** (Wispr's mic is on ~0.37 s after Pilot hears
+   its name), then the command: "open Chrome, new tab, search for Docker networking". A beat at a comma
+   is fine; a 1 s quiet ends it. Pilot stops Wispr and runs Wispr's text. Words you say before the toast
+   aren't heard by Wispr, and Pilot never fills them in.
+3. If Wispr sends nothing (you said nothing, or it heard nothing), nothing runs and the toast says
+   "Didn't get that from Wispr. Say it again".
+4. Play/pause: open a YouTube video in Chrome.
    | Say | Expected |
    |---|---|
    | "Pilot, pause the video" (playing) | It pauses. Toast "✓ Paused" |
    | "Pilot, pause" again | Nothing pressed. Toast "✓ Already paused" |
    | "Pilot, play" | It plays. Toast "✓ Playing" |
    | "Pilot, pause" with Spotify/Music playing and no video on screen | Spotify/Music pauses (media key) |
-   Wispr pauses what's playing while it listens ("Pause music while dictating" in Wispr's settings) and
-   resumes it when it stops, so the video may stop for a moment as soon as you say "Pilot". Pilot acts
-   0.7 s after it stops Wispr, after Wispr's resume. If "pause" ever ends with the video playing, tell
-   me: that delay is the knob (`Hands.media`).
-4. "Pilot dictate", then talk: Wispr starts and types it into the focused box until you pause.
-5. "Pilot stop listening" turns it off (the mic closes).
-6. With the cursor in a text field (WhatsApp, Chrome, Notes): "Pilot scroll down" runs and types
-   nothing; "Pilot swipe right" (not a command) shows "Didn't catch" and types nothing. With Wispr's
-   key held, "Pilot, swipe right" types nothing either.
-7. Terminal: while **Terminal menu → Secure Keyboard Entry** is ticked, macOS hides Wispr's paste
-   from Pilot, so "Pilot …" runs from Pilot's own hearing and Wispr doesn't start (the log says
-   "secure input is on"). Untick it and Terminal works like the other apps. The same happens while a
-   password field has focus.
-8. Hands off the keyboard: "Pilot, scroll right across space", then straight away "Pilot, scroll left
-   across space". Both run. Also after pressing → yourself (skipping in a video), "Pilot, pause" works.
-   Then hold fn and say "Pilot, scroll down": it scrolls once, and the log says `with fn held`.
+   Wispr pauses what's playing while it listens and resumes it when it stops; Pilot acts 0.7 s after it
+   stops Wispr. If "pause" ever ends with the video playing, that delay is the knob (`Hands.media`).
+5. "Pilot", then "dictate", then talk: Wispr types it into the focused box. Pilot stops Wispr after
+   2 s of quiet (the mic's loudness).
+6. "Pilot", then "stop listening" turns it off (the mic closes).
+7. Terminal with Secure Keyboard Entry on: works too, through the clipboard (section 8).
+8. Hold fn and say "Pilot, scroll down": it scrolls once, and the log says `with fn held`.
 
 ```
-grep -E "Wake word|Ran |Cmd\+V|Player button" ~/Library/Application\ Support/Pilot/debug.log | tail -30
+grep -E "Wake word|Ran |Cmd\+V" ~/Library/Application\ Support/Pilot/debug.log | tail -30
 ```
-
-How to read the log:
-- `heard "open Wi-Fi settings" after 1.6 s; Wispr heard you too` then `Wispr typed "Settings " → "open
-  Wi-Fi Settings"`: the join worked. Pilot supplied the first words, Wispr the rest.
-- `you'd finished before Wispr's mic was on`: it ran on Pilot's hearing at once, without waiting.
-- `heard "Pilot" with fn held`: you were holding Wispr's fn key, so Pilot left it to Wispr. If you
-  weren't, that's a bug: tell me.
-- `the microphone stopped, restarting it`: the mic went away (sleep, AirPods); Pilot reopened it.
 
 ## 8. Terminal (30 Oct)
 
@@ -198,7 +185,7 @@ Keyboard Entry). While it's on, macOS hides Wispr's ⌘V from every other app, s
 at your prompt. Pilot then reads it from the clipboard (Wispr marks its text there; your own ⌘C
 never is), deletes exactly those characters with Backspace, and runs the command. It never presses
 Return, never wipes what you typed before, and never touches dictation that doesn't start with
-"Pilot". You'll see the text for about half a second. The same applies to a password field, and
+"Pilot". With the wake word, Wispr's text is the command whatever it starts with. You'll see the text for about half a second. The same applies to a password field, and
 the Pilot menu says "Secure input is on" while it is. VS Code's terminal works like any other app.
 
 | Say with Wispr, in Terminal | Expected |
