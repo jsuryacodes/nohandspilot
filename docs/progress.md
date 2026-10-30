@@ -2,6 +2,17 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 31 Oct: "No Hands Pilot" still woke Pilot: fixed at the cause
+- Your report: it still woke. Recorded the recognizer's partial results on test audio (a throwaway
+  probe signed as Pilot, never Pilot itself, transcript deleted after): saying "No…", it first writes
+  "Pilot", then corrects itself to "Pilot no hands pilot". Pilot woke on that first lone "Pilot".
+- Fix: the wake word now decides only once a word follows the name, or after 0.6 s of nothing (you
+  waiting for Wispr), and checks two words on each side of the name for "no" / "hands" (and how the
+  recognizer writes them: "hand", "hans", "hence", "and", "nohands"). And if a wake still slips
+  through, Wispr's text starting with "No Hands Pilot" / "nohandspilot" is dropped quietly.
+- Cost: "Pilot" + a pause now shows 🎙 Listening… ~0.6 s later; "Pilot open Chrome" in one breath is
+  unchanged. Not re-tested here, at your request: you're testing it.
+
 ## 31 Oct: Saying "No Hands Pilot" doesn't wake Pilot
 - Your ask. Wispr's text was already safe ("No Hands Pilot …" doesn't start with "Pilot"); the wake word
   wasn't: Apple's recognizer heard "pilot" inside the project's name and started Wispr (01:59:12 in the

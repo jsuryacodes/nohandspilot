@@ -42,7 +42,7 @@ final class WakeWord {
     private var task: SFSpeechRecognitionTask?
     private var generation = 0, words: [String] = []   // the transcript while listening for the name, lowercased letters
     private var taskStarted = Date(), lastChange = Date(), sessionStarted = Date(), lastRestart = Date.distantPast
-    private var wisprStarted = Date()
+    private var wisprStarted = Date(), nameAt: Date?
     private(set) var wisprStopped = Date.distantPast
     private var timer: Timer?
     private var languageModel: Any?, trained: [String] = []   // an SFSpeechLanguageModel.Configuration (macOS 14+)
@@ -173,7 +173,7 @@ final class WakeWord {
         lock.lock(); request?.endAudio(); request = r; lock.unlock()
         generation += 1
         let gen = generation
-        words = []; taskStarted = Date()
+        words = []; nameAt = nil; taskStarted = Date()
         task = recognizer.recognitionTask(with: r) { [weak self] result, error in
             guard let self, gen == generation else { return }   // a task already replaced
             if let result { heard(result.bestTranscription.segments.map(\.substring)) }
@@ -185,6 +185,16 @@ final class WakeWord {
         }
     }
 
+    /// The name, said to Pilot: not the "pilot" in the project's name, "No Hands Pilot", however the recognizer writes
+    /// "no hands" ("hand", "hans", "hens", "and", "nohands"; checked on 31 Oct with Indian English voices). Looks at
+    /// the two words on each side of it.
+    private static func calls(_ words: [String], at i: Int) -> Bool {
+        guard names.contains(words[i]) else { return false }
+        return !(words[max(0, i - 2)..<i] + words[(i + 1)..<min(words.count, i + 3)]).contains { w in
+            ["no", "know", "and", "ands", "ends"].contains(w) || w.hasPrefix("han") || w.hasPrefix("hen") || w.hasSuffix("hands")
+        }
+    }
+
     /// Only ever looks for the name. Nothing else in the transcript is kept past this function.
     private func heard(_ segments: [String]) {
         guard mode == .listening else { return }
@@ -192,8 +202,17 @@ final class WakeWord {
         guard split != words else { return }
         words = split
         lastChange = Date()
-        // the name on its own: "pilot" in "No Hands Pilot" (the project's name) isn't you calling it
-        guard words.indices.contains(where: { Self.names.contains(words[$0]) && ($0 == 0 || words[$0 - 1] != "hands") }) else { return }
+        // The recognizer first writes "No…" as "Pilot", then corrects it: decide only once a word follows the name or
+        // 0.6 s pass without one (tick), so "Pilot no hands pilot" is seen whole.
+        guard words.indices.contains(where: { Self.calls(words, at: $0) }) else { nameAt = nil; return }
+        if nameAt == nil { nameAt = Date() }
+        guard let last = words.last, !Self.names.contains(last) else { return }
+        wake()
+    }
+
+    /// The name was heard and stood: start Wispr.
+    private func wake() {
+        nameAt = nil
         // Holding Wispr's fn key: already dictating. The key itself (63), not the fn flag, which a shortcut any app sends
         // can leave on until you next touch the keyboard.
         if CGEventSource.keyState(.hidSystemState, key: 63) {
@@ -233,6 +252,10 @@ final class WakeWord {
             return
         }
         if mode == .listening {
+            if let at = nameAt, Date().timeIntervalSince(at) > 0.6 {   // the name, then quiet: you're waiting for Wispr
+                if words.indices.contains(where: { Self.calls(words, at: $0) }) { wake() } else { nameAt = nil }
+                return
+            }
             if Date().timeIntervalSince(taskStarted) > 60, Date().timeIntervalSince(lastChange) > 1 { newTask() }   // never mid-word
             return
         }

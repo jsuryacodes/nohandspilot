@@ -97,7 +97,12 @@ final class Pilot {
         guard Date() < wakeUntil else { return false }
         if wakeTaken { Log.debug("Wake word: a second paste from Wispr, dropped"); return true }
         wakeTaken = true
-        wakeUntil = Date() + 1   // a scrap right after is dropped; "Pilot, dictate"'s own text comes later and types
+        wakeUntil = Date() + 1
+        // woken by the project's name ("No Hands Pilot …"): you were talking about it, not to it
+        if text.lowercased().filter(\.isLetter).hasPrefix("nohandspilot") || text.lowercased().filter(\.isLetter).hasPrefix("handspilot") {
+            Log.debug("Wake word: Wispr's text began with the project's name, dropped")
+            return true
+        }   // a scrap right after is dropped; "Pilot, dictate"'s own text comes later and types
         reloadIfChanged()
         let command = brain?.wakeCommand(text) ?? text
         Log.debug("Wake word: Wispr typed \"\(text)\"")
