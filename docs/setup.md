@@ -96,11 +96,11 @@ that title in the front app. "What can I say?" lists them.
 | "Pilot, click Feel Good" | Music, Home ("Find Your Mood" on screen) | The Feel Good station opens or plays, like a mouse click |
 | "Pilot, click" + a link's text | Chrome, any page | The link opens |
 | "Pilot, press enter" | any text box | Enter is pressed (the old command still wins) |
-| "Pilot, click search" | Chrome on a page with several search boxes | Either it clicks one, or "N matches … Say show numbers" |
+| "Pilot, click sign in" | a page with two "Sign in" links | Badges 1 and 2 on just those two (top to bottom), toast "✓ 2 × "Sign in": say "click 1" or "click 2"". Then "Pilot, click 2" or "Pilot, click the last one" presses the second |
 
 The first click in Chrome or an Electron app (Claude, VS Code) after it starts takes ~0.3 s longer.
 
-**Show numbers.** For icons without a name, or when "click" finds several matches.
+**Show numbers.** For icons without a name. (When "click" finds several matches, it numbers just those.)
 
 | Say | In | Expected |
 |---|---|---|

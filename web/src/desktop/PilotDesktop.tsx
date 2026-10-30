@@ -19,7 +19,7 @@ import { MenuBar } from './MenuBar';
 import {
   activate,
   appOf,
-  clickables,
+  badged,
   closeWindow,
   focusWindow,
   frontWindow,
@@ -277,7 +277,7 @@ export function PilotDesktop({
         const box = stage.current?.getBoundingClientRect();
         if (!box) return;
         setSpots(
-          clickables(deskRef.current, front).flatMap((c, i) => {
+          badged(deskRef.current, front).flatMap((c, i) => {
             const el = stage.current?.querySelector(`[data-click="${CSS.escape(c.id)}"]`);
             const r = el?.getBoundingClientRect();
             // only what's on screen gets a badge: inside its window, not scrolled out of view

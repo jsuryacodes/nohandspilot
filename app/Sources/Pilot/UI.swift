@@ -143,6 +143,7 @@ final class CommandBar: NSObject, NSTextFieldDelegate {
 final class NumberOverlay {
     static let shared = NumberOverlay()
     private(set) var isShown = false
+    var count: Int { elements.count }
     private var elements: [Screen.Element] = []
     private var pid: pid_t = 0
     private var panels: [NSPanel] = []

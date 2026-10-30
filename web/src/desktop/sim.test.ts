@@ -168,11 +168,22 @@ describe('click by name', () => {
     expect(r.desk.finder.folder).toBe('Downloads');
     expect(r.lines).toEqual(['Clicked "Downloads"']);
   });
-  test('two things with that name are refused, never guessed', () => {
+  test('two things with that name get numbers of their own, then "click 2" picks one', () => {
     const home = after('open Finder', 'click Home');
-    expect(say(home, 'click Downloads').lines).toEqual([
-      '2 matches for "downloads". Say "show numbers"',
-    ]);
+    const tie = say(home, 'click Downloads');
+    expect(tie.lines).toEqual(['2 × "Downloads": say "click 1" or "click 2"']);
+    expect(tie.desk.numbers).toEqual(['Finder:side:Downloads', 'Finder:file:Downloads']);
+    expect(tie.desk.finder.folder).toBe('Home'); // nothing pressed yet
+    const second = say(tie.desk, 'click 2');
+    expect(second.lines).toEqual(['Clicked 2 "Downloads"']);
+    expect(second.desk.finder.folder).toBe('Downloads');
+    expect(second.desk.numbers).toBe(false);
+  });
+  test('"the first one" / "the last one" while the numbers are up', () => {
+    const tie = say(after('open Finder', 'click Home'), 'click Downloads').desk;
+    expect(say(tie, 'click the first one').lines).toEqual(['Clicked 1 "Downloads"']);
+    expect(say(tie, 'click the last one').lines).toEqual(['Clicked 2 "Downloads"']);
+    expect(say(tie, 'click the third one').lines).toEqual(['No number third one on screen']);
   });
   test('nothing by that name', () => {
     expect(say(after('open Finder'), 'click the moon').lines).toEqual([

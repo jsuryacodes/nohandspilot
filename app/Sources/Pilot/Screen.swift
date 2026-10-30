@@ -140,16 +140,18 @@ enum Screen {
     static func click(_ target: String, note: inout String?) -> String? {
         guard let app = Screen.front, let front = appName(app), !target.isEmpty else { return "Nothing to click" }
         // badges up: a number means that badge. Any click clears them (the screen is about to change).
-        let (shown, badge) = DispatchQueue.main.sync { () -> (Bool, Element?) in
+        // "the second one" / "the last one" while badges are up means that badge.
+        let (shown, badge, n) = DispatchQueue.main.sync { () -> (Bool, Element?, Int?) in
             let o = NumberOverlay.shared
-            let hit = Int(target).flatMap(o.take)
-            if Int(target) == nil { o.hide() }
-            return (o.isShown || hit != nil, hit)
+            let n = Int(target) ?? (o.isShown ? ordinal(target, count: o.count) : nil)
+            let hit = n.flatMap(o.take)
+            if n == nil { o.hide() }
+            return (o.isShown || hit != nil, hit, n)
         }
         if shown {
-            guard let badge else { return "No number \(target) on screen" }
-            note = "Clicked \(target)" + (badge.name.isEmpty ? "" : " \"\(badge.name)\"")
-            Log.debug("Click badge \(target) in \(front): \(badge.role) \"\(badge.name)\"")
+            guard let badge, let n else { return "No number \(target) on screen" }
+            note = "Clicked \(n)" + (badge.name.isEmpty ? "" : " \"\(badge.name)\"")
+            Log.debug("Click badge \(n) in \(front): \(badge.role) \"\(badge.name)\"")
             return press(badge, app: front)
         }
         let all = elements(of: app, text: true)
@@ -177,9 +179,26 @@ enum Screen {
         }
         Log.debug("Click \"\(target)\" in \(front): " + (hits.isEmpty ? "no match" : hits.map { "\($0.role) \"\($0.name)\"" }.joined(separator: ", ")))
         guard let hit = hits.first else { return "Couldn't find \"\(target)\" on screen" }
-        if hits.count > 1 { return "\(hits.count) matches for \"\(target)\". Say \"show numbers\"" }
+        if hits.count > 1 {
+            // a tie: number just those, in reading order, and let you pick. Menu items have no frame to badge.
+            let tied = hits.filter { $0.menu == nil }.sorted(by: readingOrder)
+            guard tied.count > 1 else { return "\(hits.count) matches for \"\(target)\". Say \"show numbers\"" }
+            DispatchQueue.main.sync { NumberOverlay.shared.show(tied, pid: app.processIdentifier) }
+            note = "\(tied.count) × \"\(hit.name)\": say " + (tied.count == 2 ? "\"click 1\" or \"click 2\"" : "\"click 1\" to \"click \(tied.count)\"")
+            return nil
+        }
         note = "Clicked \"\(hit.name)\""
         return press(hit, app: front)
+    }
+
+    /// Top to bottom (rows of 12 pt), then left to right: how badges are numbered.
+    static func readingOrder(_ a: Element, _ b: Element) -> Bool { (Int(a.frame.minY / 12), a.frame.minX) < (Int(b.frame.minY / 12), b.frame.minX) }
+
+    /// "first one", "second", "the last one" (normalised) → a badge number, of `count` badges.
+    static func ordinal(_ t: String, count: Int) -> Int? {
+        let words = ["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"]
+        let w = t.hasSuffix(" one") ? String(t.dropLast(4)) : t
+        return w == "last" ? (count > 0 ? count : nil) : words.firstIndex(of: w).map { $0 + 1 }
     }
 
     /// "play" / "pause" / "playPause" on the player in the front window (YouTube, Netflix, Spotify, Music, QuickTime): its
@@ -207,7 +226,7 @@ enum Screen {
         guard let app = Screen.front else { return "No app in front" }
         var corners: [CGPoint] = []
         let els = elements(of: app, text: false)
-            .sorted { (Int($0.frame.minY / 12), $0.frame.minX) < (Int($1.frame.minY / 12), $1.frame.minX) }
+            .sorted(by: readingOrder)
             .filter { e in   // a row and its cell share a corner: one badge is enough
                 if corners.contains(where: { abs($0.x - e.frame.minX) < 8 && abs($0.y - e.frame.minY) < 8 }) { return false }
                 corners.append(e.frame.origin)

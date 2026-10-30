@@ -2,6 +2,20 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 30 Oct: Clicking a name that matches two or more things
+- Before: "N matches for X. Say "show numbers"". Now Pilot puts numbered badges on just the tied
+  matches, top to bottom then left to right, and says `2 × "Sign in": say "click 1" or "click 2"` (3 or
+  more: `"click 1" to "click N"`) as a ✓ toast, not a ⚠︎. "click 2" presses that badge through the
+  usual badge path; so do "click the first / second / third / last one" (and "first", "last") while
+  badges are up. Menu items have no frame to badge: a tie of only menu items keeps the old message.
+- Website: /try does the same (it used to refuse), with tests for the tie, "click 2", "the first one",
+  "the last one" and a number that isn't there. 3 new BrainCheck and Vitest cases ("click the second
+  one" → click "second one").
+- Tested live on a local page with two "Sign in" links in Chrome, through the wake word: "click sign in"
+  → both badged (`AXLink "Sign in", AXLink "Sign in"`, no error); "click number 2" → the bottom one
+  (`#bottom-sign-in`); again, "click the first one" → the top one (`#top-sign-in`). Wispr wrote "click
+  two" as "Click to" once, which then clicked nothing (6 menu matches, the old message).
+
 ## 30 Oct: The wake word hears only "Pilot"; Wispr writes every command
 - Change of plan: the wake word stays (you're recording the demo with it). The removal is undone with
   `git revert` (WakeWord.swift, the mic and speech keys, the menu item, listen/dictate, the tests and

@@ -343,6 +343,10 @@ describe('show numbers (1c): numbers go to click as digits; "close/hide numbers"
   check('Pilot, click a hundred and five', [click('105')]);
   check('Pilot, click #3.', [click('3')]);
   check('Pilot, show numbers, click 4', [numbers(true), click('4')]);
+  // a tie numbers just the tied matches (30 Oct); Hands reads these while badges are up
+  check('Pilot, click the second one', [click('second one')]);
+  check('Pilot, click the last one', [click('last one')]);
+  check('Pilot, click the first one.', [click('first one')]);
 });
 
 describe('no hands: wake word on/off, dictation', () => {

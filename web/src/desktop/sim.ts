@@ -29,7 +29,7 @@ export interface Desk {
   hidden: App[];
   minimised: Win[];
   full?: Win;
-  numbers: boolean;
+  numbers: boolean | string[]; // true: everything clickable; a list: just those (a tie for click by name), in that order
   focus?: Focus; // where typing goes in the front app
   chrome: { tabs: Tab[]; active: number; closed: Tab[]; next: number };
   code: { terminal: boolean; sidebar: boolean; file: string };
@@ -811,8 +811,35 @@ function numbers(d: Desk, show: boolean): Outcome {
   return ok({ ...d, numbers: true }, `${n} numbers. Say "click" and a number`);
 }
 
+/** What the badges are on, in badge order: everything clickable, or just the tied matches of a click by name. */
+export function badged(d: Desk, w: Win): Clickable[] {
+  const items = clickables(d, w);
+  const ids = d.numbers;
+  return Array.isArray(ids) ? ids.flatMap((id) => items.filter((c) => c.id === id)) : items;
+}
+
+/** Screen.ordinal: "first one", "second", "last one" (normalised) → a badge number, of `count` badges. */
+export function ordinal(t: string, count: number): number | undefined {
+  const words = [
+    'first',
+    'second',
+    'third',
+    'fourth',
+    'fifth',
+    'sixth',
+    'seventh',
+    'eighth',
+    'ninth',
+    'tenth',
+  ];
+  const w = t.endsWith(' one') ? t.slice(0, -4) : t;
+  if (w === 'last') return count > 0 ? count : undefined;
+  const i = words.indexOf(w);
+  return i < 0 ? undefined : i + 1;
+}
+
 /** Screen.click: a badge's number while numbers are up, else the element whose name equals the target, starts
- *  with it, or contains all its words (best tier wins). Two at the same tier are refused, never guessed. */
+ *  with it, or contains all its words (best tier wins). Two or more at the same tier get numbers of their own. */
 function click(d: Desk, target: string): Outcome {
   const w = frontWindow(d);
   if (!w || !target) return fail('Nothing to click');
@@ -821,11 +848,16 @@ function click(d: Desk, target: string): Outcome {
     const r = c.press(d);
     return 'desk' in r ? { ...r, desk: { ...r.desk, numbers: false }, note: r.note ?? note } : r;
   };
-  if (d.numbers && /^\d+$/.test(target)) {
-    const c = items[Number(target) - 1];
-    return c
-      ? run(c, `Clicked ${target}` + (c.name ? ` "${c.name}"` : ''))
-      : fail(`No number ${target} on screen`);
+  if (d.numbers) {
+    // "click 2", or "the second one" / "the last one" while badges are up, means that badge
+    const shown = badged(d, w);
+    const n = /^\d+$/.test(target) ? Number(target) : ordinal(target, shown.length);
+    if (n !== undefined) {
+      const c = shown[n - 1];
+      return c
+        ? run(c, `Clicked ${n}` + (c.name ? ` "${c.name}"` : ''))
+        : fail(`No number ${target} on screen`);
+    }
   }
   const best = (t: string) => {
     const words = t.split(' ');
@@ -852,6 +884,14 @@ function click(d: Desk, target: string): Outcome {
   const suffix = / (button|link|tab|icon|field|box|checkbox|option)$/;
   if (!hits.length && suffix.test(target)) hits = best(target.replace(suffix, '')); // "the send button"
   if (!hits.length) return fail(`Couldn't find "${target}" on screen`);
-  if (hits.length > 1) return fail(`${hits.length} matches for "${target}". Say "show numbers"`);
+  if (hits.length > 1) {
+    // a tie: number just those, in reading order, and let you pick
+    const n = hits.length;
+    return ok(
+      { ...d, numbers: hits.map((c) => c.id) },
+      `${n} × "${hits[0].name}": say ` +
+        (n === 2 ? '"click 1" or "click 2"' : `"click 1" to "click ${n}"`),
+    );
+  }
   return run(hits[0], `Clicked "${hits[0].name}"`);
 }
