@@ -162,6 +162,23 @@ Play/pause: open a YouTube video in Chrome.
 With the cursor in a text field (WhatsApp, Chrome, Notes): "Pilot, scroll down" runs and types
 nothing; "Pilot, swipe right" (not a command) shows "Didn't catch" and types nothing.
 
+## 8. Terminal (30 Oct)
+
+"Pilot, …" works in Terminal with **Secure Keyboard Entry** on or off (Terminal menu → Secure
+Keyboard Entry). While it's on, macOS hides Wispr's ⌘V from every other app, so Wispr's text lands
+at your prompt. Pilot then reads it from the clipboard (Wispr marks its text there; your own ⌘C
+never is), deletes exactly those characters with Backspace, and runs the command. It never presses
+Return, never wipes what you typed before, and never touches dictation that doesn't start with
+"Pilot". You'll see the text for about half a second. The same applies to a password field, and
+the Pilot menu says "Secure input is on" while it is. VS Code's terminal works like any other app.
+
+| Say with Wispr, in Terminal | Expected |
+|---|---|
+| "Pilot, open Chrome" | Chrome comes forward; the prompt is empty again |
+| "Pilot, new tab" | A new Terminal tab or window |
+| "ls minus la" | `Ls -la` is typed at the prompt, nothing else happens |
+| Your own ⌘C / ⌘V of "Pilot, open Finder" | Pasted as text, nothing runs |
+
 ## Everyday use
 
 - **Change commands:** Pilot menu → Edit commands.json (it's `commands/commands.json` in the repo).

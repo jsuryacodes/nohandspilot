@@ -215,6 +215,19 @@ enum Hands {
         usleep(40_000)   // give the app a beat before the next step
     }
 
+    /// Deletes the last `n` characters typed or pasted, one Backspace each.
+    static func backspace(_ n: Int) {
+        for _ in 0..<n {
+            for down in [true, false] {
+                let e = CGEvent(keyboardEventSource: source, virtualKey: 51, keyDown: down)
+                e?.flags = []
+                e?.post(tap: .cghidEventTap)
+            }
+            usleep(3_000)
+        }
+        usleep(40_000)
+    }
+
     static func type(_ text: String) {
         if text.contains("\n") || text.count > 200 { return paste(text) }   // a typed newline would send a chat message early
         let units = Array(text.utf16)

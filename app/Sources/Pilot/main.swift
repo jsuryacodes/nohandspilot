@@ -1,5 +1,6 @@
 // Pilot: menu-bar app. Wispr is the ears, the Brain decides, Hands act.
 import AppKit
+import Carbon
 import PilotBrain
 import ServiceManagement
 
@@ -228,6 +229,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem.menu?.delegate = self
 
         interceptor.onWisprPaste = { [pilot] text in pilot.wisprPaste(text) }
+        interceptor.onLandedPaste = { [pilot] text in
+            // Wispr's text is already at your prompt: erase exactly it (never Ctrl+U, which takes what you typed before), then run
+            guard pilot.reloadIfChanged() == nil, pilot.brain?.stripTrigger(text) != nil else { return }
+            Hands.queue.async { Hands.backspace(text.count) }
+            pilot.handle(text, source: "wispr", frontApp: appName(NSWorkspace.shared.frontmostApplication))
+        }
         CommandBar.shared.onSubmit = { [pilot] text, previous in
             pilot.handle(text, source: "bar", frontApp: appName(previous), waitForFocusFrom: true)
         }
@@ -238,7 +245,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary)
         }
         startTapWhenTrusted()
-        Log.debug("Pilot started. Accessibility: \(AXIsProcessTrusted())")
+        Log.debug("Pilot started. Accessibility: \(AXIsProcessTrusted()). Terminal's Secure Keyboard Entry: "
+                  + (UserDefaults(suiteName: "com.apple.Terminal")?.bool(forKey: "SecureKeyboardEntry") == true ? "on" : "off"))
     }
 
     /// The paste interceptor needs Accessibility; keep retrying until it's granted.
@@ -255,6 +263,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             menu.addItem(withTitle: "Catching \"Pilot, …\" from Wispr", action: nil, keyEquivalent: "")
         } else {
             menu.addItem(item("⚠︎ Grant Accessibility permission…", #selector(openAccessibility)))
+        }
+        if IsSecureEventInputEnabled() {
+            menu.addItem(withTitle: "Secure input is on: Pilot reads Wispr from the clipboard", action: nil, keyEquivalent: "")
         }
         menu.addItem(.separator())
         menu.addItem(item("Command Bar (\(hotkey))", #selector(openBar)))

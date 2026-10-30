@@ -1,4 +1,5 @@
 // Trigger A: catch Wispr's synthetic Cmd+V, read the clipboard, swallow it when it's a Pilot command.
+// Trigger A2: secure input hides that Cmd+V, so then Pilot watches the clipboard Wispr pastes from.
 // Trigger B: a global hotkey (Carbon, needs no permission) that opens the command bar.
 import AppKit
 import Carbon
@@ -11,6 +12,12 @@ final class PasteInterceptor {
     private var appTapSource: CFRunLoopSource?
     private var swallowNextVUp = false
     private var lastDecided: (timestamp: CGEventTimestamp, swallow: Bool)?
+    /// Called with Wispr's text when its paste already landed (secure input hid it from the taps).
+    var onLandedPaste: (String) -> Void = { _ in }
+    /// The clipboard's change count at the last Wispr Cmd+V a tap saw, and the last one the clipboard watch looked at.
+    private var tapSawCount = -1, watchedCount: Int?
+    static let terminals: Set<String> = ["com.apple.Terminal", "com.googlecode.iterm2", "dev.warp.Warp-Stable", "com.mitchellh.ghostty",
+                                         "net.kovidgoyal.kitty", "org.alacritty", "com.github.wez.wezterm"]
 
     var isRunning: Bool { sessionTap != nil }
 
@@ -25,7 +32,42 @@ final class PasteInterceptor {
             self?.retargetAppTap()
         }
         retargetAppTap()
+        NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { note in
+            let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+            guard app?.processIdentifier != getpid() else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {   // the app turns secure input on as it comes forward
+                Log.debug("Front: \(appName(app) ?? "?"), secure input \(IsSecureEventInputEnabled() ? "on" : "off")")
+            }
+        }
+        Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in self?.watchClipboard() }
         return true
+    }
+
+    /// Secure input (Terminal's Secure Keyboard Entry, a password field) hides Wispr's Cmd+V from both taps, so its
+    /// paste lands. Wispr still puts the text on the clipboard first, marked concealed (your own Cmd+C never is),
+    /// and puts your clipboard back ~0.5 s after the paste. Polled only while secure input is on or a terminal is in front.
+    private func watchClipboard() {
+        let pb = NSPasteboard.general
+        guard IsSecureEventInputEnabled() || Self.terminals.contains(NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? "") else {
+            watchedCount = nil
+            return
+        }
+        let count = pb.changeCount
+        defer { watchedCount = count }
+        guard let seen = watchedCount, count != seen, pb.types?.contains(.init("org.nspasteboard.ConcealedType")) == true,
+              NSWorkspace.shared.runningApplications.contains(where: { $0.bundleIdentifier?.lowercased().contains("wispr") == true }),
+              let text = pb.string(forType: .string), !text.contains(where: \.isNewline) else { return }
+        let deadline = Date() + 1
+        func decide() {
+            if tapSawCount == count { return }   // a tap caught the paste: already handled
+            if pb.changeCount == count, Date() < deadline { DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: decide); return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [self] in   // Wispr restored your clipboard: its paste is in
+                guard tapSawCount != count else { return }
+                Log.debug("Wispr's paste landed unseen (secure input \(IsSecureEventInputEnabled() ? "on" : "off")), read from the clipboard")
+                onLandedPaste(text)
+            }
+        }
+        decide()
     }
 
     private func retargetAppTap() {
@@ -76,6 +118,7 @@ final class PasteInterceptor {
         let fromWispr = sender.lowercased().contains("wispr")
         var swallow = false
         if fromWispr {
+            tapSawCount = NSPasteboard.general.changeCount
             // Reading the promised clipboard item also tells Wispr the paste "succeeded", so it won't warn.
             let text = NSPasteboard.general.string(forType: .string) ?? ""
             swallow = onWisprPaste(text)

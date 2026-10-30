@@ -2,6 +2,28 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 30 Oct: "Pilot, …" in Terminal, with Secure Keyboard Entry on
+- Your report: "Pilot, <command>" with Wispr does nothing in Terminal. Confirmed:
+  `defaults read com.apple.Terminal SecureKeyboardEntry` = 1, and while Terminal is in front
+  `IsSecureEventInputEnabled()` is true (now logged on every app activation: `Front: Terminal, secure
+  input on`). Wispr still pastes with ⌘V (it doesn't type keystrokes), but neither tap sees it: the
+  text landed at the prompt and the log had no `Cmd+V seen` line. With Secure Keyboard Entry off, the
+  session tap sees the ⌘V and swallows it, as in other apps.
+- Wispr puts its text on the clipboard marked `org.nspasteboard.ConcealedType` (a ⌘C from Terminal
+  isn't), pastes, and puts your clipboard back ~0.5 s later. Fallback: while secure input is on or a
+  terminal is in front, Pilot polls the clipboard's change count (every 50 ms). New concealed text from a
+  running Wispr, one line, that a tap didn't catch by the time Wispr restores the clipboard: if it starts
+  with "Pilot", Pilot sends exactly that many Backspaces (never Ctrl+U) and runs it as a Wispr command.
+  Once per change count; non-Pilot text is never touched.
+- Tested live: Wispr's own hands-free link plus `say` through the speakers, in a spare zsh window.
+  Secure on: "Pilot, open Chrome" (erased, Chrome came forward), "Pilot, new tab" (a new Terminal
+  window), "ls minus la" (`Ls -la ` stayed at the prompt), my own ⌘V of "Pilot, open Finder" (pasted,
+  nothing ran). Secure off: the same three through the tap, no double run; own ⌘V "not Wispr,
+  ignored". VS Code's terminal: secure input off, the tap swallowed "Pilot, open Chrome" and passed
+  "ls minus la" through. iTerm2 isn't installed. Posted Backspaces do reach Terminal with secure input
+  on, so the "can't see Wispr" warning wasn't needed; the menu says "Secure input is on" while it is.
+- Your Secure Keyboard Entry setting is back on, as it was.
+
 ## 30 Oct: Wispr is the only ears (Apple's speech recognition removed)
 - Pilot never opens the microphone. `WakeWord.swift` is gone (git history keeps it), with every
   Speech and AVFoundation import, the Microphone and Speech Recognition keys in the Info.plist, the
