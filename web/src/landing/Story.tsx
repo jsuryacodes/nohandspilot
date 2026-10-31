@@ -111,7 +111,7 @@ export function HowItWorks({ stats }: { stats?: Stats }) {
         'The median time to match a command, from my usage log.' +
         (stats?.sample ? ' (Sample data.)' : ''),
     },
-    { big: 'Offline', text: 'Matching runs on your Mac. No AI round-trip, no API keys.' },
+    { big: 'Rule-based', text: 'Pilot’s matching runs on your Mac. No AI, no API keys.' },
     {
       big: 'Untouched',
       text: 'Dictation that doesn’t start with “Pilot” types exactly as it always did.',

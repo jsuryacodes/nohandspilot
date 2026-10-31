@@ -62,8 +62,8 @@ export function Landing() {
               Use your Mac without touching it.
             </h1>
             <p className="mt-7 max-w-[30ch] text-lead text-fg-2">
-              Wispr Flow is the ears. Pilot is the hands. No AI round-trip, no API keys, fully
-              offline.
+              Wispr Flow is the ears. Pilot is the hands. Its matching runs on your Mac: no AI, no
+              API keys.
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
               <a href="/try" className={primary}>

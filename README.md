@@ -27,7 +27,7 @@ Full walkthrough (11 min): https://www.youtube.com/watch?v=svUKJ5K3ZRI
 - **Brain** (`app/Sources/PilotBrain`): platform-neutral matching against
   [`commands/commands.json`](commands/commands.json): phrases with slots, synonyms, app aliases,
   per-app commands, macros, chains, and any menu item of the front app by its exact title.
-  Fully offline, rule-based. Teach it new phrases by voice ("when I say focus time, do …"); they're
+  Rule-based and local; Wispr Flow does the transcription. Teach it new phrases by voice ("when I say focus time, do …"); they're
   saved to `commands/learned.json`.
 - **Hands** (`app/Sources/Pilot`): macOS actions: open/switch apps, shortcuts, typing, scrolling,
   and screen control through Accessibility (`Screen.swift`).
