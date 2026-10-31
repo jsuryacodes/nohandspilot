@@ -2,6 +2,10 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 31 Oct: Demo video on the website
+- The Demo section now plays the YouTube video (svUKJ5K3ZRI) in place of "on its way". It still loads
+  YouTube only when you press play.
+
 ## 31 Oct: Wispr starts sooner after "Pilot", and "No Hands Pilot" stops it
 - Your report: still woke on "No Hands Pilot", and the 0.6 s wait made Wispr start late. The wait is
   gone: Wispr starts the moment the recognizer writes "Pilot" (~0.3 s after you say it, plus Wispr's own
