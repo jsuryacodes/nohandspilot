@@ -32,16 +32,34 @@ Full walkthrough (11 min): https://www.youtube.com/watch?v=svUKJ5K3ZRI
 - **Hands** (`app/Sources/Pilot`): macOS actions: open/switch apps, shortcuts, typing, scrolling,
   and screen control through Accessibility (`Screen.swift`).
 
-## Build
+## Install
 
-Needs macOS 13+ and the Xcode Command Line Tools (full Xcode not required).
+Needs macOS 13+, [Wispr Flow](https://wisprflow.ai), and the Xcode Command Line Tools
+(`xcode-select --install`; full Xcode not required).
 
 ```
-app/build.sh          # build, sign, install to ~/Applications, launch
-cd app && swift run BrainCheck   # matching self-checks
+git clone https://github.com/jsuryacodes/nohandspilot.git
+cd nohandspilot
+app/build.sh          # build, sign, install to ~/Applications/Pilot.app, launch
 ```
 
-Setup and permissions: [docs/setup.md](docs/setup.md).
+The first build creates a self-signed certificate in its own keychain, so the Accessibility
+permission survives rebuilds. Keep the clone where it is: Pilot reads `commands/commands.json` from it.
+
+Then, once:
+
+1. **Accessibility:** on the "Pilot would like to control this computer" prompt, click
+   **Open System Settings** and turn Pilot on under Privacy & Security → Accessibility. The Pilot
+   menu (airplane icon) then says **Listening for "Pilot, …" in Wispr**.
+2. **Wispr dictionary:** Wispr Flow → Dictionary → add **Pilot**.
+3. **Try it:** hold the Wispr key and say "Pilot, open Finder". Without Wispr: press
+   Control+Option+P, type `open finder`, press Enter.
+4. **Optional, no hands:** Pilot menu → **Listen for "Pilot"**, then allow Microphone and Speech
+   Recognition.
+5. **Optional:** Pilot menu → **Open at Login**.
+
+After code changes, run `app/build.sh` again. Matching self-checks: `cd app && swift run BrainCheck`.
+Troubleshooting and the full test list: [docs/setup.md](docs/setup.md).
 
 ## Website
 
