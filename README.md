@@ -6,7 +6,10 @@ Hold the Wispr key anywhere and say **"Pilot, open Chrome, new tab, search for D
 Pilot catches the text before it lands in the text box and runs it: no trackpad, no AI round-trip,
 a few milliseconds of matching. Dictation that doesn't start with "Pilot" is never touched.
 
-Status: in development for No Hands: The Wispr Challenge (Oct 2026). See [docs/progress.md](docs/progress.md).
+Built for No Hands: The Wispr Challenge by WeMakeDevs × Wispr Flow (Oct 2026). Not affiliated with Wispr.
+
+Demo (2 min): https://youtu.be/gMNiggA7Vck
+Full walkthrough (11 min): https://www.youtube.com/watch?v=svUKJ5K3ZRI
 
 ## How it works
 
