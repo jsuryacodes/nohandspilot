@@ -12,15 +12,17 @@ export function Problem() {
       <div className="mt-10 grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
         <div className="max-w-[46ch] space-y-5 text-body text-fg-2">
           <p>
-            Wispr Flow turns what I say into text anywhere on my Mac. But between the sentences I
-            was still opening apps, switching tabs, clicking buttons and scrolling, all by hand.
+            On 17 October I skidded off my scooter. After that I couldn’t type and could barely use
+            the trackpad. Wispr Flow let me write by voice, but I still couldn’t open apps, switch
+            tabs or click anything. So I built NoHandsPilot.
           </p>
           <p>
             Pilot is the other half. You say the command the way you already dictate, and the Mac
             does it.
           </p>
           <p className="text-fg">
-            It’s for anyone who already dictates with Wispr and wants the last bit of hands-free.
+            It’s for anyone who uses Wispr Flow and wants to go fully hands-free, especially people
+            who can’t comfortably use a keyboard or trackpad.
           </p>
         </div>
         <Card className="overflow-hidden">
