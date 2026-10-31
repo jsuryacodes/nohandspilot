@@ -74,7 +74,9 @@ export function BuiltByVoice() {
           ) : (
             <img
               src="/wispr-usage.png"
-              alt="My Wispr Flow usage card"
+              alt="My Wispr Flow insights: 97 words per minute (top 3%), 87,712 words dictated, 14,094 fixes made by Flow, 1,294 AI prompts, a 5 day streak"
+              width={2240}
+              height={1524}
               loading="lazy"
               onError={() => setMissing(true)}
               className="w-full"

@@ -2,6 +2,10 @@
 
 Newest first. Each entry matches a commit on `main`.
 
+## 31 Oct: Wispr usage card on the website
+- "Built by voice" now shows my Wispr Flow Insights screenshot (`web/public/wispr-usage.png`) in place
+  of the empty frame, with the key numbers in its alt text.
+
 ## 31 Oct: Demo video on the website
 - The Demo section now plays the YouTube video (svUKJ5K3ZRI) in place of "on its way". It still loads
   YouTube only when you press play.
